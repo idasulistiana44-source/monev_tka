@@ -25,4 +25,4 @@ if(str_starts_with($pageName,'visits/instrument')){
 <main class="app-main">
     <?= view($pageView,$pageData) ?>
 </main>
-<?= view('layout/footer',['pageAsset'=>$pageAsset]) ?>
+<?= view('layout/footer',['pageAsset'=>$pageAsset]) ?> 

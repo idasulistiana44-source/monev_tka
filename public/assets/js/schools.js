@@ -297,7 +297,7 @@ function editSchool(id){
             $('#editNpsn').val(item.npsn||'');
             $('#editSchoolName').val(item.school_name||'');
             $('#editLevel').val(item.level||'');
-            $('#editAlamat').val(item.alamat||'');
+            $('#editAddress').val(item.address||'');
             $('#editIsActive').val(item.is_active==1?'1':'0');
 
             loadCity('#editSchoolCity',item.city_id);

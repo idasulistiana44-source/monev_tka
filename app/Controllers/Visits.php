@@ -43,14 +43,21 @@ class Visits extends BaseController
         if($visitDate===''){
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Tanggal visitasi wajib diisi.']);
         }
-        $assignment=$this->db->table('assignments')->where('id',$assignmentId)->where('status','ACTIVE')->get()->getRowArray();
+        $assignment=$this->db->table('assignments')->where('id',(int)$assignmentId)->where('status','ACTIVE')->get()->getRowArray();
         if(!$assignment){
             return $this->response->setStatusCode(404)->setJSON(['success'=>false,'message'=>'Assignment aktif tidak ditemukan.']);
         }
         if($this->visitModel->hasVisitForAssignment($assignmentId)){
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Assignment ini sudah memiliki data visitasi.']);
         }
-        $id=$this->visitModel->createVisit(['assignment_id'=>(int)$assignmentId,'visit_date'=>$visitDate,'status'=>'DRAFT','notes'=>null,'created_at'=>date('Y-m-d H:i:s'),'updated_at'=>date('Y-m-d H:i:s')]);
+        $id=$this->visitModel->createVisit([
+            'assignment_id'=>(int)$assignmentId,
+            'visit_date'=>$visitDate,
+            'status'=>'DRAFT',
+            'notes'=>null,
+            'created_at'=>date('Y-m-d H:i:s'),
+            'updated_at'=>date('Y-m-d H:i:s')
+        ]);
         if(!$id){
             return $this->response->setStatusCode(500)->setJSON(['success'=>false,'message'=>'Visitasi gagal dibuat.']);
         }
@@ -58,6 +65,7 @@ class Visits extends BaseController
     }
     public function detail($id)
     {
+        $id=(int)$id;
         $data=$this->visitModel->getVisit($id);
         if(!$data){
             return $this->response->setStatusCode(404)->setJSON(['success'=>false,'message'=>'Data visitasi tidak ditemukan.']);
@@ -66,6 +74,10 @@ class Visits extends BaseController
     }
     public function start($id)
     {
+        $id=(int)$id;
+        if($id<=0){
+            return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'ID visitasi tidak valid.']);
+        }
         $visit=$this->visitModel->getVisit($id);
         if(!$visit){
             return $this->response->setStatusCode(404)->setJSON(['success'=>false,'message'=>'Data visitasi tidak ditemukan.']);
@@ -77,43 +89,74 @@ class Visits extends BaseController
             return $this->response->setJSON(['success'=>true,'message'=>'Visitasi sudah selesai.','data'=>['redirect'=>base_url('visits/instrument/'.$id)]]);
         }
         if($visit['status']==='DRAFT'){
-            $this->visitModel->updateStatus($id,'IN_PROGRESS');
+            if(!$this->visitModel->updateStatus($id,'IN_PROGRESS')){
+                return $this->response->setStatusCode(500)->setJSON(['success'=>false,'message'=>'Status visitasi gagal diperbarui.']);
+            }
         }
         return $this->response->setJSON(['success'=>true,'message'=>'Visitasi dimulai.','data'=>['redirect'=>base_url('visits/instrument/'.$id)]]);
     }
     public function instrument($id)
     {
+        $id=(int)$id;
+        if($id<=0){
+            return redirect()->to(base_url('visits'))->with('error','ID visitasi tidak valid.');
+        }
         $visit=$this->visitModel->getVisit($id);
         if(!$visit){
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Visitasi tidak ditemukan.');
+            return redirect()->to(base_url('visits'))->with('error','Data visitasi tidak ditemukan.');
         }
         return view('layout/template',[
             'title'=>'Isi Instrumen Visitasi',
             'pageName'=>'visits/instrument',
             'pageView'=>'visits/instrument',
-            'pageAsset'=>'visits-instrument',
+            'pageAsset'=>'visit-instrument',
+            'pageCss'=>'visit-instrument',
             'pageData'=>[
-                'visitId'=>(int)$id,
-                'visit'=>$visit
+                'visitId'=>$id
             ]
         ]);
     }
     public function instrumentData($id)
     {
+        $id=(int)$id;
+        if($id<=0){
+            return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'ID visitasi tidak valid.']);
+        }
         $visit=$this->visitModel->getVisit($id);
         if(!$visit){
             return $this->response->setStatusCode(404)->setJSON(['success'=>false,'message'=>'Visitasi tidak ditemukan.']);
         }
         $sections=$this->visitModel->getInstrumentSections();
         foreach($sections as &$section){
-            $section['questions']=$this->visitModel->getInstrumentQuestions($section['id'],$id);
+            $questions=$this->visitModel->getInstrumentQuestions($section['id'],$id);
+            foreach($questions as &$question){
+                if(!empty($question['options'])){
+                    $decoded=json_decode($question['options'],true);
+                    $question['options']=is_array($decoded)?$decoded:[];
+                }else{
+                    $question['options']=[];
+                }
+            }
+            unset($question);
+            $section['questions']=$questions;
         }
-        return $this->response->setJSON(['success'=>true,'data'=>['visit'=>$visit,'sections'=>$sections]]);
+        unset($section);
+        return $this->response->setJSON([
+            'success'=>true,
+            'data'=>[
+                'visit'=>$visit,
+                'sections'=>$sections
+            ]
+        ]);
     }
     public function saveAnswers($id)
     {
         if(!$this->request->is('post')){
             return $this->response->setStatusCode(405)->setJSON(['success'=>false,'message'=>'Method tidak diizinkan.']);
+        }
+        $id=(int)$id;
+        if($id<=0){
+            return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'ID visitasi tidak valid.']);
         }
         $visit=$this->visitModel->getVisit($id);
         if(!$visit){
@@ -123,6 +166,9 @@ class Visits extends BaseController
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Visitasi sudah selesai dan tidak dapat diubah.']);
         }
         $answers=$this->request->getPost('answers');
+        if(is_string($answers)){
+            $answers=json_decode($answers,true);
+        }
         if(!is_array($answers)){
             $answers=[];
         }
@@ -139,6 +185,10 @@ class Visits extends BaseController
         if(!$this->request->is('post')){
             return $this->response->setStatusCode(405)->setJSON(['success'=>false,'message'=>'Method tidak diizinkan.']);
         }
+        $id=(int)$id;
+        if($id<=0){
+            return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'ID visitasi tidak valid.']);
+        }
         $visit=$this->visitModel->getVisit($id);
         if(!$visit){
             return $this->response->setStatusCode(404)->setJSON(['success'=>false,'message'=>'Visitasi tidak ditemukan.']);
@@ -147,6 +197,9 @@ class Visits extends BaseController
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Visitasi sudah selesai.']);
         }
         $answers=$this->request->getPost('answers');
+        if(is_string($answers)){
+            $answers=json_decode($answers,true);
+        }
         if(!is_array($answers)){
             $answers=[];
         }

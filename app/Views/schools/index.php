@@ -105,7 +105,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Address</label>
-                        <textarea name="alamat" class="form-control" rows="3"></textarea>
+                        <textarea name="address" class="form-control" rows="3"></textarea>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-0">
@@ -170,7 +170,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Address</label>
-                        <textarea name="alamat" id="editAlamat" class="form-control" rows="3"></textarea>
+                        <textarea name="address" id="editAddress" class="form-control" rows="3"></textarea>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-0">

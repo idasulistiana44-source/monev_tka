@@ -1,13 +1,12 @@
 $(document).ready(function(){
-    const visitId=window.VISIT_ID||0;
-    let instrumentData=null;
-    let saving=false;
+    if(!document.querySelector('.visit-instrument-page'))return;
+    const visitId=Number(window.VISIT_ID||0);
+    if(!visitId){
+        notify('ID visitasi tidak valid.','error');
+        return;
+    }
     init();
     function init(){
-        if(!visitId){
-            notify('ID visitasi tidak valid.','error');
-            return;
-        }
         bindEvents();
         loadInstrument();
     }
@@ -16,10 +15,10 @@ $(document).ready(function(){
             window.location.href=BASE_URL+'visits';
         });
         $('#btnSaveDraft').on('click',function(){
-            saveDraft();
+            saveInstrument(false);
         });
         $('#btnCompleteVisit').on('click',function(){
-            completeVisit();
+            saveInstrument(true);
         });
     }
     function loadInstrument(){
@@ -30,233 +29,168 @@ $(document).ready(function(){
             dataType:'json',
             success:function(response){
                 if(!response.success){
+                    $('#instrumentContainer').html('<div class="instrument-empty">Instrumen gagal dimuat.</div>');
                     notify(response.message||'Instrumen gagal dimuat.','error');
                     return;
                 }
-                instrumentData=response.data;
-                renderVisitInfo(response.data.visit);
-                renderInstrument(response.data.sections||[]);
+                if(response.data&&response.data.visit){
+                    renderVisitInfo(response.data.visit);
+                }
+                const sections=response.data&&Array.isArray(response.data.sections)?response.data.sections:[];
+                renderInstrument(sections);
             },
             error:function(xhr){
+                console.error(xhr.responseText);
+                $('#instrumentContainer').html('<div class="instrument-empty">Instrumen gagal dimuat.</div>');
                 notify(getAjaxError(xhr,'Instrumen gagal dimuat.'),'error');
-                $('#instrumentContainer').html('<div class="instrument-empty"><i class="fas fa-exclamation-circle me-2"></i>Instrumen gagal dimuat.</div>');
             }
         });
     }
-    function renderVisitInfo(visit){
-        $('#visitInfo').html(`
-            <div class="visit-info-grid">
-                <div class="visit-info-item">
-                    <span class="visit-info-label">NPSN</span>
-                    <strong>${escapeHtml(visit.npsn||'-')}</strong>
-                </div>
-                <div class="visit-info-item">
-                    <span class="visit-info-label">Sekolah</span>
-                    <strong>${escapeHtml(visit.school_name||'-')}</strong>
-                </div>
-                <div class="visit-info-item">
-                    <span class="visit-info-label">Level</span>
-                    <strong>${escapeHtml(visit.level||'-')}</strong>
-                </div>
-                <div class="visit-info-item">
-                    <span class="visit-info-label">Tanggal Visitasi</span>
-                    <strong>${formatDate(visit.visit_date)}</strong>
-                </div>
-                <div class="visit-info-item">
-                    <span class="visit-info-label">Petugas</span>
-                    <strong>${escapeHtml(visit.officer_name||'-')}</strong>
-                </div>
-                <div class="visit-info-item">
-                    <span class="visit-info-label">Status</span>
-                    ${getStatusBadge(visit.status)}
-                </div>
-            </div>
-        `);
+    function renderVisitInfo(data){
+        $('#visitInfo').html('<div class="visit-info-grid"><div class="visit-info-item"><span class="visit-info-label">NPSN</span><strong>'+escapeHtml(data.npsn||'-')+'</strong></div><div class="visit-info-item"><span class="visit-info-label">Sekolah</span><strong>'+escapeHtml(data.school_name||'-')+'</strong></div><div class="visit-info-item"><span class="visit-info-label">Level</span><strong>'+escapeHtml(data.level||'-')+'</strong></div><div class="visit-info-item"><span class="visit-info-label">Tanggal Visitasi</span><strong>'+formatDate(data.visit_date)+'</strong></div><div class="visit-info-item"><span class="visit-info-label">Petugas</span><strong>'+escapeHtml(data.officer_name||'-')+'</strong></div><div class="visit-info-item"><span class="visit-info-label">Status</span><strong>'+getStatusBadge(data.status)+'</strong></div></div>');
     }
     function renderInstrument(sections){
         const container=$('#instrumentContainer');
         container.empty();
-        if(!sections.length){
-            container.html('<div class="instrument-empty"><i class="fas fa-file-alt me-2"></i>Belum ada instrumen aktif.</div>');
+        if(!Array.isArray(sections)||sections.length===0){
+            container.html('<div class="instrument-empty"><i class="fas fa-file-circle-question me-2"></i>Belum ada instrumen aktif.</div>');
             return;
         }
-        sections.forEach(function(section,index){
-            const questions=section.questions||[];
-            const sectionHtml=$(`
-                <div class="instrument-section-card">
-                    <div class="instrument-section-header">
-                        <div class="instrument-section-number">${index+1}</div>
-                        <div class="instrument-section-info">
-                            <h3>${escapeHtml(section.name||'-')}</h3>
-                            ${section.description?'<p>'+escapeHtml(section.description)+'</p>':''}
-                        </div>
-                    </div>
-                    <div class="instrument-section-body"></div>
-                </div>
-            `);
-            const body=sectionHtml.find('.instrument-section-body');
-            if(!questions.length){
-                body.html('<div class="instrument-question-empty">Belum ada pertanyaan pada bagian ini.</div>');
-            }else{
-                questions.forEach(function(question,qIndex){
-                    body.append(renderQuestion(question,qIndex));
-                });
-            }
-            container.append(sectionHtml);
+        sections.forEach(function(section,sectionIndex){
+            const questions=Array.isArray(section.questions)?section.questions:[];
+            let questionHtml='';
+            questions.forEach(function(question,index){
+                questionHtml+=renderQuestion(question,index+1);
+            });
+            container.append('<div class="instrument-section-card"><div class="instrument-section-header"><div class="instrument-section-number">'+(sectionIndex+1)+'</div><div class="instrument-section-info"><h3>'+escapeHtml(section.name||'-')+'</h3>'+(section.description?'<p>'+escapeHtml(section.description)+'</p>':'')+'</div></div><div class="instrument-section-body">'+(questionHtml||'<div class="instrument-question-empty">Belum ada pertanyaan pada bagian ini.</div>')+'</div></div>');
         });
     }
-    function renderQuestion(question,index){
-        const id='question_'+question.id;
-        const required=Number(question.is_required)===1;
-        const requiredMark=required?' <span class="text-danger">*</span>':'';
+    function renderQuestion(question,number){
+        const id=Number(question.id||0);
+        const type=(question.type||'text').toLowerCase();
+        const required=Number(question.is_required||0)===1;
         const answer=question.answer??'';
         let input='';
-        const type=String(question.type||'text').toLowerCase();
         if(type==='textarea'){
-            input='<textarea class="form-control instrument-answer" data-question-id="'+question.id+'" data-required="'+(required?1:0)+'" rows="4" placeholder="Isi jawaban...">'+escapeHtml(answer)+'</textarea>';
-        }else if(type==='number'){
-            input='<input type="number" class="form-control instrument-answer" data-question-id="'+question.id+'" data-required="'+(required?1:0)+'" value="'+escapeHtml(answer)+'" placeholder="Masukkan angka">';
-        }else if(type==='date'){
-            input='<input type="date" class="form-control instrument-answer" data-question-id="'+question.id+'" data-required="'+(required?1:0)+'" value="'+escapeHtml(answer)+'">';
+            input='<textarea class="form-control instrument-answer" name="answer['+id+']" data-question-id="'+id+'" rows="4" '+(required?'required':'')+'>'+escapeHtml(answer)+'</textarea>';
         }else if(type==='select'){
-            input=renderSelect(question,answer,required);
+            input='<select class="form-select instrument-answer" name="answer['+id+']" data-question-id="'+id+'" '+(required?'required':'')+'><option value="">Pilih jawaban</option>'+renderOptions(question.options,answer)+'</select>';
         }else if(type==='radio'){
-            input=renderRadio(question,answer,required);
+            input='<div class="instrument-radio-group">'+renderRadioOptions(question.options,answer,id)+'</div>';
         }else if(type==='checkbox'){
-            input=renderCheckbox(question,answer,required);
+            input='<div class="instrument-checkbox-group">'+renderCheckboxOptions(question.options,answer,id)+'</div>';
+        }else if(type==='number'){
+            input='<input type="number" class="form-control instrument-answer" name="answer['+id+']" data-question-id="'+id+'" value="'+escapeHtml(answer)+'" '+(required?'required':'')+'>';
+        }else if(type==='date'){
+            input='<input type="date" class="form-control instrument-answer" name="answer['+id+']" data-question-id="'+id+'" value="'+escapeHtml(answer)+'" '+(required?'required':'')+'>';
         }else{
-            input='<input type="text" class="form-control instrument-answer" data-question-id="'+question.id+'" data-required="'+(required?1:0)+'" value="'+escapeHtml(answer)+'" placeholder="Isi jawaban...">';
+            input='<input type="text" class="form-control instrument-answer" name="answer['+id+']" data-question-id="'+id+'" value="'+escapeHtml(answer)+'" '+(required?'required':'')+'>';
         }
-        return `
-            <div class="instrument-question" data-question="${question.id}">
-                <div class="instrument-question-label">
-                    <span class="instrument-question-number">${index+1}</span>
-                    <div>
-                        <label>${escapeHtml(question.question||'-')}${requiredMark}</label>
-                        ${question.description?'<small>'+escapeHtml(question.description)+'</small>':''}
-                    </div>
-                </div>
-                <div class="instrument-question-input">${input}</div>
-            </div>
-        `;
+        return '<div class="instrument-question"><div class="instrument-question-label"><div class="instrument-question-number">'+number+'</div><div><label>'+escapeHtml(question.question||'-')+(required?' <span class="text-danger">*</span>':'')+'</label>'+(question.description?'<small>'+escapeHtml(question.description)+'</small>':'')+'</div></div><div class="instrument-question-input">'+input+'</div></div>';
     }
-    function renderSelect(question,answer,required){
-        const options=parseOptions(question.options);
-        let html='<select class="form-select instrument-answer" data-question-id="'+question.id+'" data-required="'+(required?1:0)+'"><option value="">Pilih jawaban</option>';
+    function renderOptions(options,selected){
+        if(!Array.isArray(options))return '';
+        let html='';
         options.forEach(function(option){
-            const value=typeof option==='object'?option.value:option;
-            const label=typeof option==='object'?option.label:option;
-            html+='<option value="'+escapeHtml(value)+'"'+(String(value)===String(answer)?' selected':'')+'>'+escapeHtml(label)+'</option>';
+            const value=typeof option==='object'?(option.value??''):option;
+            const label=typeof option==='object'?(option.label??value):option;
+            html+='<option value="'+escapeHtml(value)+'" '+(String(value)===String(selected)?'selected':'')+'>'+escapeHtml(label)+'</option>';
         });
-        html+='</select>';
         return html;
     }
-    function renderRadio(question,answer,required){
-        const options=parseOptions(question.options);
-        let html='<div class="instrument-radio-group">';
+    function renderRadioOptions(options,selected,id){
+        if(!Array.isArray(options)||options.length===0)return '<div class="text-muted small">Pilihan jawaban belum tersedia.</div>';
+        let html='';
         options.forEach(function(option,index){
-            const value=typeof option==='object'?option.value:option;
-            const label=typeof option==='object'?option.label:option;
-            html+='<label class="instrument-radio"><input type="radio" name="question_'+question.id+'" class="instrument-answer" data-question-id="'+question.id+'" data-required="'+(required?1:0)+'" value="'+escapeHtml(value)+'"'+(String(value)===String(answer)?' checked':'')+'><span>'+escapeHtml(label)+'</span></label>';
+            const value=typeof option==='object'?(option.value??''):option;
+            const label=typeof option==='object'?(option.label??value):option;
+            const optionId='radio_'+id+'_'+index;
+            html+='<label class="instrument-radio" for="'+optionId+'"><input type="radio" id="'+optionId+'" name="answer['+id+']" value="'+escapeHtml(value)+'" data-question-id="'+id+'" '+(String(value)===String(selected)?'checked':'')+'>'+escapeHtml(label)+'</label>';
         });
-        html+='</div>';
         return html;
     }
-    function renderCheckbox(question,answer,required){
-        const options=parseOptions(question.options);
-        let selected=[];
-        try{
-            selected=Array.isArray(answer)?answer:JSON.parse(answer||'[]');
-        }catch(e){
-            selected=answer?[answer]:[];
+    function renderCheckboxOptions(options,selected,id){
+        if(!Array.isArray(options)||options.length===0)return '<div class="text-muted small">Pilihan jawaban belum tersedia.</div>';
+        let selectedValues=[];
+        if(Array.isArray(selected)){
+            selectedValues=selected.map(String);
+        }else if(typeof selected==='string'&&selected!==''){
+            try{
+                const decoded=JSON.parse(selected);
+                if(Array.isArray(decoded))selectedValues=decoded.map(String);
+                else selectedValues=selected.split(',').map(function(item){return item.trim();});
+            }catch(e){
+                selectedValues=selected.split(',').map(function(item){return item.trim();});
+            }
         }
-        let html='<div class="instrument-checkbox-group">';
+        let html='';
         options.forEach(function(option,index){
-            const value=typeof option==='object'?option.value:option;
-            const label=typeof option==='object'?option.label:option;
-            html+='<label class="instrument-checkbox"><input type="checkbox" class="instrument-answer" data-question-id="'+question.id+'" data-required="'+(required?1:0)+'" value="'+escapeHtml(value)+'"'+(selected.map(String).includes(String(value))?' checked':'')+'><span>'+escapeHtml(label)+'</span></label>';
+            const value=typeof option==='object'?(option.value??''):option;
+            const label=typeof option==='object'?(option.label??value):option;
+            const optionId='checkbox_'+id+'_'+index;
+            html+='<label class="instrument-checkbox" for="'+optionId+'"><input type="checkbox" id="'+optionId+'" name="answer['+id+'][]" value="'+escapeHtml(value)+'" data-question-id="'+id+'" '+(selectedValues.indexOf(String(value))!==-1?'checked':'')+'>'+escapeHtml(label)+'</label>';
         });
-        html+='</div>';
         return html;
-    }
-    function parseOptions(options){
-        if(!options)return[];
-        if(Array.isArray(options))return options;
-        try{
-            const parsed=JSON.parse(options);
-            return Array.isArray(parsed)?parsed:[];
-        }catch(e){
-            return String(options).split(',').map(function(item){
-                return item.trim();
-            }).filter(Boolean);
-        }
     }
     function collectAnswers(){
         const answers={};
         $('.instrument-answer').each(function(){
-            const questionId=$(this).data('question-id');
-            if(!questionId)return;
-            if($(this).is(':checkbox')){
-                if(!answers[questionId])answers[questionId]=[];
-                if($(this).is(':checked'))answers[questionId].push($(this).val());
-            }else if($(this).is(':radio')){
-                if($(this).is(':checked'))answers[questionId]=$(this).val();
+            const element=$(this);
+            const id=element.data('question-id');
+            if(!id)return;
+            if(element.is(':radio')){
+                if(element.is(':checked'))answers[id]=element.val();
+            }else if(element.is(':checkbox')){
+                if(!Array.isArray(answers[id]))answers[id]=[];
+                if(element.is(':checked'))answers[id].push(element.val());
             }else{
-                answers[questionId]=$(this).val();
+                answers[id]=element.val();
             }
         });
         return answers;
     }
     function validateRequired(){
         let valid=true;
-        $('.instrument-answer[data-required="1"]').each(function(){
-            const questionId=$(this).data('question-id');
-            let hasValue=false;
-            if($(this).is(':checkbox')){
-                hasValue=$('.instrument-answer[data-question-id="'+questionId+'"]:checked').length>0;
-            }else if($(this).is(':radio')){
-                hasValue=$('.instrument-answer[data-question-id="'+questionId+'"]:checked').length>0;
-            }else{
-                hasValue=String($(this).val()||'').trim()!=='';
-            }
-            if(!hasValue){
+        let firstInvalid=null;
+        $('.instrument-answer[required]').each(function(){
+            const element=$(this);
+            if(element.is(':radio')){
+                const name=element.attr('name');
+                if($('input[name="'+name+'"]:checked').length===0){
+                    valid=false;
+                    if(!firstInvalid)firstInvalid=element;
+                }
+            }else if(!String(element.val()||'').trim()){
                 valid=false;
-                $(this).addClass('is-invalid');
-            }else{
-                $(this).removeClass('is-invalid');
+                if(!firstInvalid)firstInvalid=element;
             }
         });
-        if(!valid)notify('Masih ada pertanyaan wajib yang belum diisi.','warning');
+        if(!valid){
+            notify('Masih ada pertanyaan wajib yang belum diisi.','warning');
+            if(firstInvalid&&firstInvalid.length){
+                $('html,body').animate({scrollTop:firstInvalid.offset().top-120},300);
+            }
+        }
         return valid;
     }
-    function saveDraft(){
-        if(saving)return;
-        saveAnswers(false);
-    }
-    function completeVisit(){
-        if(saving)return;
-        if(!validateRequired())return;
-        saveAnswers(true);
-    }
-    function saveAnswers(complete){
-        saving=true;
+    function saveInstrument(complete){
+        if(complete&&!validateRequired())return;
+        const answers=collectAnswers();
         const button=complete?$('#btnCompleteVisit'):$('#btnSaveDraft');
         const original=button.html();
         button.prop('disabled',true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
-        const answers=collectAnswers();
+        const url=complete?BASE_URL+'visits/complete/'+visitId:BASE_URL+'visits/save-answers/'+visitId;
         $.ajax({
-            url:complete?BASE_URL+'visits/complete/'+visitId:BASE_URL+'visits/save-answers/'+visitId,
+            url:url,
             type:'POST',
-            data:{
-                answers:answers
-            },
+            data:{answers:JSON.stringify(answers)},
             dataType:'json',
             success:function(response){
                 if(response.success){
-                    notify(response.message||'Data berhasil disimpan.','success');
-                    if(complete&&response.data&&response.data.redirect){
+                    notify(response.message||(complete?'Visitasi berhasil diselesaikan.':'Data berhasil disimpan.'),'success');
+                    if(complete){
                         setTimeout(function(){
-                            window.location.href=response.data.redirect;
+                            window.location.href=response.data&&response.data.redirect?response.data.redirect:BASE_URL+'visits';
                         },700);
                     }
                 }else{
@@ -264,18 +198,19 @@ $(document).ready(function(){
                 }
             },
             error:function(xhr){
+                console.error(xhr.responseText);
                 notify(getAjaxError(xhr,'Data gagal disimpan.'),'error');
             },
             complete:function(){
-                saving=false;
                 button.prop('disabled',false).html(original);
             }
         });
     }
     function getStatusBadge(status){
-        if(status==='draft')return '<span class="badge bg-secondary-subtle text-secondary">Belum Mulai</span>';
-        if(status==='in_progress')return '<span class="badge bg-warning-subtle text-warning-emphasis">Berlangsung</span>';
-        if(status==='completed')return '<span class="badge bg-success-subtle text-success">Selesai</span>';
+        if(status==='DRAFT')return '<span class="badge bg-secondary-subtle text-secondary">Draft</span>';
+        if(status==='IN_PROGRESS')return '<span class="badge bg-warning-subtle text-warning-emphasis">Berlangsung</span>';
+        if(status==='COMPLETED')return '<span class="badge bg-success-subtle text-success">Selesai</span>';
+        if(status==='VERIFIED')return '<span class="badge bg-primary-subtle text-primary">Terverifikasi</span>';
         return '<span class="badge bg-secondary-subtle text-secondary">'+escapeHtml(status||'-')+'</span>';
     }
     function notify(message,type){
@@ -287,6 +222,7 @@ $(document).ready(function(){
     }
     function getAjaxError(xhr,fallback){
         if(xhr.responseJSON&&xhr.responseJSON.message)return xhr.responseJSON.message;
+        if(xhr.responseJSON&&xhr.responseJSON.errors)return Object.values(xhr.responseJSON.errors).join(' ');
         return fallback;
     }
     function formatDate(value){

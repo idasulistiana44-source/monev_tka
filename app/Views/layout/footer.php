@@ -17,9 +17,8 @@
 <script src="<?= base_url('assets/js/notification.js') ?>"></script>
 <?= $this->renderSection('scripts') ?>
 <script>
-    const BASE_URL="<?= base_url('/') ?>";
+const BASE_URL="<?= base_url('/') ?>";
 </script>
-<script src="<?= base_url('assets/js/visits-instrument.js') ?>"></script>
 <?php if(!empty($pageAsset)): ?>
 <script src="<?= base_url('assets/js/'.$pageAsset.'.js') ?>?v=<?= time() ?>"></script>
 <?php endif; ?>

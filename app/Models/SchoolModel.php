@@ -17,7 +17,7 @@ class SchoolModel extends Model
         'district_id',
         'region_id',
         'level',
-        'alamat',
+        'address',
         'is_active',
         'created_at',
         'updated_at'
