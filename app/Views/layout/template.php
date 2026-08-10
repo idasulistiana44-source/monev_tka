@@ -4,7 +4,7 @@ $pageView=$pageView??'';
 $pageData=$pageData??[];
 $pageAsset=$pageAsset??null;
 if(str_starts_with($pageName,'visits/instrument')){
-    $pageAsset='visit-instrument';
+    $pageAsset='visits-instrument';
 }elseif(str_starts_with($pageName,'schools/')){
     $pageAsset='schools';
 }elseif(str_starts_with($pageName,'users/')){

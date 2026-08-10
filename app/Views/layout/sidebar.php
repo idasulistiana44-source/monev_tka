@@ -52,12 +52,12 @@
         <li class="sidebar-menu-title">
             Monitoring
         </li>
-        <li>
-            <a href="<?= base_url('visits') ?>" class="nav-link <?= service('router')->getMatchedRoute()[0] === 'visits' ? 'active' : '' ?>">
+        <li class="<?= url_is('visits') || url_is('visits/*') ? 'active' : '' ?>">
+            <a href="<?= base_url('visits') ?>">
                 <i class="fas fa-clipboard-check"></i>
-                <span  class="sidebar-menu-text">Visitasi</span>
+                <span class="sidebar-menu-text">Visitasi</span>
             </a>
-        </li> 
+        </li>
         <li>
             <a href="#" title="Dokumentasi">
                 <i class="fas fa-camera"></i>

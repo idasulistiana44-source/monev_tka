@@ -67,8 +67,8 @@ class VisitModel extends Model
     }
     public function getInstrumentQuestions($sectionId,$visitId)
     {
-        $builder=$this->db->table('instrument_questions q');
-        $builder->select('q.id,q.section_id,q.code,q.question,q.description,q.type,q.options,q.is_required,q.sort_order,va.answer');
+        $builder=$this->db->table('instruments q');
+        $builder->select('q.id,q.section_id,q.code,q.question,q.description,q.answer_type,q.options,q.is_required,q.sort_order,va.answer');
         $builder->join('visit_answers va','va.question_id=q.id AND va.visit_id='.(int)$visitId,'left');
         $builder->where('q.section_id',(int)$sectionId);
         $builder->where('q.is_active',1);
