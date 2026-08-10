@@ -6,13 +6,13 @@ class VisitModel extends Model
     protected $table='visits';
     protected $primaryKey='id';
     protected $returnType='array';
-    protected $allowedFields=['assignment_id','visit_date','status','notes','created_at','updated_at'];
+    protected $allowedFields=['assignment_id','school_id','visit_date','status','notes','created_at','updated_at'];
     public function getVisits($keyword='',$status='')
     {
         $builder=$this->db->table('visits v');
-        $builder->select('v.id,v.assignment_id,v.visit_date,v.status,v.notes,v.created_at,v.updated_at,a.school_id,a.user_id,a.assignment_date,a.status as assignment_status,s.npsn,s.school_name,s.level,u.name as officer_name,u.username as officer_username');
+        $builder->select('v.id,v.assignment_id,v.school_id,v.visit_date,v.status,v.notes,v.created_at,v.updated_at,a.user_id,a.assignment_date,a.status as assignment_status,s.npsn,s.school_name,s.level,u.name as officer_name,u.username as officer_username');
         $builder->join('assignments a','a.id=v.assignment_id','left');
-        $builder->join('schools s','s.id=a.school_id','left');
+        $builder->join('schools s','s.id=v.school_id','left');
         $builder->join('users u','u.id=a.user_id','left');
         if($keyword!==''){
             $builder->groupStart();
@@ -28,11 +28,25 @@ class VisitModel extends Model
     }
     public function getVisit($id)
     {
-        return $this->db->table('visits v')->select('v.id,v.assignment_id,v.visit_date,v.status,v.notes,v.created_at,v.updated_at,a.school_id,a.user_id,a.assignment_date,a.status as assignment_status,a.notes as assignment_notes,s.npsn,s.school_name,s.level,u.name as officer_name,u.username as officer_username')->join('assignments a','a.id=v.assignment_id','left')->join('schools s','s.id=a.school_id','left')->join('users u','u.id=a.user_id','left')->where('v.id',(int)$id)->get()->getRowArray();
+        return $this->db->table('visits v')
+            ->select('v.id,v.assignment_id,v.school_id,v.visit_date,v.status,v.notes,v.created_at,v.updated_at,a.user_id,a.assignment_date,a.status as assignment_status,a.notes as assignment_notes,s.npsn,s.school_name,s.level,u.name as officer_name,u.username as officer_username')
+            ->join('assignments a','a.id=v.assignment_id','left')
+            ->join('schools s','s.id=v.school_id','left')
+            ->join('users u','u.id=a.user_id','left')
+            ->where('v.id',(int)$id)
+            ->get()
+            ->getRowArray();
     }
     public function getActiveAssignments()
     {
-        return $this->db->table('assignments a')->select('a.id,a.school_id,a.user_id,a.assignment_date,a.status,a.notes,s.npsn,s.school_name,s.level,u.name as officer_name,u.username as officer_username')->join('schools s','s.id=a.school_id','left')->join('users u','u.id=a.user_id','left')->where('a.status','ACTIVE')->orderBy('a.assignment_date','ASC')->get()->getResultArray();
+        return $this->db->table('assignments a')
+            ->select('a.id,a.school_id,a.user_id,a.assignment_date,a.status,a.notes,s.npsn,s.school_name,s.level,u.name as officer_name,u.username as officer_username')
+            ->join('schools s','s.id=a.school_id','left')
+            ->join('users u','u.id=a.user_id','left')
+            ->where('a.status','ACTIVE')
+            ->orderBy('a.assignment_date','ASC')
+            ->get()
+            ->getResultArray();
     }
     public function createVisit($data)
     {
@@ -44,7 +58,12 @@ class VisitModel extends Model
     }
     public function getInstrumentSections()
     {
-        return $this->db->table('instrument_sections')->where('is_active',1)->orderBy('sort_order','ASC')->orderBy('id','ASC')->get()->getResultArray();
+        return $this->db->table('instrument_sections')
+            ->where('is_active',1)
+            ->orderBy('sort_order','ASC')
+            ->orderBy('id','ASC')
+            ->get()
+            ->getResultArray();
     }
     public function getInstrumentQuestions($sectionId,$visitId)
     {

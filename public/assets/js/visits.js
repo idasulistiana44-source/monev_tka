@@ -93,7 +93,7 @@ $(document).ready(function(){
             $('#visitAssignmentInfo').empty();
             return;
         }
-        $('#visitAssignmentInfo').html('<div class="visit-assignment-info-grid"><div><small>Sekolah</small><strong>'+escapeHtml(option.data('school')||'-')+'</strong></div><div><small>NPSN</small><strong>'+escapeHtml(option.data('npsn')||'-')+'</strong></div><div><small>Level</small><strong>'+escapeHtml(option.data('level')||'-')+'</strong></div><div><small>Petugas</small><strong>'+escapeHtml(option.data('officer')||'-')+'</strong></div><div><small>Tanggal Assignment</small><strong>'+formatDate(option.data('date'))+'</strong></div></div>');
+      
     }
     function saveVisit(){
         const assignmentId=$('#visitAssignment').val();

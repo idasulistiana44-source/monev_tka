@@ -40,7 +40,7 @@
                                 <th>Tanggal Visitasi</th>
                                 <th>Petugas</th>
                                 <th>Status</th>
-                                <th width="150">Aksi</th>
+                                <th width="150">Aksi</th> 
                             </tr>
                         </thead>
                         <tbody id="visitTableBody">
