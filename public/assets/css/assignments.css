@@ -1,0 +1,100 @@
+/* =========================================================
+   ASSIGNMENTS PAGE
+========================================================= */
+.assignments-page{padding:25px}
+.assignments-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.assignments-title h1{margin:0;color:#343a40;font-size:24px;font-weight:600}
+.assignments-title p{margin:5px 0 0;color:#868e96;font-size:13px}
+.assignments-header-action .btn{display:flex;align-items:center;gap:8px}
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+.assignments-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.assignment-search{position:relative;flex:1}
+.assignment-search i{position:absolute;top:50%;left:14px;z-index:2;color:#adb5bd;transform:translateY(-50%)}
+.assignment-search input{padding-left:40px}
+.assignment-filter{width:190px}
+
+/* =========================================================
+   CARD
+========================================================= */
+.assignments-card{overflow:hidden;background:#fff;border:1px solid #e9ecef;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+
+/* =========================================================
+   TABLE
+========================================================= */
+.assignments-table{margin:0}
+.assignments-table thead th{padding:13px 12px;background:#f8f9fa;color:#495057;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid #e9ecef}
+.assignments-table tbody td{padding:13px 12px;color:#495057;font-size:12px;vertical-align:middle;border-bottom:1px solid #f1f3f5}
+.assignments-table tbody tr:last-child td{border-bottom:0}
+.assignments-table tbody tr:hover{background:#fafbfc}
+
+/* =========================================================
+   SCHOOL
+========================================================= */
+.assignment-school{display:flex;flex-direction:column;min-width:180px}
+.assignment-school strong{color:#343a40;font-size:12px;font-weight:600}
+.assignment-school small{margin-top:3px;color:#868e96;font-size:11px}
+
+/* =========================================================
+   ACTION
+========================================================= */
+.assignment-actions{display:flex;align-items:center;gap:5px}
+.assignment-actions .btn{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+
+/* =========================================================
+   STATUS
+========================================================= */
+.assignment-status{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.assignment-status.active{background:#d1e7dd;color:#0f5132}
+.assignment-status.completed{background:#cff4fc;color:#055160}
+.assignment-status.cancelled{background:#f8d7da;color:#842029}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+.assignment-empty{padding:60px 20px;text-align:center;color:#868e96}
+.assignment-empty-icon{margin-bottom:15px;color:#adb5bd;font-size:36px}
+.assignment-empty h5{margin:0 0 5px;color:#495057;font-size:15px}
+.assignment-empty p{margin:0;font-size:12px}
+
+/* =========================================================
+   FORM
+========================================================= */
+.assignment-form-section{margin-bottom:24px}
+.assignment-form-section:last-child{margin-bottom:0}
+.assignment-section-title{display:flex;align-items:center;gap:8px;margin-bottom:15px;padding-bottom:9px;color:#343a40;font-size:13px;font-weight:600;border-bottom:1px solid #e9ecef}
+.assignment-section-title i{color:#0d6efd}
+#assignmentModal .form-label{margin-bottom:6px;color:#495057;font-size:12px;font-weight:600}
+#assignmentModal .form-control,#assignmentModal .form-select{min-height:38px;font-size:13px}
+
+/* =========================================================
+   MODAL
+========================================================= */
+#assignmentModal .modal-header{padding:18px 20px}
+#assignmentModal .modal-body{padding:20px}
+#assignmentModal .modal-footer{padding:15px 20px;border-top:1px solid #e9ecef}
+.delete-assignment-icon{width:55px;height:55px;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;border-radius:50%;background:#fdecec;color:#dc3545;font-size:20px}
+#deleteAssignmentSchool{display:block;color:#343a40;font-size:13px}
+
+/* =========================================================
+   RESPONSIVE TABLET
+========================================================= */
+@media(max-width:1000px){
+    .assignments-page{padding:20px}
+    .assignments-card{overflow-x:auto}
+}
+
+/* =========================================================
+   RESPONSIVE SMALL MOBILE
+========================================================= */
+@media(max-width:600px){
+    .assignments-page{padding:15px}
+    .assignments-header{flex-direction:column;align-items:flex-start;gap:15px}
+    .assignments-header-action{width:100%}
+    .assignments-header-action .btn{width:100%;justify-content:center}
+    .assignments-toolbar{flex-direction:column;align-items:stretch}
+    .assignment-filter{width:100%}
+    .assignments-title h1{font-size:22px}
+}

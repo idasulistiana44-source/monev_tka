@@ -1,0 +1,91 @@
+/* =========================================================
+   INSTRUMENTS PAGE
+========================================================= */
+.instruments-page{padding:24px}
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+.instruments-page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px}
+.instruments-page-title{font-size:28px;font-weight:700;color:#1e293b;margin:0}
+.instruments-page-subtitle{color:#64748b;margin:5px 0 0}
+.instruments-header-actions{display:flex;gap:8px}
+/* =========================================================
+   INSTRUMENTS CARD
+========================================================= */
+.instruments-card,.instruments-section-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 2px 8px rgba(15,23,42,.04);overflow:hidden}
+.instruments-card{margin-bottom:20px}
+.instruments-card-header,.instruments-section-header{display:flex;align-items:center;justify-content:space-between;padding:17px 20px;border-bottom:1px solid #e2e8f0}
+.instruments-card-title{font-weight:700;color:#334155}
+.instruments-card-title i{color:#2563eb;margin-right:7px}
+.instruments-total{font-size:13px;color:#64748b}
+.instruments-total span{font-weight:700;color:#2563eb}
+.instruments-card-body{padding:20px}
+/* =========================================================
+   TOOLBAR
+========================================================= */
+.instruments-toolbar{display:flex;gap:12px;margin-bottom:18px}
+.instruments-search{position:relative;flex:1}
+.instruments-search i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;z-index:2}
+.instruments-search input{padding-left:40px}
+.instruments-filter{width:230px}
+/* =========================================================
+   TABLE
+========================================================= */
+.instruments-table-responsive{overflow-x:auto}
+.instruments-table{margin:0;vertical-align:middle}
+.instruments-table thead th{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#64748b;background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:12px}
+.instruments-table tbody td{padding:13px 12px;font-size:13px}
+.instrument-code{font-weight:700;color:#2563eb}
+.instrument-section-badge{display:inline-block;padding:5px 8px;background:#eff6ff;color:#1d4ed8;border-radius:6px;font-size:11px;font-weight:600}
+.instrument-question{font-weight:600;color:#334155;line-height:1.45}
+.instrument-description{display:block;color:#94a3b8;margin-top:3px}
+.instrument-type{font-size:11px;background:#f1f5f9;color:#475569;border-radius:5px;padding:5px 7px}
+.instrument-actions{display:flex;gap:5px}
+/* =========================================================
+   LOADING & EMPTY
+========================================================= */
+.instrument-loading,.instrument-empty{text-align:center;padding:35px!important;color:#64748b}
+/* =========================================================
+   SECTION
+========================================================= */
+.instruments-section-body{padding:15px 20px}
+.section-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #edf2f7}
+.section-item:last-child{border-bottom:0}
+.section-number{width:34px;height:34px;border-radius:9px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-weight:700}
+.section-info{flex:1}
+.section-name{font-weight:700;color:#334155}
+.section-description{font-size:12px;color:#94a3b8;margin-top:3px}
+.section-order{font-size:11px;color:#94a3b8}
+.section-actions{display:flex;gap:5px}
+/* =========================================================
+   MODAL
+========================================================= */
+.instrument-modal{border:0;border-radius:12px;overflow:hidden}
+.instrument-modal .modal-header{background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.instrument-modal .modal-title{font-weight:700;color:#334155}
+.instrument-modal .form-label{font-size:13px;font-weight:600;color:#475569}
+.instrument-modal textarea{resize:vertical}
+/* =========================================================
+   DELETE
+========================================================= */
+.instrument-delete-icon{width:55px;height:55px;border-radius:50%;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 15px}
+/* =========================================================
+   BADGE
+========================================================= */
+.badge.bg-danger-subtle{background:#fee2e2!important}
+.badge.bg-success-subtle{background:#dcfce7!important}
+.badge.bg-secondary-subtle{background:#f1f5f9!important}
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media(max-width:768px){
+.instruments-page{padding:15px}
+.instruments-page-header{display:block}
+.instruments-header-actions{margin-top:15px}
+.instruments-toolbar{display:block}
+.instruments-filter{width:100%;margin-top:10px}
+.instruments-toolbar .btn{margin-top:10px}
+.instruments-table{min-width:900px}
+.section-item{flex-wrap:wrap}
+.section-order{order:3;width:100%;padding-left:48px}
+}
