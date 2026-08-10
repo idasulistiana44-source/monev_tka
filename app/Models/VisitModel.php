@@ -110,4 +110,17 @@ class VisitModel extends Model
     {
         return $this->where('assignment_id',(int)$assignmentId)->whereIn('status',['DRAFT','IN_PROGRESS','COMPLETED','VERIFIED'])->countAllResults()>0;
     }
+    public function deleteVisit($id)
+    {
+        $id=(int)$id;
+        if($id<=0){
+            return false;
+        }
+        $this->db->transStart();
+        $this->db->table('visit_answers')->where('visit_id',$id)->delete();
+        $this->db->table('visits')->where('id',$id)->delete();
+        $this->db->transComplete();
+        return $this->db->transStatus();
+    }
+
 }

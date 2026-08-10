@@ -233,4 +233,22 @@ class Visits extends BaseController
         }
         return $this->response->setJSON(['success'=>true,'message'=>'Visitasi berhasil diselesaikan.','data'=>['redirect'=>base_url('visits')]]);
     }
+    public function delete($id)
+    {
+        if(!$this->request->is('post')){
+            return $this->response->setStatusCode(405)->setJSON(['success'=>false,'message'=>'Method tidak diizinkan.']);
+        }
+        $id=(int)$id;
+        if($id<=0){
+            return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'ID visitasi tidak valid.']);
+        }
+        $visit=$this->visitModel->getVisit($id);
+        if(!$visit){
+            return $this->response->setStatusCode(404)->setJSON(['success'=>false,'message'=>'Data visitasi tidak ditemukan.']);
+        }
+        if(!$this->visitModel->deleteVisit($id)){
+            return $this->response->setStatusCode(500)->setJSON(['success'=>false,'message'=>'Visitasi gagal dihapus.']);
+        }
+        return $this->response->setJSON(['success'=>true,'message'=>'Data visitasi berhasil dihapus.']);
+    }
 }

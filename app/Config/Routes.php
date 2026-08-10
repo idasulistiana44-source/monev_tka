@@ -48,6 +48,7 @@ $routes->get('visits/instrument/(:num)','Visits::instrument/$1');
 $routes->get('visits/instrument-data/(:num)','Visits::instrumentData/$1');
 $routes->post('visits/save-answers/(:num)','Visits::saveAnswers/$1');
 $routes->post('visits/complete/(:num)','Visits::complete/$1');
+$routes->post('visits/delete/(:num)','Visits::delete/$1');
 
 //instruments
 $routes->get('instruments','Instruments::index');

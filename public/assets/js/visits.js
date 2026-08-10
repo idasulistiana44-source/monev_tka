@@ -1,6 +1,8 @@
 $(document).ready(function(){
     if(!document.querySelector('.visits-page'))return;
     let visitModal=null;
+    let deleteVisitModal=null;
+    let deleteVisitId=null;
     let loading=false;
     init();
     function init(){
@@ -8,13 +10,17 @@ $(document).ready(function(){
         bindEvents();
         loadVisits();
     }
-    function initModal(){
+   function initModal(){
         const element=document.getElementById('visitAddModal');
         if(element){
             visitModal=new bootstrap.Modal(element);
         }
+        const deleteElement=document.getElementById('deleteVisitModal');
+        if(deleteElement){
+            deleteVisitModal=new bootstrap.Modal(deleteElement);
+        }
     }
-    function bindEvents(){
+   function bindEvents(){
         $('#btnAddVisit').on('click',function(){openAddVisit();});
         $('#btnRefreshVisit').on('click',function(){loadVisits(true);});
         $('#searchVisit').on('input',function(){loadVisits();});
@@ -24,7 +30,52 @@ $(document).ready(function(){
         $('#visitTableBody').on('click','.btn-start-visit',function(){startVisit($(this).data('id'));});
         $('#visitTableBody').on('click','.btn-continue-visit',function(){continueVisit($(this).data('id'));});
         $('#visitTableBody').on('click','.btn-view-visit',function(){viewVisit($(this).data('id'));});
+        $('#visitTableBody').on('click','.btn-delete-visit',function(){openDeleteVisit($(this).data('id'));});
+        $('#btnConfirmDeleteVisit').on('click',function(){confirmDeleteVisit();});
     }
+    function openDeleteVisit(id){
+        if(!id){
+            notify('ID visitasi tidak valid.','error');
+            return;
+        }
+        deleteVisitId=id;
+        if(deleteVisitModal){
+            deleteVisitModal.show();
+        }
+    }
+function confirmDeleteVisit(){
+    if(!deleteVisitId){
+        notify('ID visitasi tidak valid.','error');
+        return;
+    }
+    const button=$('#btnConfirmDeleteVisit');
+    const original=button.html();
+    button.prop('disabled',true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menghapus...');
+    $.ajax({
+        url:BASE_URL+'visits/delete/'+deleteVisitId,
+        type:'POST',
+        dataType:'json',
+        success:function(response){
+            if(response.success){
+                if(deleteVisitModal){
+                    deleteVisitModal.hide();
+                }
+                deleteVisitId=null;
+                loadVisits();
+                notify(response.message||'Data visitasi berhasil dihapus.','success');
+            }else{
+                notify(response.message||'Data visitasi gagal dihapus.','error');
+            }
+        },
+        error:function(xhr){
+            notify(getAjaxError(xhr,'Data visitasi gagal dihapus.'),'error');
+            console.error(xhr.responseText);
+        },
+        complete:function(){
+            button.prop('disabled',false).html(original);
+        }
+    });
+}
     function loadVisits(showMessage=false){
         if(loading)return;
         loading=true;
@@ -143,13 +194,42 @@ $(document).ready(function(){
         });
     }
     function getActionButton(item){
+        let html='';
         if(item.status==='DRAFT'){
-            return '<button type="button" class="btn btn-sm btn-primary btn-start-visit" data-id="'+escapeHtml(item.id||'')+'"><i class="fas fa-play me-1"></i>Mulai</button>';
+            html+='<button type="button" class="btn btn-sm btn-primary btn-start-visit me-1" data-id="'+escapeHtml(item.id||'')+'" title="Mulai Visitasi"><i class="fas fa-play"></i></button>';
+        }else if(item.status==='IN_PROGRESS'){
+            html+='<button type="button" class="btn btn-sm btn-primary btn-continue-visit me-1" data-id="'+escapeHtml(item.id||'')+'" title="Lanjutkan Visitasi"><i class="fas fa-arrow-right"></i></button>';
+        }else{
+            html+='<button type="button" class="btn btn-sm btn-outline-primary btn-view-visit me-1" data-id="'+escapeHtml(item.id||'')+'" title="Lihat Visitasi"><i class="fas fa-eye"></i></button>';
         }
-        if(item.status==='IN_PROGRESS'){
-            return '<button type="button" class="btn btn-sm btn-primary btn-continue-visit" data-id="'+escapeHtml(item.id||'')+'"><i class="fas fa-arrow-right me-1"></i>Lanjutkan</button>';
+        html+='<button type="button" class="btn btn-sm btn-outline-danger btn-delete-visit" data-id="'+escapeHtml(item.id||'')+'" title="Hapus Visitasi"><i class="fas fa-trash"></i></button>';
+        return html;
+    }
+    function deleteVisit(id){
+        if(!id){
+            notify('ID visitasi tidak valid.','error');
+            return;
         }
-        return '<button type="button" class="btn btn-sm btn-outline-primary btn-view-visit" data-id="'+escapeHtml(item.id||'')+'"><i class="fas fa-eye me-1"></i>Lihat</button>';
+        if(!confirm('Apakah kamu yakin ingin menghapus data visitasi ini? Data jawaban instrumen juga akan dihapus.')){
+            return;
+        }
+        $.ajax({
+            url:BASE_URL+'visits/delete/'+id,
+            type:'POST',
+            dataType:'json',
+            success:function(response){
+                if(response.success){
+                    loadVisits();
+                    notify(response.message||'Data visitasi berhasil dihapus.','success');
+                }else{
+                    notify(response.message||'Data visitasi gagal dihapus.','error');
+                }
+            },
+            error:function(xhr){
+                notify(getAjaxError(xhr,'Data visitasi gagal dihapus.'),'error');
+                console.error(xhr.responseText);
+            }
+        });
     }
     function startVisit(id){
         if(!id){

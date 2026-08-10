@@ -20,6 +20,7 @@
             </div>
         </form>
     </div>
+    
 <script>
 window.VISIT_ID=<?= (int)service('uri')->getSegment(3) ?>;
 </script>
