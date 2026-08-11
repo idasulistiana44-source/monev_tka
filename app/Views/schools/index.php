@@ -1,65 +1,64 @@
-<main class="app-main">
-    <div class="schools-page">
-        <div class="schools-page-header">
-            <div>
-                <h1 class="schools-page-title">Schools</h1>
-                <p class="schools-page-subtitle">Manage school data for monitoring and evaluation.</p>
-            </div>
-            <button type="button" class="btn btn-primary" id="btnAddSchool"><i class="fas fa-plus"></i> Add School</button>
+
+<div class="schools-page">
+    <div class="schools-page-header">
+        <div>
+            <h1 class="schools-page-title">Schools</h1>
+            <p class="schools-page-subtitle">Manage school data for monitoring and evaluation.</p>
         </div>
-        <div class="schools-card">
-            <div class="schools-card-header">
-                <div class="schools-card-title"><i class="fas fa-school"></i> School Data</div>
-                <div class="schools-card-total"><span id="schoolTotal">0</span> schools</div>
+        <button type="button" class="btn btn-primary" id="btnAddSchool"><i class="fas fa-plus"></i> Add School</button>
+    </div>
+    <div class="schools-card">
+        <div class="schools-card-header">
+            <div class="schools-card-title"><i class="fas fa-school"></i> School Data</div>
+            <div class="schools-card-total"><span id="schoolTotal">0</span> schools</div>
+        </div>
+        <div class="schools-card-body">
+            <div class="schools-toolbar">
+                <div class="schools-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="schoolSearch" class="form-control" placeholder="Search NPSN or school name..." autocomplete="off">
+                </div>
+                <div class="schools-filter">
+                    <select id="schoolLevelFilter" class="form-select">
+                        <option value="">All Levels</option>
+                        <option value="SMA">SMA</option>
+                        <option value="SMK">SMK</option>
+                    </select>
+                </div>
             </div>
-            <div class="schools-card-body">
-                <div class="schools-toolbar">
-                    <div class="schools-search">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="schoolSearch" class="form-control" placeholder="Search NPSN or school name..." autocomplete="off">
-                    </div>
-                    <div class="schools-filter">
-                        <select id="schoolLevelFilter" class="form-select">
-                            <option value="">All Levels</option>
-                            <option value="SMA">SMA</option>
-                            <option value="SMK">SMK</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="schools-table-responsive">
-                    <table class="table schools-table" id="schoolTable">
-                        <thead>
-                            <tr>
-                                <th width="55">No</th>
-                                <th>NPSN</th>
-                                <th>School Name</th>
-                                <th>Level</th>
-                                <th>City</th>
-                                <th>District</th>
-                                <th>Region</th>
-                                <th>Status</th>
-                                <th width="145">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="schoolTableBody">
-                            <tr>
-                                <td colspan="9" class="school-loading">
-                                    <div class="school-spinner"></div>
-                                    Loading school data...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div id="schoolEmpty" class="school-empty" style="display:none">
-                    <div class="school-empty-icon"><i class="fas fa-school"></i></div>
-                    <div class="school-empty-title">No school data found</div>
-                    <div class="school-empty-text">No data matches your search.</div>
-                </div>
+            <div class="schools-table-responsive">
+                <table class="table schools-table" id="schoolTable">
+                    <thead>
+                        <tr>
+                            <th width="55">No</th>
+                            <th>NPSN</th>
+                            <th>School Name</th>
+                            <th>Level</th>
+                            <th>City</th>
+                            <th>District</th>
+                            <th>Region</th>
+                            <th>Status</th>
+                            <th width="145">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schoolTableBody">
+                        <tr>
+                            <td colspan="9" class="school-loading">
+                                <div class="school-spinner"></div>
+                                Loading school data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="schoolEmpty" class="school-empty" style="display:none">
+                <div class="school-empty-icon"><i class="fas fa-school"></i></div>
+                <div class="school-empty-title">No school data found</div>
+                <div class="school-empty-text">No data matches your search.</div>
             </div>
         </div>
     </div>
-</main>
+</div>
 <div class="modal fade" id="schoolAddModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content school-modal">

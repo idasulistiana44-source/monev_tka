@@ -1,5 +1,4 @@
-<main class="app-main">
-    <div class="instruments-page">
+<div class="instruments-page">
         <div class="instruments-page-header">
             <div>
                 <h1 class="instruments-page-title">Instrumen Monev</h1>
