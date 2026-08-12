@@ -164,7 +164,7 @@ body.sidebar-collapsed .sidebar-menu i{margin-right:8px}
 /* =========================================================
    APP MAIN - SIDEBAR COLLAPSED
 ========================================================= */
-body.sidebar-collapsed .app-main{margin-left:40px!important}
+body.sidebar-collapsed .app-main{margin-left:75px!important}
 
 /* Untuk Chrome, Safari, Edge, dan Opera */
 input[type="number"]::-webkit-outer-spin-button,
