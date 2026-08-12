@@ -15,6 +15,7 @@
 <script src="<?= base_url('assets/plugins/chartjs/chart.umd.min.js') ?>"></script>
 <script src="<?= base_url('assets/js/layout.js') ?>"></script>
 <script src="<?= base_url('assets/js/notification.js') ?>"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <?= $this->renderSection('scripts') ?>
 <script>
 const BASE_URL="<?= base_url('/') ?>";

@@ -52,3 +52,9 @@ $routes->post('instruments/section-store','Instruments::sectionStore');
 $routes->post('instruments/section-update/(:num)','Instruments::sectionUpdate/$1');
 $routes->post('instruments/section-delete/(:num)','Instruments::sectionDelete/$1');
 
+// Reports / Rekap Monev
+$routes->get('reports', 'ReportController::index');
+$routes->post('reports/data', 'ReportController::getData');
+$routes->post('reports/update-followup-status', 'ReportController::updateFollowupStatus');
+$routes->post('reports/export-excel', 'ReportController::exportExcel');
+$routes->post('reports/export-pdf', 'ReportController::exportPdf');

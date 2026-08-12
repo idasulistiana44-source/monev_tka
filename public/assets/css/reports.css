@@ -1,0 +1,15 @@
+.reports-page{padding:24px;background:#f8fafc;min-height:100vh}
+.reports-page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px}
+.reports-page-title{font-size:24px;font-weight:700;color:#1e293b;margin:0}
+.reports-page-subtitle{font-size:13px;color:#64748b;margin:4px 0 0}
+.reports-header-actions{display:flex;gap:8px}
+.reports-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
+.reports-card-header{padding:14px 18px;font-size:14px;font-weight:700;color:#334155;background:#fff;border-bottom:1px solid #e2e8f0}
+.reports-card-body{padding:18px}
+.reports-table{margin:0;font-size:13px}
+.reports-table thead th{background:#f8fafc;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;padding:12px 16px}
+.reports-table tbody td{padding:12px 16px;color:#334155;border-bottom:1px solid #f1f5f9}
+.status-select-sm{padding:4px 8px;font-size:12px;border-radius:6px;font-weight:600}
+.status-select-sm[data-status="BELUM"]{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.status-select-sm[data-status="PROSES"]{background:#fefce8;color:#ca8a04;border-color:#fef08a}
+.status-select-sm[data-status="SELESAI"]{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0}
