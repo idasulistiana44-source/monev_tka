@@ -165,3 +165,18 @@ body.sidebar-collapsed .sidebar-menu i{margin-right:8px}
    APP MAIN - SIDEBAR COLLAPSED
 ========================================================= */
 body.sidebar-collapsed .app-main{margin-left:40px!important}
+
+/* Untuk Chrome, Safari, Edge, dan Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* =========================================================
+   REMOVE number input arrow IN INPUT TYPE
+========================================================= */
+/* Untuk Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield; /* Standard properti CSS modern */
+}

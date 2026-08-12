@@ -36,12 +36,6 @@
             </a>
         </li>
         <li>
-             <a href="<?= base_url('assignments') ?>" class="<?= url_is('assignments*') ? 'active' : '' ?>">
-                <i class="fas fa-tasks"></i>
-                <span class="sidebar-menu-text">Assignments</span>
-            </a>
-       </li>
-        <li>
             <a href="<?= base_url('instruments') ?>" class="nav-link <?= service('router')->getMatchedRoute()[0] === 'instruments' ? 'active' : '' ?>">
                 <i class="fas fa-file-alt"></i>
                 <span class="sidebar-menu-text">
@@ -55,15 +49,7 @@
         <li class="<?= url_is('visits') || url_is('visits/*') ? 'active' : '' ?>">
             <a href="<?= base_url('visits') ?>">
                 <i class="fas fa-clipboard-check"></i>
-                <span class="sidebar-menu-text">Visitasi</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" title="Dokumentasi">
-                <i class="fas fa-camera"></i>
-                <span class="sidebar-menu-text">
-                    Dokumentasi
-                </span>
+                <span class="sidebar-menu-text">Pelaksanaan Monev</span>
             </a>
         </li>
         <li class="sidebar-menu-title">
@@ -74,14 +60,6 @@
                 <i class="fas fa-chart-bar"></i>
                 <span class="sidebar-menu-text">
                     Rekap Monev
-                </span>
-            </a>
-        </li>
-        <li>
-            <a href="#" title="Export">
-                <i class="fas fa-file-export"></i>
-                <span class="sidebar-menu-text">
-                    Export
                 </span>
             </a>
         </li>

@@ -27,28 +27,18 @@ $routes->post('schools/store','Schools::store');
 $routes->post('schools/update/(:num)','Schools::update/$1');
 $routes->post('schools/delete/(:num)','Schools::delete/$1');
 
-//Assignment
-$routes->get('assignments','Assignments::index');
-$routes->get('assignments/data','Assignments::data');
-$routes->get('assignments/schools','Assignments::schools');
-$routes->get('assignments/users','Assignments::users');
-$routes->get('assignments/detail/(:num)','Assignments::detail/$1');
-$routes->post('assignments/store','Assignments::store');
-$routes->post('assignments/update/(:num)','Assignments::update/$1');
-$routes->post('assignments/delete/(:num)','Assignments::delete/$1');
-
 //visitasi
 $routes->get('visits','Visits::index');
 $routes->get('visits/data','Visits::data');
-$routes->get('visits/assignments','Visits::assignments');
-$routes->post('visits/store','Visits::store');
-$routes->get('visits/detail/(:num)','Visits::detail/$1');
-$routes->post('visits/start/(:num)','Visits::start/$1');
-$routes->get('visits/instrument/(:num)','Visits::instrument/$1');
-$routes->get('visits/instrument-data/(:num)','Visits::instrumentData/$1');
-$routes->post('visits/save-answers/(:num)','Visits::saveAnswers/$1');
-$routes->post('visits/complete/(:num)','Visits::complete/$1');
+$routes->get('visits/schools','Visits::schools');
+$routes->get('visits/officers','Visits::officers');
+$routes->post('visits/create','Visits::create');
 $routes->post('visits/delete/(:num)','Visits::delete/$1');
+$routes->get('visits/form/(:num)','Visits::form/$1');
+$routes->get('visits/instruments/(:num)','Visits::instrumentData/$1');
+$routes->post('visits/save-answers/(:num)','Visits::saveAnswers/$1');
+$routes->post('visits/start/(:num)','Visits::start/$1');
+$routes->post('visits/complete/(:num)','Visits::complete/$1');
 
 //instruments
 $routes->get('instruments','Instruments::index');
@@ -61,3 +51,4 @@ $routes->post('instruments/delete/(:num)','Instruments::delete/$1');
 $routes->post('instruments/section-store','Instruments::sectionStore');
 $routes->post('instruments/section-update/(:num)','Instruments::sectionUpdate/$1');
 $routes->post('instruments/section-delete/(:num)','Instruments::sectionDelete/$1');
+

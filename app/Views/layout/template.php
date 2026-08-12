@@ -17,7 +17,10 @@ if(str_starts_with($pageName,'visits/instrument')){
     $pageAsset='dashboard';
 }elseif(str_starts_with($pageName,'instruments/')){
     $pageAsset='instruments';
+}elseif(str_starts_with($pageName,'monev/index')){
+    $pageAsset='monev';
 }
+
 ?>
 <?= view('layout/header',['title'=>$title??'Monev TKA','pageAsset'=>$pageAsset]) ?>
 <?= view('layout/navbar') ?>

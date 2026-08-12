@@ -15,6 +15,9 @@
     <?php if(!empty($pageAsset)): ?>
     <link rel="stylesheet" href="<?= base_url('assets/css/'.$pageAsset.'.css') ?>?v=<?= time() ?>">
     <?php endif; ?>
+    <?php if(!empty($pageCss)): ?>
+    <link rel="stylesheet" href="<?= base_url('assets/css/'.$pageCss.'.css') ?>">
+    <?php endif; ?>
 
     
 </head>
