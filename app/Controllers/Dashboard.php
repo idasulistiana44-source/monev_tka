@@ -22,9 +22,9 @@ class Dashboard extends BaseController
             'totalVisits'=>$model->getTotalVisits(),
             'status'=>$model->getVisitStatus(),
             'readiness'=>$model->getInfrastructureReadiness(),
-            'visitsPerMonth'=>$model->getVisitsPerMonth(),
-            'visitsByLevel'=>$model->getVisitsByLevel(),
-            'recentVisits'=>$model->getRecentVisits()
+            'visitsByRegion'=>$model->getVisitsByRegion(),
+            'recentVisits'=>$model->getRecentVisits(),
+            'visitsByLevel'=>$model->getVisitsByLevel()
         ];
         return view('layout/template',$data);
     }

@@ -10,7 +10,7 @@
             <div class="stat-card-content">
                 <div>
                     <div class="stat-card-label">Total Sekolah</div>
-                    <div class="stat-card-value"><?= $totalSchools ?? 0 ?></div>
+                    <div class="stat-card-value"><?= $totalSchools??0 ?></div>
                 </div>
                 <div class="stat-card-icon">
                     <i class="fas fa-school"></i>
@@ -20,8 +20,8 @@
         <div class="stat-card stat-card-success">
             <div class="stat-card-content">
                 <div>
-                    <div class="stat-card-label">Sudah Dikunjungi</div>
-                    <div class="stat-card-value"><?= $visitedSchools ?? 0 ?></div>
+                    <div class="stat-card-label">Visitasi Selesai</div>
+                    <div class="stat-card-value"><?= $visitedSchools??0 ?></div>
                 </div>
                 <div class="stat-card-icon">
                     <i class="fas fa-check-circle"></i>
@@ -31,8 +31,19 @@
         <div class="stat-card stat-card-warning">
             <div class="stat-card-content">
                 <div>
+                    <div class="stat-card-label">Visitasi Berlangsung</div>
+                    <div class="stat-card-value"><?= $status['berlangsung']??0 ?></div>
+                </div>
+                <div class="stat-card-icon">
+                    <i class="fas fa-spinner"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-content">
+                <div>
                     <div class="stat-card-label">Petugas Monev</div>
-                    <div class="stat-card-value"><?= $totalOfficers ?? 0 ?></div>
+                    <div class="stat-card-value"><?= $totalOfficers??0 ?></div>
                 </div>
                 <div class="stat-card-icon">
                     <i class="fas fa-users"></i>
@@ -66,34 +77,43 @@
         </div>
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
-                <h3 class="dashboard-panel-title">Status Visitasi Monev</h3>
+                <h3 class="dashboard-panel-title">Sebaran Jenjang Monev</h3>
             </div>
             <div class="dashboard-panel-body">
+                <?php
+                $sma=$visitsByLevel['SMA']??0;
+                $smk=$visitsByLevel['SMK']??0;
+                $ma=$visitsByLevel['MA']??0;
+                $totalLevel=$sma+$smk+$ma;
+                $smaPercent=$totalLevel>0?round(($sma/$totalLevel)*100):0;
+                $smkPercent=$totalLevel>0?round(($smk/$totalLevel)*100):0;
+                $maPercent=$totalLevel>0?round(($ma/$totalLevel)*100):0;
+                ?>
                 <div class="progress-item">
                     <div class="progress-label">
-                        <span>Draft</span>
-                        <span><?= $draft ?></span>
+                        <span>SMA</span>
+                        <strong><?= $sma ?></strong>
                     </div>
                     <div class="progress">
-                        <div class="progress-bar bg-secondary" style="width: <?= $draftPercent ?>%"></div>
+                        <div class="progress-bar bg-primary" style="width: <?= $smaPercent ?>%"></div>
                     </div>
                 </div>
                 <div class="progress-item">
                     <div class="progress-label">
-                        <span>Berlangsung</span>
-                        <span><?= $berlangsung ?></span>
+                        <span>SMK</span>
+                        <strong><?= $smk ?></strong>
                     </div>
                     <div class="progress">
-                        <div class="progress-bar bg-warning" style="width: <?= $berlangsungPercent ?>%"></div>
+                        <div class="progress-bar bg-warning" style="width: <?= $smkPercent ?>%"></div>
                     </div>
                 </div>
                 <div class="progress-item">
                     <div class="progress-label">
-                        <span>Selesai</span>
-                        <span><?= $selesai ?></span>
+                        <span>MA</span>
+                        <strong><?= $ma ?></strong>
                     </div>
                     <div class="progress">
-                        <div class="progress-bar bg-success" style="width: <?= $selesaiPercent ?>%"></div>
+                        <div class="progress-bar bg-success" style="width: <?= $maPercent ?>%"></div>
                     </div>
                 </div>
                 <div class="readiness-box">
@@ -213,3 +233,6 @@
         </div>
     </div>
 </div>
+<script>
+window.visitsByRegion=<?= json_encode($visitsByRegion??[],JSON_UNESCAPED_UNICODE) ?>;
+</script>

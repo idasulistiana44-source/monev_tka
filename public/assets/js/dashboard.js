@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded',function(){
     const canvas=document.getElementById('visitChart');
-    if(!canvas){
-        return;
-    }
+    if(!canvas)return;
     if(typeof Chart==='undefined'){
         console.error('Chart.js tidak ditemukan.');
         return;
@@ -10,25 +8,18 @@ document.addEventListener('DOMContentLoaded',function(){
     if(window.visitChart instanceof Chart){
         window.visitChart.destroy();
     }
-    const visitData=window.visitsByLevel||{
-        SMA:0,
-        SMK:0,
-        SLB:0,
-        MA:0
-    };
+    const regionData=window.visitsByRegion||{};
+    const labels=Object.keys(regionData);
+    const data=Object.values(regionData).map(Number);
     window.visitChart=new Chart(canvas,{
         type:'bar',
         data:{
-            labels:['SMA','SMK','SLB','MA'],
+            labels:labels,
             datasets:[{
-                label:'Jumlah Visitasi',
-                data:[
-                    Number(visitData.SMA||0),
-                    Number(visitData.SMK||0),
-                    Number(visitData.SLB||0),
-                    Number(visitData.MA||0)
-                ],
-                borderWidth:1
+                label:'Sekolah Dimonev',
+                data:data,
+                borderWidth:1,
+                borderRadius:6
             }]
         },
         options:{
@@ -41,26 +32,22 @@ document.addEventListener('DOMContentLoaded',function(){
                 tooltip:{
                     callbacks:{
                         label:function(context){
-                            return ' '+context.parsed.y+' visitasi';
+                            return context.raw+' sekolah';
                         }
                     }
                 }
             },
             scales:{
+                x:{
+                    ticks:{
+                        autoSkip:false
+                    }
+                },
                 y:{
                     beginAtZero:true,
                     ticks:{
-                        precision:0
-                    },
-                    title:{
-                        display:true,
-                        text:'Jumlah Visitasi'
-                    }
-                },
-                x:{
-                    title:{
-                        display:true,
-                        text:'Jenjang'
+                        precision:0,
+                        stepSize:1
                     }
                 }
             }

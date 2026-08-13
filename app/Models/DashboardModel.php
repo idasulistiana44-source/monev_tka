@@ -18,8 +18,11 @@ class DashboardModel extends Model
     }
     public function getVisitedSchools()
     {
-        $result=$this->db->table('visits')->select('school_id')->groupBy('school_id')->get()->getResult();
-        return count($result);
+        return $this->db->table('visits')
+            ->select('school_id')
+            ->whereIn('status',['completed','verified'])
+            ->groupBy('school_id')
+            ->countAllResults();
     }
     public function getVisitStatus()
     {
@@ -34,15 +37,52 @@ class DashboardModel extends Model
             'selesai'=>0
         ];
         foreach($result as $row){
-            if(isset($data[$row['status']])){
-                $data[$row['status']]=(int)$row['total'];
+            $status=strtolower(trim($row['status']??''));
+            $total=(int)$row['total'];
+            if($status==='draft'){
+                $data['draft']=$total;
+                $data['berlangsung']+=$total;
+            }elseif($status==='in_progress'){
+                $data['berlangsung']+=$total;
+            }elseif($status==='completed'){
+                $data['selesai']+=$total;
+            }elseif($status==='verified'){
+                $data['selesai']+=$total;
+            }
+        }
+        return $data;
+    }
+    public function getVisitsByLevel()
+    {
+        $result=$this->db->table('visits v')
+            ->select('s.level, COUNT(DISTINCT v.school_id) AS total')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->whereIn('s.level',['SMA','SMK','MA'])
+            ->whereIn('v.status',['completed','verified'])
+            ->groupBy('s.level')
+            ->get()
+            ->getResultArray();
+        $data=[
+            'SMA'=>0,
+            'SMK'=>0,
+            'MA'=>0
+        ];
+        foreach($result as $row){
+            $level=strtoupper(trim($row['level']??''));
+            if(isset($data[$level])){
+                $data[$level]=(int)$row['total'];
             }
         }
         return $data;
     }
     public function getInfrastructureReadiness()
     {
-        $result=$this->db->table('visit_answers')->select('answer, COUNT(*) AS total')->where('question_id',18)->groupBy('answer')->get()->getResultArray();
+        $result=$this->db->table('visit_answers')
+            ->select('answer, COUNT(*) AS total')
+            ->where('question_id',18)
+            ->groupBy('answer')
+            ->get()
+            ->getResultArray();
         $data=[
             'Sangat Baik'=>0,
             'Baik'=>0,
@@ -56,35 +96,34 @@ class DashboardModel extends Model
         }
         return $data;
     }
-    public function getVisitsPerMonth()
-    {
-        $year=date('Y');
-        $result=$this->db->table('visits')->select('MONTH(visit_date) AS bulan, COUNT(*) AS total')->where('YEAR(visit_date)',$year)->groupBy('MONTH(visit_date)')->orderBy('MONTH(visit_date)','ASC')->get()->getResultArray();
-        $data=array_fill(1,12,0);
-        foreach($result as $row){
-            $data[(int)$row['bulan']]=(int)$row['total'];
-        }
-        return array_values($data);
-    }
-    public function getVisitsByLevel()
+    public function getVisitsByRegion()
     {
         $result=$this->db->table('visits v')
-            ->select('s.level, COUNT(v.id) AS total')
-            ->join('schools s','s.id=v.school_id','left')
-            ->whereIn('s.level',['SMA','SMK','SLB','MA'])
-            ->groupBy('s.level')
+            ->select('r.region_code, COUNT(DISTINCT v.school_id) AS total')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->join('region r','r.id=s.region_id','inner')
+            ->whereIn('v.status',['completed','verified'])
+            ->groupBy('r.id,r.region_code')
+            ->orderBy('r.id','ASC')
             ->get()
             ->getResultArray();
         $data=[
-            'SMA'=>0,
-            'SMK'=>0,
-            'SLB'=>0,
-            'MA'=>0
+            'JP1'=>0,
+            'JP2'=>0,
+            'JU1'=>0,
+            'JU2'=>0,
+            'JB1'=>0,
+            'JB2'=>0,
+            'JS1'=>0,
+            'JS2'=>0,
+            'JT1'=>0,
+            'JT2'=>0,
+            'KS'=>0
         ];
         foreach($result as $row){
-            $level=strtoupper(trim($row['level']??''));
-            if(isset($data[$level])){
-                $data[$level]=(int)$row['total'];
+            $code=strtoupper(trim($row['region_code']??''));
+            if(isset($data[$code])){
+                $data[$code]=(int)$row['total'];
             }
         }
         return $data;
