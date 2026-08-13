@@ -53,25 +53,8 @@
                 <i class="fas fa-chevron-down navbar-chevron"></i>
             </button>
             <div class="user-menu" id="userMenu">
-                <div class="user-menu-header">
-                    <div class="navbar-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div>
-                        <strong>Administrator</strong>
-                        <small>Admin Monev</small>
-                    </div>
-                </div>
-                <a href="#">
-                    <i class="fas fa-user"></i>
-                    Profile
-                </a>
-                <a href="#">
-                    <i class="fas fa-cog"></i>
-                    Pengaturan
-                </a>
                 <div class="user-menu-divider"></div>
-                <a href="#">
+                <a href="<?= base_url('logout') ?>" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i>
                     Logout
                 </a>

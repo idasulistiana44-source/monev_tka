@@ -13,6 +13,10 @@ use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 
+// 1. IMPORT KEDUA FILTER (AuthFilter & RoleFilter)
+use App\Filters\AuthFilter;
+use App\Filters\RoleFilter;
+
 class Filters extends BaseFilters
 {
     /**
@@ -34,6 +38,10 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        
+        // 2. DAFTARKAN KEDUA ALIAS DI SINI
+        'auth'          => AuthFilter::class,
+        'role'          => RoleFilter::class,
     ];
 
     /**
