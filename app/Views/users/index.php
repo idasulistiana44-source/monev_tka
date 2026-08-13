@@ -1,4 +1,3 @@
-
 <div class="users-page">
     <div class="users-page-header">
         <div>
@@ -26,6 +25,8 @@
                             <th>No</th>
                             <th>Name</th>
                             <th>Username</th>
+                            <th>Institusi</th>
+                            <th>Wilayah Verifikasi</th>
                             <th>Role</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -37,6 +38,8 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Add User -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content user-modal">
@@ -59,6 +62,24 @@
                     <div class="mb-3">
                         <label for="addUsername" class="form-label">Username</label>
                         <input type="text" name="username" id="addUsername" class="form-control" placeholder="Masukkan username" autocomplete="username" required>
+                    </div>
+
+                    <!-- Perubahan: Tambahan Field Institusi & Region -->
+                    <div class="mb-3">
+                        <label for="addInstitution" class="form-label">Institusi / Instansi</label>
+                        <input type="text" name="institution" id="addInstitution" class="form-control" placeholder="Masukkan nama instansi" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addRegionId" class="form-label"> Wilayah Verifikasi</label>
+                        <select name="region_id" id="addRegionId" class="form-select" required>
+                            <option value="">-- Pilih Wilayah Verifikasi --</option>
+                            <?php if (!empty($regions)): ?>
+                                <?php foreach ($regions as $region): ?>
+                                    <option value="<?= $region['id'] ?>"><?= esc($region['name']) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
                     </div>
 
                     <div class="mb-3">
@@ -95,75 +116,8 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered user-modal-dialog">
-        <div class="modal-content user-modal">
-            <div class="modal-header">
-                <h5 class="modal-title" id="resetPasswordModalLabel">
-                    <i class="fas fa-key"></i>
-                    Reset Password
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
 
-            <div id="resetPasswordAlert" class="modal-alert"></div>
-
-            <form id="resetPasswordForm">
-                <?= csrf_field() ?>
-
-                <input type="hidden" name="id" id="resetPasswordId">
-
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">
-                            User
-                        </label>
-                        <div class="form-control bg-light" id="resetPasswordName"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="resetPassword" class="form-label">
-                            Password Baru
-                        </label>
-
-                        <div class="input-group">
-                            <input type="password" name="password" id="resetPassword" class="form-control" placeholder="Minimal 6 karakter" autocomplete="new-password" required>
-
-                            <button type="button" class="btn btn-outline-secondary toggle-password" data-target="#resetPassword" title="Lihat password">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="resetPasswordConfirm" class="form-label">
-                            Konfirmasi Password
-                        </label>
-
-                        <div class="input-group">
-                            <input type="password" id="resetPasswordConfirm" class="form-control" placeholder="Ulangi password baru" autocomplete="new-password" required>
-
-                            <button type="button" class="btn btn-outline-secondary toggle-password" data-target="#resetPasswordConfirm" title="Lihat password">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Batal
-                    </button>
-
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i>
-                        Save
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Modal Edit User -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered user-modal-dialog">
         <div class="modal-content user-modal">
@@ -184,23 +138,35 @@
 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="editName" class="form-label">
-                            Nama Lengkap
-                        </label>
+                        <label for="editName" class="form-label">Nama Lengkap</label>
                         <input type="text" name="name" id="editName" class="form-control" placeholder="Masukkan nama lengkap" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="editUsername" class="form-label">
-                            Username
-                        </label>
+                        <label for="editUsername" class="form-label">Username</label>
                         <input type="text" name="username" id="editUsername" class="form-control" placeholder="Masukkan username" autocomplete="username" required>
                     </div>
 
+                    <!-- Perubahan: Tambahan Field Institusi & Region -->
                     <div class="mb-3">
-                        <label for="editRole" class="form-label">
-                            Role
-                        </label>
+                        <label for="editInstitution" class="form-label">Institusi / Instansi</label>
+                        <input type="text" name="institution" id="editInstitution" class="form-control" placeholder="Masukkan nama instansi" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editRegionId" class="form-label">Wilayah Verifikasi</label>
+                       <select name="region_id" id="editRegionId" class="form-select" required>
+                            <option value="">-- Pilih Wilayah Verifikasi --</option>
+                            <?php if (!empty($regions)): ?>
+                                <?php foreach ($regions as $region): ?>
+                                    <option value="<?= $region['id'] ?>"><?= esc($region['name']) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editRole" class="form-label">Role</label>
                         <select name="role" id="editRole" class="form-select" required>
                             <option value="">Pilih Role</option>
                             <option value="admin">Admin</option>
@@ -209,9 +175,7 @@
                     </div>
 
                     <div>
-                        <label for="editStatus" class="form-label">
-                            Status
-                        </label>
+                        <label for="editStatus" class="form-label">Status</label>
                         <select name="is_active" id="editStatus" class="form-select" required>
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
@@ -220,10 +184,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i>
                         Save
@@ -233,37 +194,89 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered user-modal-dialog">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteUserModalLabel">
-                    Confirm Deletion
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div id="deleteUserAlert" class="modal-alert"></div>
-            <div class="modal-body text-center py-4">
-                <div class="text-danger mb-3">
-                    <i class="fas fa-exclamation-triangle fa-3x"></i>
-                </div>
-                <p class="mb-1">
-                    Are you sure you want to delete this user?
-                </p>
-                <p class="text-muted small mb-2">
-                    This action cannot be undone.
-                </p>
-                <strong id="deleteUserName" class="d-block"></strong>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>
-                    Cancel
-                </button>
 
-                <button type="button" id="confirmDeleteUser" class="btn btn-danger">
-                    <i class="fas fa-trash me-1"></i>
-                    Delete
+<!-- Modal Reset Password -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered user-modal-dialog">
+        <div class="modal-content user-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">
+                    <i class="fas fa-key"></i>
+                    Reset Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div id="resetPasswordAlert" class="modal-alert"></div>
+
+            <form id="resetPasswordForm">
+                <?= csrf_field() ?>
+
+                <input type="hidden" name="id" id="resetPasswordId">
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">User</label>
+                        <div class="form-control bg-light" id="resetPasswordName"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="resetPassword" class="form-label">Password Baru</label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="resetPassword" class="form-control" placeholder="Minimal 6 karakter" autocomplete="new-password" required>
+                            <button type="button" class="btn btn-outline-secondary toggle-password" data-target="#resetPassword" title="Lihat password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="resetPasswordConfirm" class="form-label">Konfirmasi Password</label>
+                        <div class="input-group">
+                            <input type="password" id="resetPasswordConfirm" class="form-control" placeholder="Ulangi password baru" autocomplete="new-password" required>
+                            <button type="button" class="btn btn-outline-secondary toggle-password" data-target="#resetPasswordConfirm" title="Lihat password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Modal Delete User -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content user-modal">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-trash-alt me-2"></i> Delete User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div id="deleteUserAlert" class="modal-alert px-3 pt-3 mb-0"></div>
+
+            <div class="modal-body">
+                <div class="user-delete-content text-center py-2">
+                    <div class="user-delete-icon text-danger fs-1 mb-3">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <p class="mb-2">Are you sure you want to delete this user?</p>
+                    <strong id="deleteUserName" class="fs-5 text-dark d-block mb-3">-</strong>
+                    <input type="hidden" id="deleteUserId">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteUser">
+                    <i class="fas fa-trash me-1"></i> Delete
                 </button>
             </div>
         </div>

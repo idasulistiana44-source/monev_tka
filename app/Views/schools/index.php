@@ -188,24 +188,32 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="schoolDeleteModal" tabindex="-1" aria-hidden="true">
+<!-- Modal Delete User -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered">
-        <div class="modal-content school-modal">
+        <div class="modal-content user-modal">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-trash-alt"></i> Delete School</h5>
+                <h5 class="modal-title"><i class="fas fa-trash-alt me-2"></i> Delete User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            
+            <div id="deleteUserAlert" class="modal-alert px-3 pt-3 mb-0"></div>
+
             <div class="modal-body">
-                <div class="school-delete-content">
-                    <div class="school-delete-icon"><i class="fas fa-trash-alt"></i></div>
-                    <p>Are you sure you want to delete this school?</p>
-                    <strong id="deleteSchoolName">-</strong>
-                    <input type="hidden" id="deleteSchoolId">
+                <div class="user-delete-content text-center py-2">
+                    <div class="user-delete-icon text-danger fs-1 mb-3">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <p class="mb-2">Are you sure you want to delete this user?</p>
+                    <strong id="deleteUserName" class="fs-5 text-dark d-block mb-3">-</strong>
+                    <input type="hidden" id="deleteUserId">
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="btnDeleteSchool"><i class="fas fa-trash"></i> Delete</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteUser">
+                    <i class="fas fa-trash me-1"></i> Delete
+                </button>
             </div>
         </div>
     </div>

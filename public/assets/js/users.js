@@ -1,3 +1,7 @@
+if (typeof BASE_URL === 'undefined') window.BASE_URL = '/';
+if (typeof CSRF_TOKEN_NAME === 'undefined') window.CSRF_TOKEN_NAME = 'csrf_test_name';
+if (typeof CSRF_HASH === 'undefined') window.CSRF_HASH = '';
+
 let users = [];
 let deleteUserId = null;
 
@@ -72,13 +76,46 @@ $(document).ready(function () {
     function hideModalAlert(selector) {
         $(selector).removeClass('show success error warning').html('');
     }
+
+    // =========================================================
+    // [TAMBAHAN 1] Fungsi Load Option Region dari Server via AJAX
+    // =========================================================
+   function loadRegions(selectedEditId = null) {
+    return $.ajax({
+        url: BASE_URL + 'regions/data',
+        type: 'GET',
+        dataType: 'json',
+        success: function (response) {
+            updateCsrf(response);
+
+            if (response && response.success) {
+                let options = '<option value="">Pilih Wilayah Verifikasi</option>';
+
+                $.each(response.data || [], function (index, region) {
+                    options += `<option value="${escapeAttribute(region.id)}">${escapeHtml(region.name)}</option>`;
+                });
+
+                $('#addRegionId').html(options);
+                $('#editRegionId').html(options);
+
+                // Set value jika parameter selectedEditId dikirim
+                if (selectedEditId !== null && selectedEditId !== '') {
+                    $('#editRegionId').val(String(selectedEditId));
+                }
+            }
+        },
+        error: function (xhr) {
+            console.error('Gagal memuat daftar wilayah:', xhr.responseText || xhr);
+        }
+    });
+}
     
+
     $(document).on('click', '.status-user-btn', function (e) {
         e.preventDefault();
 
         const button = $(this);
         const id = Number(button.data('id'));
-        const currentStatus = Number(button.data('status'));
 
         const user = users.find(function (item) {
             return Number(item.id) === id;
@@ -97,9 +134,7 @@ $(document).ready(function () {
             data: $.extend(
                 {},
                 getCsrfData(),
-                {
-                    id: id
-                }
+                { id: id }
             ),
             dataType: 'json',
             success: function (response) {
@@ -110,27 +145,17 @@ $(document).ready(function () {
                         'success',
                         response.message || 'Status user berhasil diperbarui.'
                     );
-
                     loadUsers();
                 } else {
-                    const message = getErrorMessage(
-                        response,
-                        'Gagal mengubah status user.'
-                    );
-
+                    const message = getErrorMessage(response, 'Gagal mengubah status user.');
                     showGlobalAlert('error', message);
                 }
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-
                 updateCsrf(response);
 
-                const message = getErrorMessage(
-                    response,
-                    'Terjadi kesalahan saat mengubah status user.'
-                );
-
+                const message = getErrorMessage(response, 'Terjadi kesalahan saat mengubah status user.');
                 showGlobalAlert('error', message);
             },
             complete: function () {
@@ -185,11 +210,7 @@ $(document).ready(function () {
     function closeModal(id) {
         const element = document.getElementById(id);
 
-        if (!element) {
-            return;
-        }
-
-        if (typeof bootstrap === 'undefined') {
+        if (!element || typeof bootstrap === 'undefined') {
             return;
         }
 
@@ -206,13 +227,12 @@ $(document).ready(function () {
         }
 
         const tbody = $('#userTable tbody');
-
         tbody.empty();
 
         if (!users.length) {
             tbody.html(`
                 <tr>
-                    <td colspan="6" class="text-center">
+                    <td colspan="8" class="text-center">
                         Belum ada data user.
                     </td>
                 </tr>
@@ -222,18 +242,19 @@ $(document).ready(function () {
                 const active = Number(user.is_active) === 1;
                 const role = String(user.role || '').toLowerCase();
 
-                const roleText = role === 'admin'
-                    ? 'Admin'
-                    : 'Petugas';
-
-                const roleClass = role === 'admin'
-                    ? 'bg-primary'
-                    : 'bg-info';
+                const roleText = role === 'admin' ? 'Admin' : 'Petugas';
+                const roleClass = role === 'admin' ? 'bg-primary' : 'bg-info';
 
                 const statusText = active ? 'Active' : 'Inactive';
                 const statusClass = active ? 'bg-success' : 'bg-secondary';
                 const statusIcon = active ? 'fa-user-slash' : 'fa-user-check';
                 const statusButtonClass = active ? 'btn-outline-success' : 'btn-outline-secondary';
+
+                // =========================================================
+                // [TAMBAHAN 2] Format Tampilan Institution & Nama Region
+                // =========================================================
+                const institutionText = user.institution ? escapeHtml(user.institution) : '-';
+                const regionName = user.region_name ? escapeHtml(user.region_name) : '-';
 
                 tbody.append(`
                     <tr>
@@ -247,6 +268,8 @@ $(document).ready(function () {
                             </div>
                         </td>
                         <td>${escapeHtml(user.username)}</td>
+                        <td>${institutionText}</td>
+                        <td>${regionName}</td>
                         <td>
                             <span class="badge ${roleClass}">
                                 ${roleText}
@@ -307,7 +330,7 @@ $(document).ready(function () {
                     orderable: false
                 },
                 {
-                    targets: 5,
+                    targets: 7, // Kolom aksi berpindah ke index 7 karena penambahan 2 kolom baru
                     width: '155px',
                     orderable: false
                 }
@@ -324,33 +347,17 @@ $(document).ready(function () {
                 updateCsrf(response);
 
                 if (!response || !response.success) {
-                    showGlobalAlert(
-                        'error',
-                        getErrorMessage(
-                            response,
-                            'Gagal memuat data user.'
-                        )
-                    );
-
+                    showGlobalAlert('error', getErrorMessage(response, 'Gagal memuat data user.'));
                     return;
                 }
 
                 users = response.data || [];
-
                 renderUsers();
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-
                 updateCsrf(response);
-
-                showGlobalAlert(
-                    'error',
-                    getErrorMessage(
-                        response,
-                        'Gagal memuat data user.'
-                    )
-                );
+                showGlobalAlert('error', getErrorMessage(response, 'Gagal memuat data user.'));
             }
         });
     }
@@ -404,31 +411,42 @@ $(document).ready(function () {
         deleteUserId = null;
     });
 
-    $(document).on('click', '.edit-user-btn', function (e) {
+    // =========================================================
+    // [TAMBAHAN 3] Populate Institution & Region saat Tombol Edit Diklik
+    // =========================================================
+   $(document).on('click', '.edit-user-btn', function (e) {
         e.preventDefault();
 
         const id = Number($(this).data('id'));
-
         const user = users.find(function (item) {
             return Number(item.id) === id;
         });
 
         if (!user) {
-            showGlobalAlert(
-                'error',
-                'Data user tidak ditemukan.'
-            );
-
+            showGlobalAlert('error', 'Data user tidak ditemukan.');
             return;
         }
 
+        // Reset Alert Modal Edit
+        hideModalAlert('#editUserAlert');
+
+        // Fill Input Teks
         $('#editUserId').val(user.id);
         $('#editName').val(user.name);
         $('#editUsername').val(user.username);
         $('#editRole').val(user.role);
         $('#editStatus').val(String(user.is_active));
+        $('#editInstitution').val(user.institution || '');
 
-        hideModalAlert('#editUserAlert');
+        const targetRegionId = (user.region_id !== null && user.region_id !== undefined) ? String(user.region_id) : '';
+
+        // KUNCI PERBAIKAN: Jika dropdown sudah terisi option, langsung set .val()
+        // Jika belum terisi, panggil loadRegions() dan pasang nilainya
+        if ($('#editRegionId option').length > 1) {
+            $('#editRegionId').val(targetRegionId);
+        } else {
+            loadRegions(targetRegionId);
+        }
 
         openModal('editUserModal');
     });
@@ -443,11 +461,7 @@ $(document).ready(function () {
         });
 
         if (!user) {
-            showGlobalAlert(
-                'error',
-                'Data user tidak ditemukan.'
-            );
-
+            showGlobalAlert('error', 'Data user tidak ditemukan.');
             return;
         }
 
@@ -460,35 +474,76 @@ $(document).ready(function () {
         openModal('resetPasswordModal');
     });
 
-
-
+    // 1. Event Buka Modal Delete & Set Data
     $(document).on('click', '.delete-user-btn', function (e) {
         e.preventDefault();
 
         const id = Number($(this).data('id'));
-
         const user = users.find(function (item) {
             return Number(item.id) === id;
         });
 
         if (!user) {
-            showGlobalAlert(
-                'error',
-                'Data user tidak ditemukan.'
-            );
-
+            showGlobalAlert('error', 'Data user tidak ditemukan.');
             return;
         }
 
+        // Set value ke input hidden dan elemen teks nama
         deleteUserId = id;
-
+        $('#deleteUserId').val(user.id);
         $('#deleteUserName').text(user.name);
 
         hideModalAlert('#deleteUserAlert');
-
         openModal('deleteUserModal');
     });
 
+    // 2. Action Klik Tombol Delete di Dalam Modal
+    $('#confirmDeleteUser').on('click', function (e) {
+        e.preventDefault();
+
+        const button = $(this);
+        const idToDelete = $('#deleteUserId').val() || deleteUserId;
+
+        if (!idToDelete) {
+            showGlobalAlert('error', 'User tidak ditemukan.');
+            return;
+        }
+
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Deleting...');
+
+        $.ajax({
+            url: BASE_URL + 'users/delete', // Memanggil endpoint delete pada Controller Users
+            type: 'POST',
+            data: $.extend({}, getCsrfData(), { id: idToDelete }),
+            dataType: 'json',
+            success: function (response) {
+                updateCsrf(response);
+
+                if (response && response.success) {
+                    closeModal('deleteUserModal');
+                    showGlobalAlert('success', response.message || 'User berhasil dihapus.');
+                    loadUsers(); // Load ulang data tabel
+                } else {
+                    const message = getErrorMessage(response, 'Gagal menghapus user.');
+                    showModalAlert('#deleteUserAlert', 'error', message);
+                    showGlobalAlert('error', message);
+                }
+            },
+            error: function (xhr) {
+                const response = xhr.responseJSON;
+                updateCsrf(response);
+
+                const message = getErrorMessage(response, 'Terjadi kesalahan saat menghapus user.');
+                showModalAlert('#deleteUserAlert', 'error', message);
+                showGlobalAlert('error', message);
+            },
+            complete: function () {
+                button.prop('disabled', false).html('<i class="fas fa-trash me-1"></i> Delete');
+            }
+        });
+    });
+
+    // Submit Add Form (Otomatis mengirimkan field institution & region_id melalui serialize())
     $('#addUserForm').on('submit', function (e) {
         e.preventDefault();
 
@@ -510,50 +565,24 @@ $(document).ready(function () {
                 if (response && response.success) {
                     closeModal('addUserModal');
 
-                    showGlobalAlert(
-                        'success',
-                        response.message || 'User berhasil ditambahkan.'
-                    );
+                    showGlobalAlert('success', response.message || 'User berhasil ditambahkan.');
 
                     loadUsers();
                 } else {
-                    const message = getErrorMessage(
-                        response,
-                        'Periksa kembali data yang diisi.'
-                    );
+                    const message = getErrorMessage(response, 'Periksa kembali data yang diisi.');
 
-                    showModalAlert(
-                        '#addUserAlert',
-                        'error',
-                        message
-                    );
-
-                    showGlobalAlert(
-                        'error',
-                        message
-                    );
+                    showModalAlert('#addUserAlert', 'error', message);
+                    showGlobalAlert('error', message);
                 }
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-
                 updateCsrf(response);
 
-                const message = getErrorMessage(
-                    response,
-                    'Terjadi kesalahan saat menyimpan user.'
-                );
+                const message = getErrorMessage(response, 'Terjadi kesalahan saat menyimpan user.');
 
-                showModalAlert(
-                    '#addUserAlert',
-                    'error',
-                    message
-                );
-
-                showGlobalAlert(
-                    'error',
-                    message
-                );
+                showModalAlert('#addUserAlert', 'error', message);
+                showGlobalAlert('error', message);
             },
             complete: function () {
                 button.prop('disabled', false);
@@ -561,6 +590,7 @@ $(document).ready(function () {
         });
     });
 
+    // Submit Edit Form (Otomatis mengirimkan field institution & region_id melalui serialize())
     $('#editUserForm').on('submit', function (e) {
         e.preventDefault();
 
@@ -582,50 +612,24 @@ $(document).ready(function () {
                 if (response && response.success) {
                     closeModal('editUserModal');
 
-                    showGlobalAlert(
-                        'success',
-                        response.message || 'User berhasil diperbarui.'
-                    );
+                    showGlobalAlert('success', response.message || 'User berhasil diperbarui.');
 
                     loadUsers();
                 } else {
-                    const message = getErrorMessage(
-                        response,
-                        'Periksa kembali data yang diisi.'
-                    );
+                    const message = getErrorMessage(response, 'Periksa kembali data yang diisi.');
 
-                    showModalAlert(
-                        '#editUserAlert',
-                        'error',
-                        message
-                    );
-
-                    showGlobalAlert(
-                        'error',
-                        message
-                    );
+                    showModalAlert('#editUserAlert', 'error', message);
+                    showGlobalAlert('error', message);
                 }
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-
                 updateCsrf(response);
 
-                const message = getErrorMessage(
-                    response,
-                    'Terjadi kesalahan saat memperbarui user.'
-                );
+                const message = getErrorMessage(response, 'Terjadi kesalahan saat memperbarui user.');
 
-                showModalAlert(
-                    '#editUserAlert',
-                    'error',
-                    message
-                );
-
-                showGlobalAlert(
-                    'error',
-                    message
-                );
+                showModalAlert('#editUserAlert', 'error', message);
+                showGlobalAlert('error', message);
             },
             complete: function () {
                 button.prop('disabled', false);
@@ -644,62 +648,26 @@ $(document).ready(function () {
         hideModalAlert('#resetPasswordAlert');
 
         if (password === '') {
-            showModalAlert(
-                '#resetPasswordAlert',
-                'error',
-                'Password baru wajib diisi.'
-            );
-
-            showGlobalAlert(
-                'error',
-                'Password baru wajib diisi.'
-            );
-
+            showModalAlert('#resetPasswordAlert', 'error', 'Password baru wajib diisi.');
+            showGlobalAlert('error', 'Password baru wajib diisi.');
             return;
         }
 
         if (password.length < 6) {
-            showModalAlert(
-                '#resetPasswordAlert',
-                'error',
-                'Password minimal 6 karakter.'
-            );
-
-            showGlobalAlert(
-                'error',
-                'Password minimal 6 karakter.'
-            );
-
+            showModalAlert('#resetPasswordAlert', 'error', 'Password minimal 6 karakter.');
+            showGlobalAlert('error', 'Password minimal 6 karakter.');
             return;
         }
 
         if (confirmPassword === '') {
-            showModalAlert(
-                '#resetPasswordAlert',
-                'error',
-                'Konfirmasi password wajib diisi.'
-            );
-
-            showGlobalAlert(
-                'error',
-                'Konfirmasi password wajib diisi.'
-            );
-
+            showModalAlert('#resetPasswordAlert', 'error', 'Konfirmasi password wajib diisi.');
+            showGlobalAlert('error', 'Konfirmasi password wajib diisi.');
             return;
         }
 
         if (password !== confirmPassword) {
-            showModalAlert(
-                '#resetPasswordAlert',
-                'error',
-                'Konfirmasi password tidak sesuai.'
-            );
-
-            showGlobalAlert(
-                'error',
-                'Konfirmasi password tidak sesuai.'
-            );
-
+            showModalAlert('#resetPasswordAlert', 'error', 'Konfirmasi password tidak sesuai.');
+            showGlobalAlert('error', 'Konfirmasi password tidak sesuai.');
             return;
         }
 
@@ -718,50 +686,24 @@ $(document).ready(function () {
 
                     form.reset();
 
-                    showGlobalAlert(
-                        'success',
-                        response.message || 'Password berhasil direset.'
-                    );
+                    showGlobalAlert('success', response.message || 'Password berhasil direset.');
 
                     loadUsers();
                 } else {
-                    const message = getErrorMessage(
-                        response,
-                        'Password gagal direset.'
-                    );
+                    const message = getErrorMessage(response, 'Password gagal direset.');
 
-                    showModalAlert(
-                        '#resetPasswordAlert',
-                        'error',
-                        message
-                    );
-
-                    showGlobalAlert(
-                        'error',
-                        message
-                    );
+                    showModalAlert('#resetPasswordAlert', 'error', message);
+                    showGlobalAlert('error', message);
                 }
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-
                 updateCsrf(response);
 
-                const message = getErrorMessage(
-                    response,
-                    'Terjadi kesalahan saat mereset password.'
-                );
+                const message = getErrorMessage(response, 'Terjadi kesalahan saat mereset password.');
 
-                showModalAlert(
-                    '#resetPasswordAlert',
-                    'error',
-                    message
-                );
-
-                showGlobalAlert(
-                    'error',
-                    message
-                );
+                showModalAlert('#resetPasswordAlert', 'error', message);
+                showGlobalAlert('error', message);
             },
             complete: function () {
                 button.prop('disabled', false);
@@ -769,18 +711,13 @@ $(document).ready(function () {
         });
     });
 
-
     $('#confirmDeleteUser').on('click', function (e) {
         e.preventDefault();
 
         const button = $(this);
 
         if (!deleteUserId) {
-            showGlobalAlert(
-                'error',
-                'User tidak ditemukan.'
-            );
-
+            showGlobalAlert('error', 'User tidak ditemukan.');
             return;
         }
 
@@ -792,9 +729,7 @@ $(document).ready(function () {
             data: $.extend(
                 {},
                 getCsrfData(),
-                {
-                    id: deleteUserId
-                }
+                { id: deleteUserId }
             ),
             dataType: 'json',
             success: function (response) {
@@ -803,50 +738,24 @@ $(document).ready(function () {
                 if (response && response.success) {
                     closeModal('deleteUserModal');
 
-                    showGlobalAlert(
-                        'success',
-                        response.message || 'User berhasil dihapus.'
-                    );
+                    showGlobalAlert('success', response.message || 'User berhasil dihapus.');
 
                     loadUsers();
                 } else {
-                    const message = getErrorMessage(
-                        response,
-                        'Gagal menghapus user.'
-                    );
+                    const message = getErrorMessage(response, 'Gagal menghapus user.');
 
-                    showModalAlert(
-                        '#deleteUserAlert',
-                        'error',
-                        message
-                    );
-
-                    showGlobalAlert(
-                        'error',
-                        message
-                    );
+                    showModalAlert('#deleteUserAlert', 'error', message);
+                    showGlobalAlert('error', message);
                 }
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-
                 updateCsrf(response);
 
-                const message = getErrorMessage(
-                    response,
-                    'Terjadi kesalahan saat menghapus user.'
-                );
+                const message = getErrorMessage(response, 'Terjadi kesalahan saat menghapus user.');
 
-                showModalAlert(
-                    '#deleteUserAlert',
-                    'error',
-                    message
-                );
-
-                showGlobalAlert(
-                    'error',
-                    message
-                );
+                showModalAlert('#deleteUserAlert', 'error', message);
+                showGlobalAlert('error', message);
             },
             complete: function () {
                 button.prop('disabled', false);
@@ -854,7 +763,10 @@ $(document).ready(function () {
         });
     });
 
+    // Panggil pengambilan region & user saat halaman dimuat
+    loadRegions();
     loadUsers();
+
     $(document).on('click', '.toggle-password', function () {
         const button = $(this);
         const target = $(button.data('target'));
@@ -870,5 +782,5 @@ $(document).ready(function () {
             button.attr('title', 'Lihat password');
         }
     });
-    
+
 });

@@ -1,60 +1,84 @@
 <?php
 
 namespace App\Models;
+
 use CodeIgniter\Model;
+
 class UserModel extends Model
 {
-    protected $table = 'users';
-    protected $primaryKey = 'id';
-    protected $returnType = 'array';
-    protected $allowedFields = [
+    protected $table            = 'users';
+    protected $primaryKey       = 'id';
+    protected $allowedFields    = [
         'name',
         'username',
         'password',
         'role',
         'is_active',
-        'created_at',
-        'updated_at'
+        'institution',
+        'region_id'
     ];
-    protected $useTimestamps = true;
+
     public function getUsers()
     {
-        return $this->orderBy('id', 'DESC')->findAll();
+        return $this->db->table($this->table)
+            ->select('users.*, region.name as region_name')
+            ->join('region', 'region.id = users.region_id', 'left')
+            ->get()
+            ->getResultArray();
     }
+
     public function getUser($id)
     {
-        return $this->find($id);
+        return $this->db->table($this->table)
+            ->select('users.*, region.name as region_name')
+            ->join('region', 'region.id = users.region_id', 'left')
+            ->where('users.id', $id)
+            ->get()
+            ->getRowArray();
     }
-    public function usernameExists($username, $exceptId = null)
+
+    public function createUser($data)
     {
-        $builder = $this->where('username', $username);
-        if($exceptId !== null) {
-            $builder->where('id !=', $exceptId);
+        $this->db->table($this->table)->insert($data);
+        return $this->db->insertID();
+    }
+
+    public function updateUser($id, $data)
+    {
+        return $this->db->table($this->table)
+            ->where('id', $id)
+            ->update($data);
+    }
+
+    public function usernameExists($username, $excludeId = null)
+    {
+        $builder = $this->db->table($this->table)->where('username', $username);
+        
+        if ($excludeId !== null) {
+            $builder->where('id !=', $excludeId);
         }
+
         return $builder->countAllResults() > 0;
     }
-    public function createUser(array $data)
-    {
-        return $this->insert($data);
-    }
-    public function updateUser($id, array $data)
-    {
-        return $this->update($id, $data);
-    }
-    public function deleteUser($id)
-    {
-        return $this->delete($id);
-    }
+
     public function updatePassword($id, $password)
     {
-        return $this->update($id, [
-            'password' => password_hash($password, PASSWORD_DEFAULT)
-        ]);
+        return $this->db->table($this->table)
+            ->where('id', $id)
+            ->update(['password' => password_hash($password, PASSWORD_DEFAULT)]);
     }
+
     public function updateStatus($id, $status)
     {
-        return $this->update($id, [
-            'is_active' => $status
-        ]);
+        return $this->db->table($this->table)
+            ->where('id', $id)
+            ->update(['is_active' => $status]);
+    }
+
+    public function deleteUser($id)
+    {
+        return $this->db->table($this->table)
+            ->where('id', $id)
+            ->delete();
     }
 }

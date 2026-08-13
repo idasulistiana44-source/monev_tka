@@ -31,3 +31,4 @@ if(str_starts_with($pageName,'visits/instrument')){
     <?= view($pageView,$pageData) ?>
 </main>
 <?= view('layout/footer',['pageAsset'=>$pageAsset]) ?> 
+

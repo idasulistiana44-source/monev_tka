@@ -10,6 +10,8 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('login', 'AuthController::index');   // Tampilkan View HTML
 $routes->post('login', 'AuthController::login');   // Proses AJAX Login
 $routes->get('logout', 'AuthController::logout');
+$routes->get('regions/data', 'Regions::data');
+$routes->get('regions/get-list', 'Regions::getList');
 // ==========================================
 // 2. RUTE TERPROTEKSI (Wajib Login)
 // ==========================================

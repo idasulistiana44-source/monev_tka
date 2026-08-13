@@ -20,8 +20,14 @@
 <script>
 const BASE_URL="<?= base_url('/') ?>";
 </script>
+<script>
+    window.BASE_URL = '<?= base_url() ?>/';
+    window.CSRF_TOKEN_NAME = '<?= csrf_token() ?>';
+    window.CSRF_HASH = '<?= csrf_hash() ?>';
+</script>
 <?php if(!empty($pageAsset)): ?>
 <script src="<?= base_url('assets/js/'.$pageAsset.'.js') ?>?v=<?= time() ?>"></script>
 <?php endif; ?>
 </body>
 </html>
+
