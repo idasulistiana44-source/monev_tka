@@ -5,12 +5,11 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 
 // ==========================================
-// 1. RUTE PUBLIK (Tidat Perlu Login)
+// 1. RUTE PUBLIK
 // ==========================================
-$routes->get('login', 'AuthController::login');
-$routes->post('login/process', 'AuthController::processLogin');
+$routes->get('login', 'AuthController::index');   // Tampilkan View HTML
+$routes->post('login', 'AuthController::login');   // Proses AJAX Login
 $routes->get('logout', 'AuthController::logout');
-
 // ==========================================
 // 2. RUTE TERPROTEKSI (Wajib Login)
 // ==========================================

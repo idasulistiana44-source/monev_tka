@@ -1,72 +1,123 @@
-$.ajaxSetup({
-    headers: {
-        'X-Requested-With': 'XMLHttpRequest'
-    }
-});
-
 $(document).ready(function () {
     $('#formLogin').on('submit', function (e) {
-        e.preventDefault(); // MENCEGAH browser reload/membuka halaman JSON mentah
+        e.preventDefault();
+        e.stopPropagation();
 
         const form = $(this);
-        const url  = form.attr('action');
-        const data = form.serialize();
+        const btnLogin = $('#btnLogin');
+        const btnText = $('#btnText');
+        const btnSpinner = $('#btnSpinner');
 
-        // Reset error state
-        $('.invalid-feedback').text('');
-        $('.form-control').removeClass('is-invalid');
+        clearErrors();
 
-        // Loading state
-        $('#btnLogin').prop('disabled', true);
-        $('#btnText').addClass('d-none');
-        $('#btnSpinner').removeClass('d-none');
+        const username = $.trim($('#username').val());
+        const password = $('#password').val();
+
+        if (username === '') {
+            showFieldError('username', 'Username tidak boleh kosong.');
+            $('#username').focus();
+            return false;
+        }
+
+        if (password === '') {
+            showFieldError('password', 'Password tidak boleh kosong.');
+            $('#password').focus();
+            return false;
+        }
+
+        btnLogin.prop('disabled', true);
+        btnText.text('Memproses...');
+        btnSpinner.removeClass('d-none');
 
         $.ajax({
-            url: url,
+            url: form.attr('action'),
             type: 'POST',
-            data: data,
-            dataType: 'JSON',
+            data: form.serialize(),
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
             success: function (response) {
-                if (response.status === 'validation_error') {
-                    $.each(response.errors, function (field, message) {
-                        $('#' + field).addClass('is-invalid');
-                        $('#error-' + field).text(message);
-                    });
-                } else if (response.status === 'error') {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal Login',
-                        text: response.message,
-                        confirmButtonColor: '#d33'
-                    });
-                } else if (response.status === 'success') {
-                    // Tampilkan Notifikasi Pop-up
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Login Berhasil',
-                        text: response.message,
-                        showConfirmButton: false,
-                        timer: 1500,
-                        timerProgressBar: true
-                    }).then(function () {
-                        // Baru lakukan redirect setelah alert selesai
+                if (response.status === 'success') {
+                    if (typeof window.showGlobalAlert === 'function') {
+                        window.showGlobalAlert(
+                            response.message || 'Login berhasil!',
+                            'success'
+                        );
+                    }
+
+                    setTimeout(function () {
                         window.location.href = response.redirect;
-                    });
+                    }, 1200);
+
+                    return;
+                }
+
+                if (response.status === 'validation_error') {
+                    if (response.errors) {
+                        if (response.errors.username) {
+                            showFieldError(
+                                'username',
+                                response.errors.username
+                            );
+                        }
+
+                        if (response.errors.password) {
+                            showFieldError(
+                                'password',
+                                response.errors.password
+                            );
+                        }
+                    }
+
+                    return;
+                }
+
+                if (typeof window.showGlobalAlert === 'function') {
+                    window.showGlobalAlert(
+                        response.message || 'Username atau Password salah!',
+                        'error'
+                    );
                 }
             },
             error: function (xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Kesalahan Sistem',
-                    text: 'Terjadi kesalahan (' + xhr.status + '). Silakan coba lagi.',
-                    confirmButtonColor: '#d33'
-                });
+                let message = 'Terjadi kesalahan pada server. Silakan coba lagi.';
+
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+
+                if (typeof window.showGlobalAlert === 'function') {
+                    window.showGlobalAlert(message, 'error');
+                }
             },
             complete: function () {
-                $('#btnLogin').prop('disabled', false);
-                $('#btnText').removeClass('d-none');
-                $('#btnSpinner').addClass('d-none');
+                btnLogin.prop('disabled', false);
+                btnText.text('Login');
+                btnSpinner.addClass('d-none');
             }
         });
+
+        return false;
     });
+
+    $('#username, #password').on('input', function () {
+        const field = $(this).attr('id');
+
+        $(this).removeClass('is-invalid');
+        $('#error-' + field).text('');
+    });
+
+    function showFieldError(field, message) {
+        $('#' + field).addClass('is-invalid');
+        $('#error-' + field).text(message);
+    }
+
+    function clearErrors() {
+        $('#username').removeClass('is-invalid');
+        $('#password').removeClass('is-invalid');
+        $('#error-username').text('');
+        $('#error-password').text('');
+    }
 });

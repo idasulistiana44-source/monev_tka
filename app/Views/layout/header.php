@@ -18,7 +18,5 @@
     <?php if(!empty($pageCss)): ?>
     <link rel="stylesheet" href="<?= base_url('assets/css/'.$pageCss.'.css') ?>">
     <?php endif; ?>
-
-    
 </head>
 <body>
