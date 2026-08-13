@@ -167,3 +167,17 @@ body.sidebar-collapsed .app-main{margin-left:70px}
     .dashboard-panel-header{padding:0 15px}
     .dashboard-panel-body{padding:15px}
 }
+/* =========================================================
+   panel Visitasi Terbaru
+========================================================= */
+.visit-list{display:flex;flex-direction:column;gap:0}
+.visit-item{display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid #eef1f5}
+.visit-item:last-child{border-bottom:none}
+.visit-icon{width:42px;height:42px;min-width:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#eff6ff;color:#2563eb;font-size:17px}
+.visit-info{flex:1;min-width:0}
+.visit-school{font-size:14px;font-weight:600;color:#1f2937;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.visit-meta{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280}
+.visit-meta span{display:inline-flex;align-items:center}
+.visit-meta-divider{color:#cbd5e1}
+.visit-status{flex-shrink:0;margin-left:auto}
+.status-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;white-space:nowrap}

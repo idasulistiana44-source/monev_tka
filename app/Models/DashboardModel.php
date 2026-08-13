@@ -3,7 +3,7 @@ namespace App\Models;
 use CodeIgniter\Model;
 class DashboardModel extends Model
 {
-    protected $DBGroup = 'default';
+    protected $DBGroup='default';
     public function getTotalSchools()
     {
         return $this->db->table('schools')->countAllResults();
@@ -23,8 +23,16 @@ class DashboardModel extends Model
     }
     public function getVisitStatus()
     {
-        $result=$this->db->table('visits')->select('status, COUNT(*) AS total')->groupBy('status')->get()->getResultArray();
-        $data=['draft'=>0,'submitted'=>0,'verified'=>0];
+        $result=$this->db->table('visits')
+            ->select('status, COUNT(*) AS total')
+            ->groupBy('status')
+            ->get()
+            ->getResultArray();
+        $data=[
+            'draft'=>0,
+            'berlangsung'=>0,
+            'selesai'=>0
+        ];
         foreach($result as $row){
             if(isset($data[$row['status']])){
                 $data[$row['status']]=(int)$row['total'];
@@ -34,11 +42,16 @@ class DashboardModel extends Model
     }
     public function getInfrastructureReadiness()
     {
-        $result=$this->db->table('visit_tka_readiness')->select('infrastructure_ready, COUNT(*) AS total')->groupBy('infrastructure_ready')->get()->getResultArray();
-        $data=['YA'=>0,'TIDAK'=>0];
+        $result=$this->db->table('visit_answers')->select('answer, COUNT(*) AS total')->where('question_id',18)->groupBy('answer')->get()->getResultArray();
+        $data=[
+            'Sangat Baik'=>0,
+            'Baik'=>0,
+            'Cukup'=>0,
+            'Kurang Memadai'=>0
+        ];
         foreach($result as $row){
-            if(isset($data[$row['infrastructure_ready']])){
-                $data[$row['infrastructure_ready']]=(int)$row['total'];
+            if(isset($data[$row['answer']])){
+                $data[$row['answer']]=(int)$row['total'];
             }
         }
         return $data;
@@ -53,7 +66,29 @@ class DashboardModel extends Model
         }
         return array_values($data);
     }
-
+    public function getVisitsByLevel()
+    {
+        $result=$this->db->table('visits v')
+            ->select('s.level, COUNT(v.id) AS total')
+            ->join('schools s','s.id=v.school_id','left')
+            ->whereIn('s.level',['SMA','SMK','SLB','MA'])
+            ->groupBy('s.level')
+            ->get()
+            ->getResultArray();
+        $data=[
+            'SMA'=>0,
+            'SMK'=>0,
+            'SLB'=>0,
+            'MA'=>0
+        ];
+        foreach($result as $row){
+            $level=strtoupper(trim($row['level']??''));
+            if(isset($data[$level])){
+                $data[$level]=(int)$row['total'];
+            }
+        }
+        return $data;
+    }
     public function getRecentVisits($limit=10)
     {
         return $this->db->table('visits v')
@@ -68,5 +103,4 @@ class DashboardModel extends Model
             ->get()
             ->getResultArray();
     }
-
 }

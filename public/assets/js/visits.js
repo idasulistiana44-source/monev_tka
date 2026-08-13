@@ -25,40 +25,40 @@
         }
     }
 
-    function loadVisits(){
-        const keyword=$.trim($('#searchVisit').val()||'');
-        const status=$('#filterStatus').val()||'';
-        $('#visitTableBody').html('<tr><td colspan="8" class="visit-loading"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data...</td></tr>');
-        if($('#visitEmpty').length){
-            $('#visitEmpty').hide();
-        }
-        request(URLS.data,{
-            data:{
-                keyword:keyword,
-                status:status
-            }
-        }).done(function(res){
-            if(!res||res.status===false){
-                renderError(res&&res.message?res.message:'Data Monev gagal dimuat.');
-                notify(res&&res.message?res.message:'Data Monev gagal dimuat.','error');
-                return;
-            }
-            renderVisits(res.data||[]);
-        }).fail(function(xhr){
-            let message='Gagal memuat data kegiatan Monev.';
-            if(xhr.responseJSON&&xhr.responseJSON.message){
-                message=xhr.responseJSON.message;
-            }
-            renderError(message);
-            notify(message,'error');
-            console.error('VISITS DATA ERROR:',xhr.responseText);
-        });
+   function loadVisits(){
+    const keyword=$.trim($('#searchVisit').val()||'');
+    const status=$('#filterStatus').val()||'';
+    $('#visitTableBody').html('<tr><td colspan="8" class="visit-loading"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data...</td></tr>');
+    if($('#visitEmpty').length){
+        $('#visitEmpty').hide();
     }
+    request(URLS.data,{
+        data:{
+            keyword:keyword,
+            status:status
+        }
+    }).done(function(res){
+        if(!res||res.status===false){
+            renderError(res&&res.message?res.message:'Data visitasi gagal dimuat.');
+            notify(res&&res.message?res.message:'Data visitasi gagal dimuat.','error');
+            return;
+        }
+        renderVisits(res.data||[]);
+    }).fail(function(xhr){
+        let message='Gagal memuat data visitasi.';
+        if(xhr.responseJSON&&xhr.responseJSON.message){
+            message=xhr.responseJSON.message;
+        }
+        renderError(message);
+        notify(message,'error');
+        console.error('VISITS DATA ERROR:',xhr.responseText);
+    });
+}
 
     function renderVisits(rows){
         $('#visitTotal').text(rows.length);
         if(!rows.length){
-            $('#visitTableBody').html('<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-clipboard-check fa-2x mb-3 d-block"></i>Belum ada kegiatan Monev.</td></tr>');
+            $('#visitTableBody').html('');
             if($('#visitEmpty').length){
                 $('#visitEmpty').show();
             }

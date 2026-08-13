@@ -9,14 +9,14 @@
         </div>
     </div>
     <div class="navbar-right">
-        <button type="button" class="navbar-action" id="searchButton" title="Pencarian">
+        <!-- <button type="button" class="navbar-action" id="searchButton" title="Pencarian">
             <i class="fas fa-search"></i>
-        </button>
+        </button> -->
         <div class="navbar-dropdown">
-            <button type="button" id="notificationButton" class="navbar-action" title="Notifikasi">
+            <!-- <button type="button" id="notificationButton" class="navbar-action" title="Notifikasi">
                 <i class="far fa-bell"></i>
                 <span class="notification-badge">3</span>
-            </button>
+            </button> -->
             <div class="notification-menu" id="notificationMenu">
                 <div class="dropdown-header">
                     Notifikasi

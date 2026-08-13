@@ -10,37 +10,40 @@ document.addEventListener('DOMContentLoaded',function(){
     if(window.visitChart instanceof Chart){
         window.visitChart.destroy();
     }
-    let visitData=window.visitsPerMonth;
-    if(!Array.isArray(visitData)||visitData.length!==12){
-        visitData=[0,0,0,0,0,0,0,0,0,0,0,0];
-    }
+    const visitData=window.visitsByLevel||{
+        SMA:0,
+        SMK:0,
+        SLB:0,
+        MA:0
+    };
     window.visitChart=new Chart(canvas,{
-        type:'line',
+        type:'bar',
         data:{
-            labels:['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+            labels:['SMA','SMK','SLB','MA'],
             datasets:[{
-                label:'Visitasi',
-                data:visitData,
-                borderWidth:3,
-                tension:0.35,
-                fill:false,
-                pointRadius:4,
-                pointHoverRadius:6
+                label:'Jumlah Visitasi',
+                data:[
+                    Number(visitData.SMA||0),
+                    Number(visitData.SMK||0),
+                    Number(visitData.SLB||0),
+                    Number(visitData.MA||0)
+                ],
+                borderWidth:1
             }]
         },
         options:{
             responsive:true,
             maintainAspectRatio:false,
-            interaction:{
-                intersect:false,
-                mode:'index'
-            },
             plugins:{
                 legend:{
                     display:false
                 },
                 tooltip:{
-                    enabled:true
+                    callbacks:{
+                        label:function(context){
+                            return ' '+context.parsed.y+' visitasi';
+                        }
+                    }
                 }
             },
             scales:{
@@ -48,6 +51,16 @@ document.addEventListener('DOMContentLoaded',function(){
                     beginAtZero:true,
                     ticks:{
                         precision:0
+                    },
+                    title:{
+                        display:true,
+                        text:'Jumlah Visitasi'
+                    }
+                },
+                x:{
+                    title:{
+                        display:true,
+                        text:'Jenjang'
                     }
                 }
             }

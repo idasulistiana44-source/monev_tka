@@ -10,7 +10,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
             <p class="visits-page-subtitle">Kelola kegiatan monitoring dan evaluasi sekolah.</p>
         </div>
         <div class="visits-header-actions">
-            <button type="button" class="btn btn-primary" id="btnAddVisit"><i class="fas fa-plus me-1"></i>Buat Kegiatan Monev</button>
+            <button type="button" class="btn btn-primary" id="btnAddVisit"><i class="fas fa-plus me-1"></i>Tambah Monev</button>
             <button type="button" class="btn btn-outline-secondary" id="btnRefreshVisit"><i class="fas fa-sync-alt"></i></button>
         </div>
     </div>
@@ -58,7 +58,6 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                 <div class="visit-empty-icon"><i class="fas fa-clipboard-check"></i></div>
                 <h5>Belum ada kegiatan Monev</h5>
                 <p>Buat kegiatan Monev dengan memilih sekolah dan satu atau beberapa petugas.</p>
-                <button type="button" class="btn btn-primary" id="btnEmptyAddVisit"><i class="fas fa-plus me-1"></i>Buat Kegiatan Monev</button>
             </div>
         </div>
     </div>
