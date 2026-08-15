@@ -12,6 +12,9 @@ $routes->post('login', 'AuthController::login');   // Proses AJAX Login
 $routes->get('logout', 'AuthController::logout');
 $routes->get('regions/data', 'Regions::data');
 $routes->get('regions/get-list', 'Regions::getList');
+$routes->get('/', function () {
+    return view('portal');
+});
 // ==========================================
 // 2. RUTE TERPROTEKSI (Wajib Login)
 // ==========================================
