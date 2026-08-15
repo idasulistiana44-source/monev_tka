@@ -23,7 +23,7 @@ class AuthController extends Controller
     {
         // Jika sudah login, langsung alihkan ke visits
         if (session()->get('isLoggedIn')) {
-            return redirect()->to(base_url('visits'));
+            return redirect()->to(base_url('dashboard'));
         }
 
         // PERBAIKAN: Memanggil file di app/Views/auth/login.php
@@ -69,7 +69,7 @@ class AuthController extends Controller
         return $this->response->setJSON([
             'status'   => 'success',
             'message'  => 'Login berhasil!',
-            'redirect' => base_url('visits')
+            'redirect' => base_url('dashboard')
         ]);
     }
 
