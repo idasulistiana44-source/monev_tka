@@ -4,8 +4,30 @@ if (typeof CSRF_HASH === 'undefined') window.CSRF_HASH = '';
 
 let users = [];
 let deleteUserId = null;
+function initRegionSelect() {
 
+    if (!$.fn.select2) {
+        return;
+    }
+
+    $('#addRegionId').select2({
+        width: '100%',
+        placeholder: 'Pilih wilayah verifikasi...',
+        allowClear: true,
+        closeOnSelect: false,
+        dropdownParent: $('#addUserModal')
+    });
+
+    $('#editRegionId').select2({
+        width: '100%',
+        placeholder: 'Pilih wilayah verifikasi...',
+        allowClear: true,
+        closeOnSelect: false,
+        dropdownParent: $('#editUserModal')
+    });
+}
 $(document).ready(function () {
+    initRegionSelect();
     function getCsrfData() {
         const token = $('input[name="' + CSRF_TOKEN_NAME + '"]').first();
 
@@ -80,36 +102,73 @@ $(document).ready(function () {
     // =========================================================
     // [TAMBAHAN 1] Fungsi Load Option Region dari Server via AJAX
     // =========================================================
-   function loadRegions(selectedEditId = null) {
-    return $.ajax({
-        url: BASE_URL + 'regions/data',
-        type: 'GET',
-        dataType: 'json',
-        success: function (response) {
-            updateCsrf(response);
+    function loadRegions(selectedEditIds = []) {
 
-            if (response && response.success) {
-                let options = '<option value="">Pilih Wilayah Verifikasi</option>';
+        return $.ajax({
+            url: BASE_URL + 'regions/data',
+            type: 'GET',
+            dataType: 'json',
 
-                $.each(response.data || [], function (index, region) {
-                    options += `<option value="${escapeAttribute(region.id)}">${escapeHtml(region.name)}</option>`;
-                });
+            success: function (response) {
 
-                $('#addRegionId').html(options);
-                $('#editRegionId').html(options);
+                updateCsrf(response);
 
-                // Set value jika parameter selectedEditId dikirim
-                if (selectedEditId !== null && selectedEditId !== '') {
-                    $('#editRegionId').val(String(selectedEditId));
+                if (response && response.success) {
+
+                    let options = '';
+
+                    $.each(response.data || [], function (index, region) {
+
+                        options += `
+                            <option value="${escapeAttribute(region.id)}">
+                                ${escapeHtml(region.name)}
+                            </option>
+                        `;
+
+                    });
+
+                    // ADD
+                    $('#addRegionId')
+                        .html(options)
+                        .val(null)
+                        .trigger('change');
+
+                    // EDIT
+                    $('#editRegionId')
+                        .html(options)
+                        .val(null)
+                        .trigger('change');
+
+                    // Pastikan array
+                    if (!Array.isArray(selectedEditIds)) {
+
+                        selectedEditIds = selectedEditIds
+                            ? [selectedEditIds]
+                            : [];
+
+                    }
+
+                    // Pilih wilayah milik user
+                    if (selectedEditIds.length) {
+
+                        $('#editRegionId')
+                            .val(selectedEditIds.map(String))
+                            .trigger('change');
+
+                    }
                 }
+            },
+
+            error: function (xhr) {
+
+                console.error(
+                    'Gagal memuat daftar wilayah:',
+                    xhr.responseText || xhr
+                );
+
             }
-        },
-        error: function (xhr) {
-            console.error('Gagal memuat daftar wilayah:', xhr.responseText || xhr);
-        }
-    });
-}
-    
+        });
+    }
 
     $(document).on('click', '.status-user-btn', function (e) {
         e.preventDefault();
@@ -414,10 +473,11 @@ $(document).ready(function () {
     // =========================================================
     // [TAMBAHAN 3] Populate Institution & Region saat Tombol Edit Diklik
     // =========================================================
-   $(document).on('click', '.edit-user-btn', function (e) {
+    $(document).on('click', '.edit-user-btn', function (e) {
         e.preventDefault();
 
         const id = Number($(this).data('id'));
+
         const user = users.find(function (item) {
             return Number(item.id) === id;
         });
@@ -438,16 +498,28 @@ $(document).ready(function () {
         $('#editStatus').val(String(user.is_active));
         $('#editInstitution').val(user.institution || '');
 
-        const targetRegionId = (user.region_id !== null && user.region_id !== undefined) ? String(user.region_id) : '';
+        // =====================================================
+        // MULTIPLE WILAYAH VERIFIKASI
+        // =====================================================
 
-        // KUNCI PERBAIKAN: Jika dropdown sudah terisi option, langsung set .val()
-        // Jika belum terisi, panggil loadRegions() dan pasang nilainya
-        if ($('#editRegionId option').length > 1) {
-            $('#editRegionId').val(targetRegionId);
-        } else {
-            loadRegions(targetRegionId);
-        }
+        // Ambil semua wilayah user dari user_regions
+            let targetRegionIds = [];
 
+            if (Array.isArray(user.region_ids)) {
+                targetRegionIds = user.region_ids.map(String);
+            } else if (
+                user.region_id !== null &&
+                user.region_id !== undefined &&
+                user.region_id !== ''
+            ) {
+                // Fallback data lama
+                targetRegionIds = [String(user.region_id)];
+            }
+
+            // Set multiple wilayah ke select
+            $('#editRegionId')
+                .val(targetRegionIds)
+                .trigger('change');
         openModal('editUserModal');
     });
 

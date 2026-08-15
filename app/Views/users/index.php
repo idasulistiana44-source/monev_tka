@@ -1,3 +1,4 @@
+
 <div class="users-page">
     <div class="users-page-header">
         <div>
@@ -72,14 +73,22 @@
 
                     <div class="mb-3">
                         <label for="addRegionId" class="form-label"> Wilayah Verifikasi</label>
-                        <select name="region_id" id="addRegionId" class="form-select" required>
-                            <option value="">-- Pilih Wilayah Verifikasi --</option>
-                            <?php if (!empty($regions)): ?>
-                                <?php foreach ($regions as $region): ?>
-                                    <option value="<?= $region['id'] ?>"><?= esc($region['name']) ?></option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
+                         <select
+                                name="region_id[]"
+                                id="addRegionId"
+                                class="form-select region-select"
+                                multiple
+                                required>
+
+                                <?php if (!empty($regions)): ?>
+                                    <?php foreach ($regions as $region): ?>
+                                        <option value="<?= esc($region['id']) ?>">
+                                            <?= esc($region['name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+
+                            </select>
                     </div>
 
                     <div class="mb-3">
@@ -154,14 +163,25 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="editRegionId" class="form-label">Wilayah Verifikasi</label>
-                       <select name="region_id" id="editRegionId" class="form-select" required>
-                            <option value="">-- Pilih Wilayah Verifikasi --</option>
+                        <label for="editRegionId" class="form-label">
+                            Wilayah Verifikasi
+                        </label>
+
+                        <select
+                            name="region_id[]"
+                            id="editRegionId"
+                            class="form-select region-select"
+                            multiple
+                            required>
+
                             <?php if (!empty($regions)): ?>
                                 <?php foreach ($regions as $region): ?>
-                                    <option value="<?= $region['id'] ?>"><?= esc($region['name']) ?></option>
+                                    <option value="<?= esc($region['id']) ?>">
+                                        <?= esc($region['name']) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             <?php endif; ?>
+
                         </select>
                     </div>
 

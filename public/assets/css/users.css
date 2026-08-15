@@ -135,3 +135,106 @@
 .user-modal-dialog{
     max-width:380px;
 }
+/* =========================================================
+   SELECT2 - WILAYAH VERIFIKASI
+========================================================= */
+
+.region-select + .select2-container {
+    width: 100% !important;
+}
+
+.region-select + .select2-container .select2-selection--multiple {
+    min-height: 42px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px 8px;
+    transition: all .2s ease;
+}
+
+.region-select + .select2-container .select2-selection--multiple:focus,
+.region-select + .select2-container.select2-container--focus
+.select2-selection--multiple {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .10);
+    outline: none;
+}
+
+/* Placeholder */
+.region-select + .select2-container
+.select2-selection__placeholder {
+    color: #6c757d;
+}
+
+/* Wilayah yang sudah dipilih */
+.region-select + .select2-container
+.select2-selection__choice {
+    background: #eef4ff;
+    border: 1px solid #cfe0ff;
+    color: #2457a6;
+    border-radius: 6px;
+    padding: 4px 8px 4px 24px;
+    margin-top: 3px;
+    font-size: 13px;
+}
+
+/* Tombol X */
+.region-select + .select2-container
+.select2-selection__choice__remove {
+    color: #2457a6;
+    border-right: none;
+    padding: 0 6px;
+}
+
+.region-select + .select2-container
+.select2-selection__choice__remove:hover {
+    background: transparent;
+    color: #dc3545;
+}
+
+/* Dropdown */
+.select2-container .select2-dropdown {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .10);
+}
+
+/* Search */
+.select2-container .select2-search--dropdown {
+    padding: 8px;
+}
+
+.select2-container .select2-search--dropdown .select2-search__field {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px 10px;
+    outline: none;
+}
+
+.select2-container .select2-search--dropdown .select2-search__field:focus {
+    border-color: #86b7fe;
+}
+
+/* Option */
+.select2-container .select2-results__option {
+    padding: 9px 12px;
+    font-size: 14px;
+}
+
+/* Hover */
+.select2-container .select2-results__option--highlighted {
+    background: #f1f5f9;
+    color: #212529;
+}
+
+/* Selected */
+.select2-container .select2-results__option[aria-selected="true"] {
+    background: #eef4ff;
+    color: #2457a6;
+}
+
+/* Dropdown jangan terlalu tinggi */
+.select2-container .select2-results__options {
+    max-height: 250px;
+}

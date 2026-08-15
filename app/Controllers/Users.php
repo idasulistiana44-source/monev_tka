@@ -19,6 +19,7 @@ class Users extends BaseController
     public function index()
     {
         $regions = $this->regionModel->findAll();
+
         return view('layout/template', [
             'title'     => 'Users',
             'pageName'  => 'users/index',
@@ -32,21 +33,28 @@ class Users extends BaseController
 
     public function data()
     {
-        // Mengambil data user yang sudah di-JOIN dengan region di UserModel
+        // Mengambil data user beserta multiple region
         $users = $this->userModel->getUsers();
         $data  = [];
 
         foreach ($users as $user) {
             $data[] = [
-                'id'          => $user['id'],
-                'name'        => $user['name'],
-                'username'    => $user['username'],
-                'role'        => $user['role'],
-                'is_active'   => (int) $user['is_active'],
-                'institution' => $user['institution'] ?? '',
-                'region_id'   => $user['region_id'] ?? null,
-                'region_name' => $user['region_name'] ?? '-', // Diambil dari JOIN tabel region
-                'created_at'  => $user['created_at']
+                'id'           => $user['id'],
+                'name'         => $user['name'],
+                'username'     => $user['username'],
+                'role'         => $user['role'],
+                'is_active'    => (int) $user['is_active'],
+                'institution'  => $user['institution'] ?? '',
+
+                // Multiple region
+                'region_ids'   => $user['region_ids'] ?? [],
+                'region_names' => $user['region_names'] ?? [],
+                'region_name'  => $user['region_name'] ?? '-',
+
+                // Tetap dikirim untuk kompatibilitas sementara
+                'region_id'    => $user['region_id'] ?? null,
+
+                'created_at'   => $user['created_at']
             ];
         }
 
@@ -72,7 +80,15 @@ class Users extends BaseController
         $role        = (string) $this->request->getPost('role');
         $isActive    = (string) $this->request->getPost('is_active');
         $institution = trim((string) $this->request->getPost('institution'));
-        $regionId    = $this->request->getPost('region_id');
+
+        // Multiple region
+        $regionIds = $this->request->getPost('region_id');
+
+        if (!is_array($regionIds)) {
+            $regionIds = !empty($regionIds)
+                ? [$regionIds]
+                : [];
+        }
 
         $errors = [];
 
@@ -106,8 +122,14 @@ class Users extends BaseController
             $errors['institution'] = 'Institusi wajib diisi.';
         }
 
-        if (empty($regionId) || !is_numeric($regionId)) {
-            $errors['region_id'] = 'Kota/Region wajib dipilih.';
+        // Validasi multiple region
+        $regionIds = array_values(array_unique(array_filter(
+            array_map('intval', $regionIds),
+            fn($id) => $id > 0
+        )));
+
+        if (empty($regionIds)) {
+            $errors['region_id'] = 'Wilayah Verifikasi wajib dipilih.';
         }
 
         if ($errors) {
@@ -119,19 +141,53 @@ class Users extends BaseController
             ]);
         }
 
+        /*
+         * region_id lama tetap disimpan untuk sementara.
+         * Kita gunakan region pertama sebagai nilai kompatibilitas.
+         */
         $data = [
             'name'        => $name,
             'username'    => $username,
             'password'    => password_hash($password, PASSWORD_DEFAULT),
             'role'        => $role,
             'is_active'   => (int) $isActive,
-            'institution' => $institution,
-            'region_id'   => (int) $regionId // Menyimpan angka ID (misal: 10 untuk DKI, 12 untuk JP1)
+            'institution' => $institution
         ];
+
+        $db = \Config\Database::connect();
+        $db->transStart();
 
         $id = $this->userModel->createUser($data);
 
         if (!$id) {
+            $db->transRollback();
+
+            return $this->response->setStatusCode(500)->setJSON([
+                'success'  => false,
+                'message'  => 'User gagal ditambahkan.',
+                'csrfHash' => csrf_hash()
+            ]);
+        }
+
+        // Simpan semua wilayah ke user_regions
+        $regionsSaved = $this->userModel->syncUserRegions(
+            $id,
+            $regionIds
+        );
+
+        if (!$regionsSaved) {
+            $db->transRollback();
+
+            return $this->response->setStatusCode(500)->setJSON([
+                'success'  => false,
+                'message'  => 'Wilayah user gagal disimpan.',
+                'csrfHash' => csrf_hash()
+            ]);
+        }
+
+       $db->transComplete();
+
+        if ($db->transStatus() === false) {
             return $this->response->setStatusCode(500)->setJSON([
                 'success'  => false,
                 'message'  => 'User gagal ditambahkan.',
@@ -142,7 +198,10 @@ class Users extends BaseController
         return $this->response->setJSON([
             'success'  => true,
             'message'  => 'User berhasil ditambahkan.',
-            'data'     => ['id' => $id],
+            'data'     => [
+                'id'         => $id,
+                'region_ids' => $regionIds
+            ],
             'csrfHash' => csrf_hash()
         ]);
     }
@@ -154,16 +213,10 @@ class Users extends BaseController
         $rules = [
             'id'          => 'required|is_natural_no_zero',
             'name'        => 'required|min_length[3]',
+            'username'    => 'required|min_length[3]',
             'institution' => 'required',
             'role'        => 'required',
-            'is_active'   => 'required',
-            'region_id'   => [
-                'rules'  => 'required|is_natural_no_zero',
-                'errors' => [
-                    'required'           => 'Wilayah Verifikasi wajib dipilih.',
-                    'is_natural_no_zero' => 'Wilayah Verifikasi tidak valid.'
-                ]
-            ]
+            'is_active'   => 'required'
         ];
 
         if (!$this->validate($rules)) {
@@ -175,27 +228,87 @@ class Users extends BaseController
             ]);
         }
 
+        // Multiple region
+        $regionIds = $this->request->getPost('region_id');
+
+        if (!is_array($regionIds)) {
+            $regionIds = !empty($regionIds)
+                ? [$regionIds]
+                : [];
+        }
+
+        $regionIds = array_values(array_unique(array_filter(
+            array_map('intval', $regionIds),
+            fn($regionId) => $regionId > 0
+        )));
+
+        if (empty($regionIds)) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'success'  => false,
+                'message'  => 'Wilayah Verifikasi wajib dipilih.',
+                'errors'   => [
+                    'region_id' => 'Wilayah Verifikasi wajib dipilih.'
+                ],
+                'csrfHash' => csrf_hash()
+            ]);
+        }
+
         $data = [
             'name'        => trim((string) $this->request->getPost('name')),
             'role'        => $this->request->getPost('role'),
+            'username'    => trim((string) $this->request->getPost('username')),
             'is_active'   => (int) $this->request->getPost('is_active'),
-            'institution' => trim((string) $this->request->getPost('institution')),
-            'region_id'   => (int) $this->request->getPost('region_id'),
+            'institution' => trim((string) $this->request->getPost('institution'))
         ];
 
-        $updated = $this->userModel->update($id, $data);
+            $db = \Config\Database::connect();
+            $db->transStart();
 
-        if ($updated) {
+        $updated = $this->userModel->updateUser($id, $data);
+
+        if (!$updated) {
+            $db->transRollback();
+
             return $this->response->setJSON([
-                'success'  => true,
-                'message'  => 'Data user berhasil diperbarui.',
+                'success'  => false,
+                'message'  => 'Gagal memperbarui data user.',
+                'csrfHash' => csrf_hash()
+            ]);
+        }
+
+        // Sinkronkan multiple region
+        $regionsSaved = $this->userModel->syncUserRegions(
+            $id,
+            $regionIds
+        );
+
+        if (!$regionsSaved) {
+            $db->transRollback();
+
+            return $this->response->setStatusCode(500)->setJSON([
+                'success'  => false,
+                'message'  => 'Wilayah user gagal diperbarui.',
+                'csrfHash' => csrf_hash()
+            ]);
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return $this->response->setJSON([
+                'success'  => false,
+                'message'  => 'Gagal memperbarui data user.',
                 'csrfHash' => csrf_hash()
             ]);
         }
 
         return $this->response->setJSON([
-            'success'  => false,
-            'message'  => 'Gagal memperbarui data user.',
+            'success'  => true,
+            'message'  => 'Data user berhasil diperbarui.',
+            'data'     => [
+                'id'         => $id,
+                'region_ids' => $regionIds
+            ],
             'csrfHash' => csrf_hash()
         ]);
     }
@@ -325,7 +438,7 @@ class Users extends BaseController
     {
         $id = $this->request->getPost('id');
 
-        if ($id && $this->userModel->delete($id)) {
+        if ($id && $this->userModel->deleteUser($id)) {
             return $this->response->setJSON([
                 'success'  => true,
                 'message'  => 'User berhasil dihapus',
