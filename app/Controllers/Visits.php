@@ -414,55 +414,53 @@ class Visits extends BaseController
         }
     }
 
-    public function complete($id = null)
+  public function complete($id = null)
     {
         try {
             if (!$id) {
-                return $this->response->setJSON([
-                    'status'  => false,
-                    'message' => 'ID Visit tidak valid.'
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => false,
+                    'message' => 'ID Visit tidak valid.',
+                    'csrf_hash' => csrf_hash()
                 ]);
             }
-
             $visit = $this->visitModel->getDetail($id);
             if (!$visit) {
-                return $this->response->setJSON([
-                    'status'  => false,
-                    'message' => 'Kegiatan Monev tidak ditemukan.'
+                return $this->response->setStatusCode(404)->setJSON([
+                    'status' => false,
+                    'message' => 'Kegiatan Monev tidak ditemukan.',
+                    'csrf_hash' => csrf_hash()
                 ]);
             }
-
-            // Cek Keamanan Akses
             if (!$this->isUserAuthorizedForVisit($visit)) {
                 return $this->response->setStatusCode(403)->setJSON([
-                    'status'  => false,
-                    'message' => 'Anda tidak berhak menyelesaikan kegiatan Monev ini.'
+                    'status' => false,
+                    'message' => 'Anda tidak berhak menyelesaikan kegiatan Monev ini.',
+                    'csrf_hash' => csrf_hash()
                 ]);
             }
-
-            $updated = $this->visitModel->update($id, [
-                'status'       => 'COMPLETED',
-                'completed_at' => date('Y-m-d H:i:s')
-            ]);
-
-            if (!$updated) {
-                return $this->response->setJSON([
-                    'status'  => false,
-                    'message' => 'Gagal memperbarui status visitasi di database.'
+            $result = $this->visitModel->completeVisit((int) $id);
+            log_message('error', 'COMPLETE RESULT: ' . json_encode($result));
+            if (!$result['status']) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => false,
+                    'message' => $result['message'] ?? 'Kegiatan Monev belum dapat diselesaikan.',
+                    'missing' => $result['missing'] ?? [],
+                    'csrf_hash' => csrf_hash()
                 ]);
             }
-
             return $this->response->setJSON([
-                'status'    => true,
-                'message'   => 'Kegiatan Monev berhasil diselesaikan.',
+                'status' => true,
+                'message' => $result['message'] ?? 'Kegiatan Monev berhasil diselesaikan.',
+                'visit_status' => 'COMPLETED',
                 'csrf_hash' => csrf_hash()
             ]);
-
-        } catch (\Exception $e) {
-            log_message('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            log_message('error', 'Complete Monev: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
-                'status'  => false,
-                'message' => 'Error Server: ' . $e->getMessage()
+                'status' => false,
+                'message' => 'Error Server: ' . $e->getMessage(),
+                'csrf_hash' => csrf_hash()
             ]);
         }
     }
@@ -471,57 +469,162 @@ class Visits extends BaseController
     {
         try {
             if (!$id) {
-                return $this->response->setStatusCode(400)->setJSON([
-                    'status'    => false,
-                    'message'   => 'ID Visitasi tidak valid.',
-                    'csrf_hash' => csrf_hash()
-                ]);
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'status' => false,
+                        'message' => 'ID Visitasi tidak valid.',
+                        'csrf_hash' => csrf_hash()
+                    ]);
             }
-
             $visit = $this->visitModel->getDetail($id);
             if (!$visit) {
-                return $this->response->setStatusCode(404)->setJSON([
-                    'status'    => false,
-                    'message'   => 'Kegiatan Monev tidak ditemukan.',
-                    'csrf_hash' => csrf_hash()
-                ]);
+                return $this->response
+                    ->setStatusCode(404)
+                    ->setJSON([
+                        'status' => false,
+                        'message' => 'Kegiatan Monev tidak ditemukan.',
+                        'csrf_hash' => csrf_hash()
+                    ]);
             }
-
-            // Cek Keamanan Akses
-            if (!$this->isUserAuthorizedForVisit($visit)) {
-                return $this->response->setStatusCode(403)->setJSON([
-                    'status'    => false,
-                    'message'   => 'Anda tidak berhak menyimpan jawaban untuk kegiatan Monev ini.',
-                    'csrf_hash' => csrf_hash()
-                ]);
-            }
-
             $answers = $this->request->getPost('answers');
-
-            if (is_string($answers)) {
-                $answers = json_decode($answers, true) ?? [];
+            if (!is_array($answers)) {
+                $answers = [];
             }
+            $uploadedFiles = [];
+            $oldFilesToDelete = [];
+            $files = $this->request->getFiles();
+            if (!empty($files['files']) && is_array($files['files'])) {
+                foreach ($files['files'] as $questionId => $file) {
+                    if (!$file || !$file->isValid()) {
+                        if ($file && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+                            throw new \RuntimeException('Upload file gagal: ' . $file->getErrorString());
+                        }
+                        continue;
+                    }
+                    $questionId = (int) $questionId;
+                    if ($questionId <= 0) {
+                        continue;
+                    }
+                    $instrument = $this->visitModel->db
+                        ->table('instruments')
+                        ->select('id, answer_type')
+                        ->where('id', $questionId)
+                        ->get()
+                        ->getRowArray();
+                    if (!$instrument) {
+                        throw new \RuntimeException('Instrumen tidak ditemukan untuk file yang diupload.');
+                    }
+                    $type = strtolower($instrument['answer_type'] ?? '');
+                    $schoolName = $visit['school_name'] ?? 'SEKOLAH';
+                    $schoolName = strtoupper(trim($schoolName));
+                    $schoolName = preg_replace('/[^A-Z0-9]+/i', '_', $schoolName);
+                    $schoolName = trim($schoolName, '_');
+                    $oldAnswer = $this->visitModel->db
+                        ->table('visit_answers')
+                        ->select('answer')
+                        ->where('visit_id', $id)
+                        ->where('question_id', $questionId)
+                        ->get()
+                        ->getRowArray();
+                    if ($type === 'pdf') {
+                        $maxSize = 5 * 1024 * 1024;
+                        if ($file->getSize() > $maxSize) {
+                            throw new \RuntimeException('Ukuran PDF maksimal 5 MB.');
+                        }
+                        if ($file->getMimeType() !== 'application/pdf') {
+                            throw new \RuntimeException('File harus berupa PDF.');
+                        }
+                        $extension = strtolower($file->guessExtension());
+                        if ($extension !== 'pdf') {
+                            throw new \RuntimeException('Ekstensi file harus .pdf.');
+                        }
+                        $uploadPath = FCPATH . 'uploads/monev/berkas/';
+                        $baseUrl = base_url('uploads/monev/berkas/');
+                        $baseName = $schoolName . '_BERKAS_';
+                    } elseif ($type === 'photo') {
+                        $maxSize = 3 * 1024 * 1024;
+                        if ($file->getSize() > $maxSize) {
+                            throw new \RuntimeException('Ukuran foto maksimal 3 MB.');
+                        }
+                        $mime = $file->getMimeType();
+                        $allowedMime = ['image/jpeg', 'image/png'];
+                        if (!in_array($mime, $allowedMime, true)) {
+                            throw new \RuntimeException('Foto harus berformat JPG, JPEG, atau PNG.');
+                        }
+                        $extension = strtolower($file->guessExtension());
+                        if (!in_array($extension, ['jpg', 'jpeg', 'png'], true)) {
+                            throw new \RuntimeException('Ekstensi foto tidak diperbolehkan.');
+                        }
+                        if ($extension === 'jpeg') {
+                            $extension = 'jpg';
+                        }
+                        $uploadPath = FCPATH . 'uploads/monev/foto/';
+                        $baseUrl = base_url('uploads/monev/foto/');
+                        $baseName = $schoolName . '_FOTO_';
+                    } else {
+                        throw new \RuntimeException('Instrumen tersebut bukan instrumen upload file.');
+                    }
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0775, true);
+                    }
+                    $counter = 1;
 
+                    if ($oldAnswer && !empty($oldAnswer['answer'])) {
+                        $oldPath = parse_url($oldAnswer['answer'], PHP_URL_PATH);
+
+                        if ($oldPath) {
+                            $oldFileName = basename($oldPath);
+
+                            if (preg_match('/_(\d+)\.[^.]+$/', $oldFileName, $matches)) {
+                                $counter = ((int) $matches[1]) + 1;
+                            }
+                        }
+                    }
+
+                    $newName = $baseName . $counter . '.' . $extension;
+                    $newFilePath = $uploadPath . $newName;
+                    $file->move($uploadPath, $newName, true);
+                    $fileUrl = $baseUrl . $newName;
+                    $uploadedFiles[$questionId] = $fileUrl;
+                    if ($oldAnswer && !empty($oldAnswer['answer'])) {
+                        $oldPath = parse_url($oldAnswer['answer'], PHP_URL_PATH);
+                        if ($oldPath) {
+                            $oldFilePath = FCPATH . ltrim($oldPath, '/');
+                            if (is_file($oldFilePath) && realpath($oldFilePath) !== realpath($newFilePath)) {
+                                $oldFilesToDelete[] = $oldFilePath;
+                            }
+                        }
+                    }
+                }
+            }
+            foreach ($uploadedFiles as $questionId => $fileUrl) {
+                $answers[$questionId] = $fileUrl;
+            }
             $result = $this->visitModel->saveAnswers($id, $answers);
-
+            foreach ($oldFilesToDelete as $oldFilePath) {
+                if (is_file($oldFilePath)) {
+                    unlink($oldFilePath);
+                }
+            }
             return $this->response->setJSON([
-                'status'       => true,
-                'message'      => 'Draft jawaban berhasil disimpan.',
+                'status' => true,
+                'message' => 'Draft jawaban berhasil disimpan.',
                 'visit_status' => $result['status'] ?? 'IN_PROGRESS',
-                'csrf_hash'    => csrf_hash()
-            ]);
-
-        } catch (\Throwable $th) {
-            log_message('error', 'Error saveAnswers: ' . $th->getMessage());
-
-            return $this->response->setStatusCode(500)->setJSON([
-                'status'    => false,
-                'message'   => 'Server Error: ' . $th->getMessage(),
                 'csrf_hash' => csrf_hash()
             ]);
+        } catch (\Throwable $th) {
+            log_message('error', 'Error saveAnswers: ' . $th->getMessage());
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status' => false,
+                    'message' => $th->getMessage(),
+                    'csrf_hash' => csrf_hash()
+                ]);
         }
     }
-
+    
     protected function isValidDate($date)
     {
         $dateObject = \DateTime::createFromFormat('Y-m-d', $date);

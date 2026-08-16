@@ -108,91 +108,264 @@
         let html = '';
 
         if (type === 'textarea') {
-            html = '<textarea class="form-control instrument-answer" data-id="' + id + '" rows="4">' + escapeHtml(answer) + '</textarea>';
+
+            html = '<textarea class="form-control instrument-answer" ' +
+                'data-id="' + id + '" rows="4">' +
+                escapeHtml(answer) +
+                '</textarea>';
+
         } else if (type === 'number') {
-            html = '<input type="number" class="form-control instrument-answer" data-id="' + id + '" value="' + escapeAttr(answer) + '">';
+
+            html = '<input type="number" class="form-control instrument-answer" ' +
+                'data-id="' + id + '" ' +
+                'value="' + escapeAttr(answer) + '">';
+
         } else if (type === 'date') {
-            html = '<input type="date" class="form-control instrument-answer" data-id="' + id + '" value="' + escapeAttr(answer) + '">';
+
+            html = '<input type="date" class="form-control instrument-answer" ' +
+                'data-id="' + id + '" ' +
+                'value="' + escapeAttr(answer) + '">';
+
         } else if (type === 'yesno') {
+
             html += '<div class="instrument-options d-flex gap-3">';
-            html += '<label class="form-check-label"><input type="radio" name="' + name + '" class="form-check-input instrument-answer" data-id="' + id + '" value="Ya" ' + (answer === 'Ya' ? 'checked' : '') + '> <span>Ya</span></label>';
-            html += '<label class="form-check-label"><input type="radio" name="' + name + '" class="form-check-input instrument-answer" data-id="' + id + '" value="Tidak" ' + (answer === 'Tidak' ? 'checked' : '') + '> <span>Tidak</span></label>';
+
+            html += '<label class="form-check-label">' +
+                '<input type="radio" name="' + name + '" ' +
+                'class="form-check-input instrument-answer" ' +
+                'data-id="' + id + '" value="Ya" ' +
+                (answer === 'Ya' ? 'checked' : '') +
+                '> <span>Ya</span></label>';
+
+            html += '<label class="form-check-label">' +
+                '<input type="radio" name="' + name + '" ' +
+                'class="form-check-input instrument-answer" ' +
+                'data-id="' + id + '" value="Tidak" ' +
+                (answer === 'Tidak' ? 'checked' : '') +
+                '> <span>Tidak</span></label>';
+
             html += '</div>';
+
         } else if (type === 'radio') {
+
             html += '<div class="instrument-options d-flex flex-column gap-2">';
+
             $.each(item.options || [], function (index, option) {
-                html += '<label class="form-check-label"><input type="radio" name="' + name + '" class="form-check-input instrument-answer" data-id="' + id + '" value="' + escapeAttr(option) + '" ' + (String(answer) === String(option) ? 'checked' : '') + '> <span>' + escapeHtml(option) + '</span></label>';
+                html += '<label class="form-check-label">' +
+                    '<input type="radio" name="' + name + '" ' +
+                    'class="form-check-input instrument-answer" ' +
+                    'data-id="' + id + '" ' +
+                    'value="' + escapeAttr(option) + '" ' +
+                    (String(answer) === String(option) ? 'checked' : '') +
+                    '> <span>' + escapeHtml(option) + '</span></label>';
             });
+
             html += '</div>';
+
         } else if (type === 'checkbox') {
+
             let values = [];
+
             if (Array.isArray(answer)) {
                 values = answer;
             } else if (typeof answer === 'string' && answer.trim() !== '') {
                 try {
                     values = JSON.parse(answer);
+
                     if (!Array.isArray(values)) {
                         values = [answer];
                     }
+
                 } catch (e) {
                     values = [answer];
                 }
             }
 
             html += '<div class="instrument-options d-flex flex-column gap-2">';
+
             $.each(item.options || [], function (index, option) {
-                html += '<label class="form-check-label"><input type="checkbox" class="form-check-input instrument-answer-checkbox" data-id="' + id + '" value="' + escapeAttr(option) + '" ' + (values.indexOf(option) !== -1 ? 'checked' : '') + '> <span>' + escapeHtml(option) + '</span></label>';
+                html += '<label class="form-check-label">' +
+                    '<input type="checkbox" ' +
+                    'class="form-check-input instrument-answer-checkbox" ' +
+                    'data-id="' + id + '" ' +
+                    'value="' + escapeAttr(option) + '" ' +
+                    (values.indexOf(option) !== -1 ? 'checked' : '') +
+                    '> <span>' + escapeHtml(option) + '</span></label>';
             });
+
             html += '</div>';
-        } else if (type === 'select') {
-            html = '<select class="form-select instrument-answer" data-id="' + id + '"><option value="">Pilih jawaban</option>';
-            $.each(item.options || [], function (index, option) {
-                html += '<option value="' + escapeAttr(option) + '" ' + (String(answer) === String(option) ? 'selected' : '') + '>' + escapeHtml(option) + '</option>';
-            });
-            html += '</select>';
-        } else {
-            html = '<input type="text" class="form-control instrument-answer" data-id="' + id + '" value="' + escapeAttr(answer) + '">';
-        }
+
+            } else if (type === 'select') {
+
+                html = '<select class="form-select instrument-answer" data-id="' + id + '">' +
+                    '<option value="">Pilih jawaban</option>';
+
+                $.each(item.options || [], function (index, option) {
+                    html += '<option value="' + escapeAttr(option) + '" ' +
+                        (String(answer) === String(option) ? 'selected' : '') +
+                        '>' + escapeHtml(option) + '</option>';
+                });
+
+                html += '</select>';
+
+            } else if (type === 'pdf') {
+
+                html = '<input type="file" ' +
+                    'class="form-control instrument-answer" ' +
+                    'data-id="' + id + '" ' +
+                    'accept=".pdf,application/pdf">';
+
+                if (answer) {
+                    html += '<div class="mt-2">' +
+                        '<a href="' + escapeAttr(answer) + '" ' +
+                        'target="_blank" ' +
+                        'class="btn btn-sm btn-outline-danger uploaded-file">' +
+                        '<i class="fas fa-file-pdf me-1"></i>' +
+                        'Lihat Berkas PDF' +
+                        '</a>' +
+                        '</div>';
+                }
+
+            } else if (type === 'photo') {
+
+                html = '<input type="file" ' +
+                    'class="form-control instrument-answer" ' +
+                    'data-id="' + id + '" ' +
+                    'accept=".jpg,.jpeg,.png,image/jpeg,image/png">';
+
+                if (answer) {
+                    html += '<div class="mt-2">' +
+                        '<a href="' + escapeAttr(answer) + '" ' +
+                        'target="_blank" ' +
+                        'class="uploaded-photo d-inline-block" ' +
+                        'title="Klik untuk melihat foto ukuran penuh">' +
+                        '<img src="' + escapeAttr(answer) + '" ' +
+                        'alt="Foto dokumentasi" ' +
+                        'style="width:220px;height:160px;object-fit:cover;border-radius:8px;border:1px solid #ddd;cursor:pointer;">' +
+                        '</a>' +
+                        '</div>';
+                }
+
+            } else {
+
+                html = '<input type="text" class="form-control instrument-answer" ' +
+                    'data-id="' + id + '" ' +
+                    'value="' + escapeAttr(answer) + '">';
+            }
 
         return html;
     }
 
     function bindAnswerEvents() {
-        $('.instrument-answer, .instrument-answer-checkbox').on('change input', updateProgress);
 
-        $(document).off('keydown', 'input[type="number"]').on('keydown', 'input[type="number"]', function (e) {
-            if (['e', 'E', '-', '+', '.', ',', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
-                e.preventDefault();
-            }
-        });
+        $('.instrument-answer, .instrument-answer-checkbox')
+            .on('change input', updateProgress);
 
-        $(document).off('wheel', 'input[type="number"]').on('wheel', 'input[type="number"]', function () {
-            $(this).blur();
-        });
+        $(document)
+            .off('change.instrumentFile', '.instrument-answer[type="file"]')
+            .on('change.instrumentFile', '.instrument-answer[type="file"]', function () {
 
-        $(document).off('input', 'input[type="number"]').on('input', 'input[type="number"]', function () {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
+                const file = this.files && this.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                const accept = $(this).attr('accept') || '';
+
+                const isPdf = accept.includes('.pdf');
+
+                const maxSize = isPdf
+                    ? 5 * 1024 * 1024
+                    : 3 * 1024 * 1024;
+
+                const maxMb = isPdf ? 5 : 3;
+
+                if (file.size > maxSize) {
+
+                    showError(
+                        'Ukuran file terlalu besar. Maksimal ' +
+                        maxMb + ' MB.'
+                    );
+
+                    $(this).val('');
+
+                    updateProgress();
+
+                    return;
+                }
+            });
+
+        $(document).off('keydown', 'input[type="number"]')
+            .on('keydown', 'input[type="number"]', function (e) {
+
+                if ([
+                    'e',
+                    'E',
+                    '-',
+                    '+',
+                    '.',
+                    ',',
+                    'ArrowUp',
+                    'ArrowDown'
+                ].includes(e.key)) {
+
+                    e.preventDefault();
+                }
+            });
+
+        $(document).off('wheel', 'input[type="number"]')
+            .on('wheel', 'input[type="number"]', function () {
+
+                $(this).blur();
+
+            });
+
+        $(document).off('input', 'input[type="number"]')
+            .on('input', 'input[type="number"]', function () {
+
+                this.value = this.value.replace(/[^0-9]/g, '');
+
+            });
     }
 
-    function collectAnswers() {
+   function collectAnswers() {
+
         const answers = {};
+        const files = {};
 
         $('.instrument-answer').each(function () {
+
             const questionId = $(this).data('id');
+
             if (!questionId) return;
 
-            if ($(this).is(':radio')) {
+            if ($(this).is(':file')) {
+
+                const file = this.files && this.files.length
+                    ? this.files[0]
+                    : null;
+
+                if (file) {
+                    files[questionId] = file;
+                }
+
+            } else if ($(this).is(':radio')) {
+
                 if ($(this).is(':checked')) {
                     answers[questionId] = $(this).val();
                 }
+
             } else {
+
                 answers[questionId] = $(this).val();
             }
         });
 
         $('.instrument-answer-checkbox').each(function () {
+
             const questionId = $(this).data('id');
+
             if (!questionId) return;
 
             if (!answers[questionId]) {
@@ -204,32 +377,82 @@
             }
         });
 
-        return answers;
+        return {
+            answers: answers,
+            files: files
+        };
     }
 
     function updateProgress() {
+
         let total = 0;
         let answered = 0;
 
-        const items = $('.instrument-item[data-required="1"]').length > 0 
-                    ? $('.instrument-item[data-required="1"]') 
-                    : $('.instrument-item'); 
+        const items = $('.instrument-item[data-required="1"]').length > 0
+            ? $('.instrument-item[data-required="1"]')
+            : $('.instrument-item');
 
         items.each(function () {
+
             total++;
+
             const item = $(this);
+
             let hasValue = false;
 
+            // CHECKBOX
             const checkbox = item.find('.instrument-answer-checkbox');
+
             if (checkbox.length) {
+
                 hasValue = checkbox.filter(':checked').length > 0;
+
             } else {
+
+                // RADIO
                 const radio = item.find('.instrument-answer:radio');
+
                 if (radio.length) {
+
                     hasValue = radio.filter(':checked').length > 0;
+
                 } else {
-                    const val = item.find('.instrument-answer').first().val();
-                    hasValue = val !== null && String(val).trim() !== '';
+
+                    const input = item.find('.instrument-answer').first();
+
+                    // =========================
+                    // FILE PDF / FOTO
+                    // =========================
+                    if (input.is(':file')) {
+
+                        // File baru dipilih
+                        if (
+                            input[0] &&
+                            input[0].files &&
+                            input[0].files.length > 0
+                        ) {
+                            hasValue = true;
+                        }
+
+                        // File lama sudah tersimpan
+                        if (!hasValue) {
+
+                            if (
+                                item.find('.uploaded-file').length > 0 ||
+                                item.find('.uploaded-photo').length > 0
+                            ) {
+                                hasValue = true;
+                            }
+                        }
+
+                    } else {
+
+                        const val = input.val();
+
+                        hasValue =
+                            val !== null &&
+                            String(val).trim() !== '';
+                    }
                 }
             }
 
@@ -238,45 +461,139 @@
             }
         });
 
-        const percent = total ? Math.round((answered / total) * 100) : 0;
+        const percent = total
+            ? Math.round((answered / total) * 100)
+            : 0;
+
         $('#answeredCount').text(answered);
         $('#requiredCount').text(total);
         $('#progressText').text(percent + '%');
         $('#progressBar').css('width', percent + '%');
     }
+   
 
-    function saveDraft(callback) {
+  function saveDraft(callback) {
+
         if (saving) return;
+
         saving = true;
 
-        const answers = collectAnswers();
+        const collected = collectAnswers();
+
+        const answers = collected.answers || {};
+        const files = collected.files || {};
+
         const btn = $('#btnSaveDraft');
         const old = btn.html();
 
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
+        btn.prop('disabled', true)
+            .html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
 
-        ajax('visits/save-answers/' + VISIT_ID, {
+        const formData = new FormData();
+
+        // Jawaban biasa
+        $.each(answers, function (questionId, answer) {
+
+            if (Array.isArray(answer)) {
+
+                formData.append(
+                    'answers[' + questionId + ']',
+                    JSON.stringify(answer)
+                );
+
+            } else {
+
+                formData.append(
+                    'answers[' + questionId + ']',
+                    answer
+                );
+            }
+        });
+
+        // File
+        $.each(files, function (questionId, file) {
+
+            formData.append(
+                'files[' + questionId + ']',
+                file
+            );
+        });
+
+        // CSRF
+        if (
+            window.VISITS_FORM_CSRF_NAME &&
+            window.VISITS_FORM_CSRF_HASH
+        ) {
+
+            formData.append(
+                window.VISITS_FORM_CSRF_NAME,
+                window.VISITS_FORM_CSRF_HASH
+            );
+        }
+
+        $.ajax({
+
+            url: BASE_URL + 'visits/save-answers/' + VISIT_ID,
+
             type: 'POST',
-            data: { answers: answers }
-        }).done(function (res) {
+
+            data: formData,
+
+            dataType: 'json',
+
+            processData: false,
+
+            contentType: false
+
+        })
+        .done(function (res) {
+            if (res && res.csrf_hash) {
+                window.VISITS_FORM_CSRF_HASH = res.csrf_hash;
+            }
+
             if (!res || res.status === false) {
-                const msg = res && res.message ? res.message : 'Draft gagal disimpan.';
-                showError(msg);
-                if (typeof callback === 'function') callback(false);
+                showError(
+                    res && res.message
+                        ? res.message
+                        : 'Draft gagal disimpan.'
+                );
+
+                if (typeof callback === 'function') {
+                    callback(false);
+                }
+
                 return;
             }
+
+            updateProgress();
 
             if (typeof callback === 'function') {
                 callback(true);
             } else {
-                showSuccess(res.message || 'Draft berhasil disimpan.', true);
+                showSuccess(
+                    res.message || 'Draft berhasil disimpan.',
+                    true
+                );
             }
-        }).fail(function (xhr) {
-            handleAjaxError(xhr, 'Gagal menyimpan Draft.');
-            if (typeof callback === 'function') callback(false);
-        }).always(function () {
+        })
+        .fail(function (xhr) {
+
+            handleAjaxError(
+                xhr,
+                'Gagal menyimpan Draft.'
+            );
+
+            if (typeof callback === 'function') {
+                callback(false);
+            }
+
+        })
+        .always(function () {
+
             saving = false;
-            btn.prop('disabled', false).html(old);
+
+            btn.prop('disabled', false)
+                .html(old);
         });
     }
     function updateStatus(status) {
@@ -352,78 +669,105 @@
     }
 
     // READY STATE & EVENT BINDING
-    $(document).ready(function () {
+   $(document).ready(function () {
         loadForm();
 
-        // 1. Simpan Draft
         $('#btnSaveDraft').off('click').on('click', function (e) {
             e.preventDefault();
             saveDraft();
         });
 
-        // 2. Trigger Buka Modal Selesaikan Monev
         $('#btnCompleteVisit, #btnSubmitVisits').off('click').on('click', function (e) {
             e.preventDefault();
 
             $('#submitVisitId').val(VISIT_ID);
+
             if (typeof window.SCHOOL_NAME !== 'undefined') {
                 $('#submitVisitSchool').text(window.SCHOOL_NAME);
             }
 
             const modalEl = document.getElementById('submitVisitModal');
+
             if (modalEl) {
                 const submitModal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 submitModal.show();
             }
         });
 
-        // 3. Konfirmasi Selesai di dalam Modal
-       // Konfirmasi Selesai di dalam Modal
         $('#btnConfirmSubmitVisit').off('click').on('click', function () {
             const btn = $(this);
             const oldHtml = btn.html();
 
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Memproses...');
+            btn.prop('disabled', true)
+                .html('<i class="fas fa-spinner fa-spin me-1"></i>Memproses...');
 
-            // 1. Simpan Jawaban / Draft terlebih dahulu
             saveDraft(function (saved) {
+
                 if (!saved) {
                     btn.prop('disabled', false).html(oldHtml);
                     return;
                 }
 
-                // 2. Siapkan Payload + CSRF Token terbaru yang diperbarui oleh saveDraft
                 const postData = {};
-                if (window.VISITS_FORM_CSRF_NAME && window.VISITS_FORM_CSRF_HASH) {
-                    postData[window.VISITS_FORM_CSRF_NAME] = window.VISITS_FORM_CSRF_HASH;
+
+                if (
+                    window.VISITS_FORM_CSRF_NAME &&
+                    window.VISITS_FORM_CSRF_HASH
+                ) {
+                    postData[window.VISITS_FORM_CSRF_NAME] =
+                        window.VISITS_FORM_CSRF_HASH;
                 }
 
-                // 3. Jalankan AJAX Complete / Submit
                 ajax('visits/complete/' + VISIT_ID, {
                     type: 'POST',
                     data: postData
-                }).done(function (res) {
-                    const modalEl = document.getElementById('submitVisitModal');
-                    if (modalEl) {
-                        const modalInstance = bootstrap.Modal.getInstance(modalEl);
-                        if (modalInstance) modalInstance.hide();
-                    }
+                })
+                .done(function (res) {
 
                     if (!res || res.status === false) {
-                        let msg = res && res.message ? res.message : 'Gagal menyelesaikan kegiatan.';
+
+                        let msg = res && res.message
+                            ? res.message
+                            : 'Gagal menyelesaikan kegiatan.';
+
                         if (res.missing && res.missing.length) {
-                            msg += '\n\nInstrumen belum terisi:\n' + res.missing.join('\n');
+                            msg += '\n\nInstrumen belum terisi:\n' +
+                                res.missing.join('\n');
                         }
+
                         showError(msg);
                         return;
                     }
 
-                    showSuccess(res.message || 'Kegiatan berhasil diselesaikan.', true);
+                    const modalEl =
+                        document.getElementById('submitVisitModal');
 
-                }).fail(function (xhr) {
-                    handleAjaxError(xhr, 'Terjadi kesalahan pada server saat menyelesaikan kegiatan.');
-                }).always(function () {
-                    btn.prop('disabled', false).html(oldHtml);
+                    if (modalEl) {
+                        const modalInstance =
+                            bootstrap.Modal.getInstance(modalEl);
+
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+                    }
+
+                    window.location.href =
+                        BASE_URL.replace(/\/+$/, '') + '/visits';
+
+                })
+                .fail(function (xhr) {
+
+                    handleAjaxError(
+                        xhr,
+                        'Terjadi kesalahan pada server saat menyelesaikan kegiatan.'
+                    );
+
+                })
+                .always(function () {
+
+                    btn.prop('disabled', false)
+                        .html(oldHtml);
+
                 });
             });
         });

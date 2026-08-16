@@ -105,6 +105,8 @@
                                 <option value="radio">Radio</option>
                                 <option value="checkbox">Checkbox</option>
                                 <option value="yesno">Ya / Tidak</option>
+                                <option value="pdf">Upload PDF</option>
+                                <option value="photo">Upload Foto</option>
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">

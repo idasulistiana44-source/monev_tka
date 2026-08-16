@@ -8,7 +8,15 @@ class VisitModel extends Model
     protected $table         = 'visits';
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
-    protected $allowedFields = ['school_id', 'visit_date', 'status', 'notes'];
+    protected $allowedFields = [
+        'school_id',
+        'visit_date',
+        'officer_id',
+        'status',
+        'completed_at',
+        'created_at',
+        'updated_at'
+    ];
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
@@ -183,7 +191,10 @@ class VisitModel extends Model
 
     public function updateStatus($id, $status)
     {
-        return $this->update((int)$id, ['status' => $status]);
+        log_message('error', 'UPDATE STATUS VISIT: ID=' . $id . ' STATUS=' . $status);
+        $result = $this->update((int)$id, ['status' => $status]);
+        log_message('error', 'UPDATE STATUS RESULT: ' . ($result ? 'TRUE' : 'FALSE'));
+        return $result;
     }
 
     public function deleteVisit($id)
@@ -329,10 +340,13 @@ class VisitModel extends Model
         }
 
         // Update status visitasi
-        $this->update($visitId, [
-            'status'     => 'IN_PROGRESS',
-            'updated_at' => $now
-        ]);
+      $visit = $this->find((int) $visitId);
+        if ($visit && $visit['status'] !== 'COMPLETED') {
+            $this->update((int) $visitId, [
+                'status' => 'IN_PROGRESS',
+                'updated_at' => $now
+            ]);
+        }
 
         $db->transComplete();
 

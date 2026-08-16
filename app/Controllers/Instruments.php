@@ -98,7 +98,7 @@ class Instruments extends BaseController
         if($question===''){
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Pertanyaan wajib diisi.']);
         }
-        $allowedTypes=['text','textarea','number','date','select','radio','checkbox','yesno'];
+        $allowedTypes=['text','textarea','number','date','select','radio','checkbox','yesno','pdf','photo'];
         if(!in_array($answerType,$allowedTypes,true)){
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Jenis jawaban tidak valid.']);
         }
@@ -149,7 +149,7 @@ class Instruments extends BaseController
         if($question===''){
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Pertanyaan wajib diisi.']);
         }
-        $allowedTypes=['text','textarea','number','date','select','radio','checkbox','yesno'];
+        $allowedTypes=['text','textarea','number','date','select','radio','checkbox','yesno','pdf','photo'];
         if(!in_array($answerType,$allowedTypes,true)){
             return $this->response->setStatusCode(422)->setJSON(['success'=>false,'message'=>'Jenis jawaban tidak valid.']);
         }

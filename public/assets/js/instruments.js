@@ -436,7 +436,9 @@ $(document).ready(function(){
             select:'Select',
             radio:'Radio',
             checkbox:'Checkbox',
-            yesno:'Ya / Tidak'
+            yesno:'Ya / Tidak',
+            pdf:'Upload PDF',
+            photo:'Upload Foto'
         };
         return labels[type]||type;
     }
