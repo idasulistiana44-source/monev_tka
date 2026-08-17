@@ -83,3 +83,45 @@
 .btn-remove-officer:hover{color:#dc2626}
 .visit-no-team{font-size:12px;color:#94a3b8;padding:8px 0;display:inline-block}
 }
+/* css modal */
+#visitAddModal .modal-dialog{
+    max-width:800px;
+    width:100%;
+    height:calc(100vh - 2rem);
+    margin:1rem auto;
+}
+#visitAddModal .modal-content{
+    height:100%;
+    max-height:100%;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden!important;
+}
+#visitAddModal .modal-header{
+    flex:none;
+}
+#visitAddModal .modal-body{
+    height:calc(100vh - 220px)!important;
+    max-height:calc(100vh - 220px)!important;
+    flex:none!important;
+    overflow-y:scroll!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+}
+#visitAddModal .modal-footer{
+    flex:none;
+    background:#fff;
+    position:relative;
+    z-index:10;
+}
+#visitAddModal .select2-container{
+    width:100%!important;
+}
+
+#visitAddModal .select2-dropdown{
+    display:none!important;
+}
+#visitAddModal .select2-container--open .select2-dropdown{
+    display:block!important;
+}

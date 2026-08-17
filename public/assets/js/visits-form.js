@@ -209,42 +209,34 @@
                 html += '</select>';
 
             } else if (type === 'pdf') {
-
-                html = '<input type="file" ' +
-                    'class="form-control instrument-answer" ' +
-                    'data-id="' + id + '" ' +
-                    'accept=".pdf,application/pdf">';
-
-                if (answer) {
-                    html += '<div class="mt-2">' +
-                        '<a href="' + escapeAttr(answer) + '" ' +
-                        'target="_blank" ' +
-                        'class="btn btn-sm btn-outline-danger uploaded-file">' +
-                        '<i class="fas fa-file-pdf me-1"></i>' +
-                        'Lihat Berkas PDF' +
-                        '</a>' +
-                        '</div>';
-                }
+                    html='<input type="file" class="form-control instrument-answer" data-id="'+id+'" accept=".pdf,application/pdf">';
+                    html+='<div class="mt-2 pdf-preview" style="display:none;">';
+                    html+='<div class="d-flex align-items-center gap-2 mb-2">';
+                    html+='<i class="fas fa-file-pdf text-danger"></i>';
+                    html+='<span class="pdf-name small text-muted"></span>';
+                    html+='</div>';
+                    html+='<iframe class="pdf-preview-frame" style="width:100%;height:400px;border:1px solid #ddd;border-radius:8px;display:none;"></iframe>';
+                    html+='</div>';
+                    if(answer){
+                        html+='<div class="mt-2 uploaded-file">';
+                        html+='<a href="'+escapeAttr(answer)+'" target="_blank" class="btn btn-sm btn-outline-danger">';
+                        html+='<i class="fas fa-file-pdf me-1"></i>Lihat Berkas PDF';
+                        html+='</a>';
+                        html+='</div>';
+                    }
 
             } else if (type === 'photo') {
-
-                html = '<input type="file" ' +
-                    'class="form-control instrument-answer" ' +
-                    'data-id="' + id + '" ' +
-                    'accept=".jpg,.jpeg,.png,image/jpeg,image/png">';
-
-                if (answer) {
-                    html += '<div class="mt-2">' +
-                        '<a href="' + escapeAttr(answer) + '" ' +
-                        'target="_blank" ' +
-                        'class="uploaded-photo d-inline-block" ' +
-                        'title="Klik untuk melihat foto ukuran penuh">' +
-                        '<img src="' + escapeAttr(answer) + '" ' +
-                        'alt="Foto dokumentasi" ' +
-                        'style="width:220px;height:160px;object-fit:cover;border-radius:8px;border:1px solid #ddd;cursor:pointer;">' +
-                        '</a>' +
-                        '</div>';
-                }
+                    html='<input type="file" class="form-control instrument-answer" data-id="'+id+'" accept=".jpg,.jpeg,.png,image/jpeg,image/png">';
+                    html+='<div class="mt-2 photo-preview" style="display:none;">';
+                    html+='<img class="photo-preview-img" src="" alt="Preview Foto" style="width:220px;height:160px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">';
+                    html+='</div>';
+                    if(answer){
+                        html+='<div class="mt-2 uploaded-photo">';
+                        html+='<a href="'+escapeAttr(answer)+'" target="_blank" title="Klik untuk melihat foto ukuran penuh">';
+                        html+='<img src="'+escapeAttr(answer)+'" alt="Foto dokumentasi" style="width:220px;height:160px;object-fit:cover;border-radius:8px;border:1px solid #ddd;cursor:pointer;">';
+                        html+='</a>';
+                        html+='</div>';
+            }
 
             } else {
 
@@ -257,44 +249,70 @@
     }
 
     function bindAnswerEvents() {
-
         $('.instrument-answer, .instrument-answer-checkbox')
             .on('change input', updateProgress);
-
-        $(document)
-            .off('change.instrumentFile', '.instrument-answer[type="file"]')
-            .on('change.instrumentFile', '.instrument-answer[type="file"]', function () {
-
-                const file = this.files && this.files[0];
-
-                if (!file) {
-                    return;
-                }
-
-                const accept = $(this).attr('accept') || '';
-
-                const isPdf = accept.includes('.pdf');
-
-                const maxSize = isPdf
-                    ? 5 * 1024 * 1024
-                    : 3 * 1024 * 1024;
-
-                const maxMb = isPdf ? 5 : 3;
-
-                if (file.size > maxSize) {
-
-                    showError(
-                        'Ukuran file terlalu besar. Maksimal ' +
-                        maxMb + ' MB.'
-                    );
-
-                    $(this).val('');
-
+        $(document).off('change.instrumentFile','.instrument-answer[type="file"]').on('change.instrumentFile','.instrument-answer[type="file"]',function(){
+            const input=this;
+            const file=input.files&&input.files[0];
+            if(!file){
+                return;
+            }
+            const accept=$(input).attr('accept')||'';
+            const isPdf=accept.includes('.pdf');
+            const maxSize=isPdf?5*1024*1024:3*1024*1024;
+            const maxMb=isPdf?5:3;
+            if(file.size>maxSize){
+                showError('Ukuran file terlalu besar. Maksimal '+maxMb+' MB.');
+                $(input).val('');
+                updateProgress();
+                return;
+            }
+            if(isPdf){
+                if(file.type!=='application/pdf'){
+                    showError('File harus berupa PDF.');
+                    $(input).val('');
                     updateProgress();
-
                     return;
                 }
-            });
+
+                const item=$(input).closest('.instrument-item');
+
+                // Hapus PDF lama
+                item.find('.uploaded-file').remove();
+
+                const url=URL.createObjectURL(file);
+
+                item.find('.pdf-name').text(file.name);
+                item.find('.pdf-preview-frame')
+                    .attr('src',url)
+                    .show();
+
+                item.find('.pdf-preview').show();
+            }else{
+                if(!file.type.match(/^image\/(jpeg|png)$/)){
+                    showError('File harus berupa JPG, JPEG, atau PNG.');
+                    $(input).val('');
+                    updateProgress();
+                    return;
+                }
+
+            const item=$(input).closest('.instrument-item');
+            item.find('.uploaded-photo').remove();
+
+            const reader=new FileReader();
+
+            reader.onload=function(e){
+                item.find('.photo-preview-img')
+                    .attr('src',e.target.result)
+                    .show();
+
+                item.find('.photo-preview').show();
+            };
+
+            reader.readAsDataURL(file);
+            }
+            updateProgress();
+        });
 
         $(document).off('keydown', 'input[type="number"]')
             .on('keydown', 'input[type="number"]', function (e) {

@@ -54,162 +54,184 @@ class Visits extends BaseController
         }
     }
 
-    public function schools()
+   public function schools()
     {
         try {
-            $existingVisits = $this->db->table('visits')
+            $regionId=(int)$this->request->getGet('region_id');
+            if($regionId<=0){
+                return $this->response->setJSON([
+                    'status'=>false,
+                    'message'=>'Wilayah wajib dipilih.'
+                ]);
+            }
+            $existingVisits=$this->db->table('visits')
                 ->select('school_id')
                 ->get()
                 ->getResultArray();
-
-            $usedSchoolIds = array_filter(array_column($existingVisits, 'school_id'));
-
-            $builder = $this->db->table('schools')
-                ->select('id, npsn, school_name, level, city_id, district_id, region_id');
-
-            if (!empty($usedSchoolIds)) {
-                $builder->whereNotIn('id', $usedSchoolIds);
+            $usedSchoolIds=array_filter(array_column($existingVisits,'school_id'));
+            $builder=$this->db->table('schools')
+                ->select('id,npsn,school_name,level,city_id,district_id,region_id');
+            if($regionId!==10){
+                $builder->where('region_id',$regionId);
             }
-
-            $rows = $builder->orderBy('school_name', 'ASC')
+            if(!empty($usedSchoolIds)){
+                $builder->whereNotIn('id',$usedSchoolIds);
+            }
+            $rows=$builder->orderBy('school_name','ASC')
                 ->get()
                 ->getResultArray();
-
-            foreach ($rows as &$row) {
-                $row['name'] = $row['school_name'];
+            foreach($rows as &$row){
+                $row['name']=$row['school_name'];
             }
             unset($row);
-
             return $this->response->setJSON([
-                'status' => true,
-                'data'   => $rows
+                'status'=>true,
+                'data'=>$rows,
+                'csrfHash'=>csrf_hash()
             ]);
-
-        } catch (\Throwable $e) {
-            log_message('error', 'VISITS SCHOOLS ERROR: ' . $e->getMessage());
+        } catch(\Throwable $e){
+            log_message('error','VISITS SCHOOLS ERROR: '.$e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
-                'status'  => false,
-                'message' => 'Gagal mengambil data sekolah: ' . $e->getMessage()
+                'status'=>false,
+                'message'=>'Gagal mengambil data sekolah: '.$e->getMessage(),
+                'csrfHash'=>csrf_hash()
             ]);
         }
     }
 
-    public function officers()
+   public function officers()
     {
         try {
-            $rows = $this->db->table('users') 
-                ->select('id, name')
-                ->where('is_active', 1)
-                ->orderBy('name', 'ASC')
+            $rows=$this->db->table('users')
+                ->select('id,name')
+                ->where('role','petugas')
+                ->where('is_active',1)
+                ->orderBy('name','ASC')
                 ->get()
                 ->getResultArray();
-
             return $this->response->setJSON([
-                'status' => true,
-                'data'   => $rows
+                'status'=>true,
+                'data'=>$rows,
+                'csrfHash'=>csrf_hash()
             ]);
-        } catch (\Throwable $e) {
-            log_message('error', 'VISITS OFFICERS ERROR: ' . $e->getMessage());
+        } catch(\Throwable $e){
+            log_message('error','VISITS OFFICERS ERROR: '.$e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
-                'status'  => false,
-                'message' => 'Gagal mengambil data petugas.'
+                'status'=>false,
+                'message'=>'Gagal mengambil data petugas.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
     }
 
     public function create()
     {
-        if (!$this->request->isAJAX()) {
+        if(!$this->request->isAJAX()){
             return $this->response->setStatusCode(400)->setJSON([
-                'status'  => false,
-                'message' => 'Request tidak valid.'
+                'status'=>false,
+                'message'=>'Request tidak valid.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
-
-        $schoolId  = (int)$this->request->getPost('school_id');
-        $visitDate = trim((string)$this->request->getPost('visit_date'));
-
-        $userIds = $this->request->getPost('user_ids') ?? $this->request->getPost('user_ids[]');
-        if (empty($userIds)) {
-            $json    = $this->request->getJSON(true);
-            $userIds = $json['user_ids'] ?? [];
+        $regionId=(int)$this->request->getPost('region_id');
+        $schoolId=(int)$this->request->getPost('school_id');
+        $visitDate=trim((string)$this->request->getPost('visit_date'));
+        $userIds=$this->request->getPost('user_ids')??$this->request->getPost('user_ids[]');
+        if(empty($userIds)){
+            $json=$this->request->getJSON(true);
+            $userIds=$json['user_ids']??[];
         }
-
-        if (!is_array($userIds)) {
-            $userIds = $userIds ? [$userIds] : [];
+        if(!is_array($userIds)){
+            $userIds=$userIds?[$userIds]:[];
         }
-
-        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
-
-        if ($schoolId <= 0) {
+        $userIds=array_values(array_unique(array_filter(array_map('intval',$userIds))));
+        if($regionId<=0){
             return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'Sekolah wajib dipilih.'
+                'status'=>false,
+                'message'=>'Wilayah wajib dipilih.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
-
-        $school = $this->db->table('schools')
-            ->where('id', $schoolId)
+        if($schoolId<=0){
+            return $this->response->setJSON([
+                'status'=>false,
+                'message'=>'Sekolah wajib dipilih.',
+                'csrfHash'=>csrf_hash()
+            ]);
+        }
+        $school=$this->db->table('schools')
+            ->select('id,npsn,school_name,level,region_id')
+            ->where('id',$schoolId)
             ->get()
             ->getRowArray();
-
-        if (!$school) {
+        if(!$school){
             return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'Sekolah tidak ditemukan.'
+                'status'=>false,
+                'message'=>'Sekolah tidak ditemukan.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
-
-        if ($visitDate === '') {
+        if($regionId!==10&&(int)$school['region_id']!==$regionId){
             return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'Tanggal Monev wajib diisi.'
+                'status'=>false,
+                'message'=>'Sekolah yang dipilih tidak berada pada wilayah yang dipilih.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
-
-        if (!$this->isValidDate($visitDate)) {
+        if($visitDate===''){
             return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'Format tanggal Monev tidak valid.'
+                'status'=>false,
+                'message'=>'Tanggal Monev wajib diisi.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
-
-        if (count($userIds) < 1) {
+        if(!$this->isValidDate($visitDate)){
             return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'Minimal satu petugas harus dipilih.'
+                'status'=>false,
+                'message'=>'Format tanggal Monev tidak valid.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
-
-        $validUsers = $this->db->table('users')
+        if(count($userIds)<1){
+            return $this->response->setJSON([
+                'status'=>false,
+                'message'=>'Minimal satu petugas harus dipilih.',
+                'csrfHash'=>csrf_hash()
+            ]);
+        }
+        $validUsers=$this->db->table('users')
             ->select('id')
-            ->whereIn('id', $userIds)
+            ->whereIn('id',$userIds)
+            ->where('role','petugas')
+            ->where('is_active',1)
             ->get()
             ->getResultArray();
-
-        $validUserIds = array_map('intval', array_column($validUsers, 'id'));
-
-        if (count($validUserIds) !== count($userIds)) {
+        $validUserIds=array_map('intval',array_column($validUsers,'id'));
+        sort($validUserIds);
+        $checkUserIds=$userIds;
+        sort($checkUserIds);
+        if($validUserIds!==$checkUserIds){
             return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'Ada petugas yang tidak valid.'
+                'status'=>false,
+                'message'=>'Ada petugas yang tidak valid, tidak aktif, atau bukan petugas.',
+                'csrfHash'=>csrf_hash()
             ]);
         }
-
-        try {
-            $visitId = $this->visitModel->createVisit($schoolId, $visitDate, $userIds);
-
+        try{
+            $visitId=$this->visitModel->createVisit($schoolId,$visitDate,$userIds);
             return $this->response->setJSON([
-                'status'   => true,
-                'message'  => 'Kegiatan Monev berhasil dibuat.',
-                'id'       => $visitId,
-                'redirect' => site_url('visits/form/' . $visitId)
+                'status'=>true,
+                'message'=>'Kegiatan Monev berhasil dibuat.',
+                'id'=>$visitId,
+                'redirect'=>site_url('visits/form/'.$visitId),
+                'csrfHash'=>csrf_hash()
             ]);
-        } catch (\Throwable $e) {
-            log_message('error', 'VISITS CREATE ERROR: ' . $e->getMessage());
+        }catch(\Throwable $e){
+            log_message('error','VISITS CREATE ERROR: '.$e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
-                'status'  => false,
-                'message' => $e->getMessage()
+                'status'=>false,
+                'message'=>$e->getMessage(),
+                'csrfHash'=>csrf_hash()
             ]);
         }
     }

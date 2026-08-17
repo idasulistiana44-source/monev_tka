@@ -1,5 +1,12 @@
 <script>
-window.VISITS_BASE_URL='<?= rtrim(base_url(),'/') ?>/';
+window.VISITS_URLS={
+    data:'<?= site_url('visits/data') ?>',
+    regions:'<?= site_url('regions/data') ?>',
+    schools:'<?= site_url('visits/schools') ?>',
+    officers:'<?= site_url('visits/officers') ?>',
+    create:'<?= site_url('visits/create') ?>',
+    delete:'<?= site_url('visits/delete') ?>'
+};
 window.VISITS_CSRF_NAME='<?= csrf_token() ?>';
 window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
 </script>
@@ -57,7 +64,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
             <div id="visitEmpty" class="visit-empty" style="display:none;">
                 <div class="visit-empty-icon"><i class="fas fa-clipboard-check"></i></div>
                 <h5>Belum ada kegiatan Monev</h5>
-                <p>Buat kegiatan Monev dengan memilih sekolah dan satu atau beberapa petugas.</p>
+                <p>Buat kegiatan Monev dengan memilih wilayah, sekolah, dan satu atau beberapa petugas.</p>
             </div>
         </div>
     </div>
@@ -89,18 +96,27 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
             <div class="modal-header">
                 <div>
                     <h5 class="modal-title"><i class="fas fa-clipboard-check me-2"></i>Buat Kegiatan Monev</h5>
-                    <small class="text-muted">Pilih sekolah dan petugas yang akan melakukan Monev.</small>
+                    <small class="text-muted">Pilih wilayah, sekolah, dan petugas yang akan melakukan Monev.</small>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="visitAddForm">
                 <div class="modal-body">
                     <div class="visit-form-section">
-                        <div class="visit-section-title"><i class="fas fa-school"></i><span>1. Sekolah</span></div>
+                        <div class="visit-section-title"><i class="fas fa-map-marker-alt"></i><span>1. Wilayah</span></div>
+                        <div class="mb-0">
+                            <label class="form-label">Wilayah <span class="text-danger">*</span></label>
+                            <select id="visitRegion" name="region_id" class="form-select" required>
+                                <option value="">Pilih Wilayah</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="visit-form-section">
+                        <div class="visit-section-title"><i class="fas fa-school"></i><span>2. Sekolah</span></div>
                         <div class="mb-3">
                             <label class="form-label">Sekolah <span class="text-danger">*</span></label>
-                            <select id="visitSchool" name="school_id" class="form-select" required>
-                                <option value="">Memuat sekolah...</option>
+                            <select id="visitSchool" name="school_id" class="form-select" required disabled>
+                                <option value="">Pilih wilayah terlebih dahulu</option>
                             </select>
                         </div>
                         <div id="visitSchoolInfo" class="visit-school-info" style="display:none;">
@@ -112,23 +128,16 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                         </div>
                     </div>
                     <div class="visit-form-section">
-                        <div class="visit-section-title"><i class="fas fa-users"></i><span>2. Tim Monev</span></div>
-                        <div class="visit-team-help">Pilih petugas satu per satu. Petugas yang dipilih akan menjadi anggota tim Monev untuk sekolah ini.</div>
+                        <div class="visit-section-title"><i class="fas fa-users"></i><span>3. Tim Monev</span></div>
+                        <div class="visit-team-help">Pilih satu atau beberapa petugas yang akan menjadi anggota tim Monev untuk sekolah ini.</div>
                         <div class="mb-3">
                             <label class="form-label">Pilih Petugas <span class="text-danger">*</span></label>
-                            <select id="visitOfficerSelect" class="form-select">
-                                <option value="">Pilih Petugas</option>
+                            <select id="visitOfficerSelect" name="user_ids[]" class="form-select" multiple required>
                             </select>
-                        </div>
-                        <div class="visit-selected-team">
-                            <div class="visit-selected-title">Petugas Terpilih <span id="visitSelectedCount">0</span></div>
-                            <div id="visitSelectedTeam" class="visit-selected-list">
-                                <span class="visit-no-team">Belum ada petugas dipilih.</span>
-                            </div>
                         </div>
                     </div>
                     <div class="visit-form-section">
-                        <div class="visit-section-title"><i class="fas fa-calendar-alt"></i><span>3. Pelaksanaan</span></div>
+                        <div class="visit-section-title"><i class="fas fa-calendar-alt"></i><span>4. Pelaksanaan</span></div>
                         <div class="mb-0">
                             <label class="form-label">Tanggal Monev <span class="text-danger">*</span></label>
                             <input type="date" id="visitDate" name="visit_date" class="form-control" required>
@@ -146,6 +155,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
 <script>
 window.VISITS_URLS={
     data:'<?= site_url('visits/data') ?>',
+    regions:'<?= site_url('regions/data') ?>',
     schools:'<?= site_url('visits/schools') ?>',
     officers:'<?= site_url('visits/officers') ?>',
     create:'<?= site_url('visits/create') ?>',

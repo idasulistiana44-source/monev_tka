@@ -26,7 +26,6 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->group('', ['filter' => 'role:admin,petugas'], function ($routes) {
         
         // Dashboard
-        $routes->get('/', 'Dashboard::index');
         $routes->get('dashboard', 'Dashboard::index');
 
         // Visitasi / Monitoring

@@ -180,3 +180,7 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield; /* Standard properti CSS modern */
 }
+
+.select2-container .select2-search--inline .select2-search__field {
+    height: 20px !important;
+}
