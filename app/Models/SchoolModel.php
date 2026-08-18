@@ -1,15 +1,12 @@
 <?php
 
 namespace App\Models;
-
 use CodeIgniter\Model;
-
 class SchoolModel extends Model
 {
     protected $table = 'schools';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
-
     protected $allowedFields = [
         'npsn',
         'school_name',
@@ -17,7 +14,7 @@ class SchoolModel extends Model
         'district_id',
         'region_id',
         'level',
-        'address',
+        'status',
         'is_active',
         'created_at',
         'updated_at'
@@ -29,24 +26,31 @@ class SchoolModel extends Model
 
     public function getSchools($keyword = '', $level = '')
     {
-        $builder = $this->select('schools.*,city.name AS city_name,district.name AS district_name,region.name AS region_name')
-            ->join('city','city.id=schools.city_id','left')
-            ->join('district','district.id=schools.district_id','left')
-            ->join('region','region.id=schools.region_id','left')
-            ->orderBy('schools.school_name','ASC');
+        $builder = $this->select(
+            'schools.*, 
+            city.name AS city_name,
+            district.name AS district_name,
+            region.name AS region_name'
+        )
+        ->join('city', 'city.id = schools.city_id', 'left')
+        ->join('district', 'district.id = schools.district_id', 'left')
+        ->join('region', 'region.id = schools.region_id', 'left');
 
-        if($keyword !== ''){
+        $keyword = trim($keyword);
+        $level = trim($level);
+
+        if ($keyword !== '') {
             $builder->groupStart()
-                ->like('schools.npsn',$keyword)
-                ->orLike('schools.school_name',$keyword)
+                ->like('schools.npsn', $keyword)
+                ->orLike('schools.school_name', $keyword)
                 ->groupEnd();
         }
-
-        if($level !== ''){
-            $builder->where('schools.level',$level);
+        if ($level !== '') {
+            $builder->where('schools.level', $level);
         }
-
-        return $builder->findAll();
+        return $builder
+            ->orderBy('schools.id', 'DESC')
+            ->findAll();
     }
 
     public function getSchool($id)

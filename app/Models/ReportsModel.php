@@ -20,7 +20,6 @@ class ReportsModel extends Model
             v.school_id,
             v.visit_date,
             v.status,
-            v.notes,
             v.created_at,
             v.updated_at,
             s.npsn,
@@ -136,7 +135,7 @@ class ReportsModel extends Model
     {
         $id=(int)$id;
         $builder=$this->db->table('visits v');
-        $builder->select('v.id,v.school_id,v.visit_date,v.status,v.notes,v.created_at,v.updated_at,s.npsn,s.school_name,s.level,s.region_id,r.name AS region_name');
+        $builder->select('v.id,v.school_id,v.visit_date,v.status,v.created_at,v.updated_at,s.npsn,s.school_name,s.level,s.region_id,r.name AS region_name');
         $builder->join('schools s','s.id=v.school_id','left');
         $builder->join('region r','r.id=s.region_id','left');
         $builder->where('v.id',$id);

@@ -47,17 +47,29 @@ class Schools extends BaseController
     public function city()
     {
         try {
+
+            $data = $this->cityModel
+                ->where('id !=', '10')
+                ->where('is_active', 1)
+                ->orderBy('name', 'ASC')
+                ->findAll();
+
             return $this->response->setJSON([
                 'success' => true,
-                'data' => $this->cityModel->getActive()
+                'data' => $data
             ]);
+
         } catch (\Throwable $e) {
+
             log_message('error', 'ERROR LOAD CITY: ' . $e->getMessage());
-            return $this->response->setStatusCode(500)->setJSON([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'data' => []
-            ]);
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'data' => []
+                ]);
         }
     }
     public function district()
@@ -120,8 +132,7 @@ class Schools extends BaseController
             'school_name' => 'required|max_length[150]',
             'city_id' => 'required|integer',
             'district_id' => 'required|integer',
-            'level' => 'required|in_list[SMA,SMK]',
-            'address' => 'permit_empty',
+            'level' => 'required|in_list[SMA,SMK,MA,MAK,SMAK,SMTK]',
             'is_active' => 'required|in_list[0,1]'
         ];
         if (!$this->validate($rules)) {
@@ -136,8 +147,8 @@ class Schools extends BaseController
         $cityId = (int) $this->request->getPost('city_id');
         $districtId = (int) $this->request->getPost('district_id');
         $level = trim((string) $this->request->getPost('level'));
-        $address = trim((string) $this->request->getPost('address'));
         $isActive = (int) $this->request->getPost('is_active');
+        $status = trim((string) $this->request->getPost('status'));
         $district = $this->districtModel->getWithRegion($districtId);
         if (!$district) {
             return $this->response->setStatusCode(422)->setJSON([
@@ -171,7 +182,7 @@ class Schools extends BaseController
             'district_id' => $districtId,
             'region_id' => (int) $district['region_id'],
             'level' => $level,
-            'address' => $address,
+            'status' => $status,
             'is_active' => $isActive
         ];
         $id = $this->schoolModel->insert($data);
@@ -210,8 +221,7 @@ class Schools extends BaseController
             'school_name' => 'required|max_length[150]',
             'city_id' => 'required|integer',
             'district_id' => 'required|integer',
-            'level' => 'required|in_list[SMA,SMK]',
-            'address' => 'permit_empty',
+            'level' => 'required|in_list[SMA,SMK,MA,MAK,SMAK,SMTK]',
             'is_active' => 'required|in_list[0,1]'
         ];
         if (!$this->validate($rules)) {
@@ -226,8 +236,8 @@ class Schools extends BaseController
         $cityId = (int) $this->request->getPost('city_id');
         $districtId = (int) $this->request->getPost('district_id');
         $level = trim((string) $this->request->getPost('level'));
-        $address = trim((string) $this->request->getPost('address'));
         $isActive = (int) $this->request->getPost('is_active');
+        $status = trim((string) $this->request->getPost('status'));
         $district = $this->districtModel->getWithRegion($districtId);
         if (!$district) {
             return $this->response->setStatusCode(422)->setJSON([
@@ -261,7 +271,7 @@ class Schools extends BaseController
             'district_id' => $districtId,
             'region_id' => (int) $district['region_id'],
             'level' => $level,
-            'address' => $address,
+            'status' => $status,
             'is_active' => $isActive
         ];
         if (!$this->schoolModel->update($id, $data)) {

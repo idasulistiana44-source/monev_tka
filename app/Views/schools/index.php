@@ -2,41 +2,46 @@
 <div class="schools-page">
     <div class="schools-page-header">
         <div>
-            <h1 class="schools-page-title">Schools</h1>
-            <p class="schools-page-subtitle">Manage school data for monitoring and evaluation.</p>
+            <h1 class="schools-page-title">Sekolah</h1>
+            <p class="schools-page-subtitle">Kelola data sekolah untuk pemantauan dan evaluasi.</p>
         </div>
-        <button type="button" class="btn btn-primary" id="btnAddSchool"><i class="fas fa-plus"></i> Add School</button>
+        <button type="button" class="btn btn-primary" id="btnAddSchool"><i class="fas fa-plus"></i> Tambah Sekolah</button>
     </div>
     <div class="schools-card">
         <div class="schools-card-header">
-            <div class="schools-card-title"><i class="fas fa-school"></i> School Data</div>
-            <div class="schools-card-total"><span id="schoolTotal">0</span> schools</div>
+            <div class="schools-card-title"><i class="fas fa-school"></i> Data Sekolah</div>
+            <div class="schools-card-total"><span id="schoolTotal">0</span> sekolah</div>
         </div>
         <div class="schools-card-body">
             <div class="schools-toolbar">
                 <div class="schools-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="schoolSearch" class="form-control" placeholder="Search NPSN or school name..." autocomplete="off">
+                    <input type="text" id="schoolSearch" class="form-control" placeholder="Search NPSN or Nama Sekolah..." autocomplete="off" >
                 </div>
                 <div class="schools-filter">
                     <select id="schoolLevelFilter" class="form-select">
-                        <option value="">All Levels</option>
+                        <option value="">Semua Jenjang</option>
                         <option value="SMA">SMA</option>
                         <option value="SMK">SMK</option>
+                        <option value="MA">MA</option>
+                        <option value="MAK">MAK</option>
+                        <option value="SMAK">SMAK</option>
+                        <option value="SMTK">SMTK</option>
                     </select>
                 </div>
             </div>
             <div class="schools-table-responsive">
-                <table class="table schools-table" id="schoolTable">
+                <table class="table schools-table" id="schoolsTable">
                     <thead>
                         <tr>
                             <th width="55">No</th>
                             <th>NPSN</th>
-                            <th>School Name</th>
-                            <th>Level</th>
-                            <th>City</th>
-                            <th>District</th>
-                            <th>Region</th>
+                            <th>Sekolah</th>
+                            <th>Jenjang</th>
+                            <th>Kota</th>
+                            <th>Kecamatan</th>
+                            <th>Wilayah</th>
+                             <th>Status Sekolah</th>
                             <th>Status</th>
                             <th width="145">Action</th>
                         </tr>
@@ -71,7 +76,7 @@
                 <form id="schoolAddForm">
                     <div class="mb-3">
                         <label class="form-label">NPSN</label>
-                        <input type="text" name="npsn" class="form-control" maxlength="20" inputmode="numeric" autocomplete="off">
+                        <input type="text" name="npsn" class="form-control" inputmode="numeric" autocomplete="off" maxlength="10">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
@@ -80,31 +85,39 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">City</label>
+                        <label class="form-label">kota</label>
                         <select name="city_id" id="schoolCity" class="form-select">
-                            <option value="">Select City</option>
+                            <option value="">Pilih Kota</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">District</label>
+                        <label class="form-label">Kecamatan</label>
                         <select name="district_id" id="schoolDistrict" class="form-select" disabled>
-                            <option value="">Select city first</option>
+                            <option value="">Pilih Kota</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Level</label>
+                        <label class="form-label">Jenjang</label>
                         <select name="level" id="schoolLevel" class="form-select">
-                            <option value="">Select Level</option>
+                            <option value="">Pilih Jenjang</option>
                             <option value="SMA">SMA</option>
                             <option value="SMK">SMK</option>
+                            <option value="MA">MA</option>
+                            <option value="MAK">MAK</option>
+                            <option value="SMAK">SMAK</option>
+                            <option value="SMTK">SMTK</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Address</label>
-                        <textarea name="address" class="form-control" rows="3"></textarea>
+                        <label class="form-label">Status Sekolah</label>
+                        <select name="status" class="form-select">
+                            <option value="">Pilih Status Sekolah</option>
+                            <option value="negeri">Negeri</option>
+                            <option value="swasta">Swasta</option>
+                        </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-0">
@@ -136,40 +149,48 @@
                     <input type="hidden" name="id" id="editSchoolId">
                     <div class="mb-3">
                         <label class="form-label">NPSN</label>
-                        <input type="text" name="npsn" id="editNpsn" class="form-control" maxlength="20" inputmode="numeric">
+                        <input type="text" name="npsn" id="editNpsn" class="form-control"  inputmode="numeric" maxlength="10">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">School Name</label>
+                        <label class="form-label">Nama Sekolah</label>
                         <input type="text" name="school_name" id="editSchoolName" class="form-control" maxlength="150">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">City</label>
+                        <label class="form-label">Kota</label>
                         <select name="city_id" id="editSchoolCity" class="form-select">
-                            <option value="">Select City</option>
+                            <option value="">Pilih Kota</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">District</label>
+                        <label class="form-label">Kecamatan</label>
                         <select name="district_id" id="editSchoolDistrict" class="form-select" disabled>
-                            <option value="">Select city first</option>
+                            <option value="">Pilih Kota Terlebih Dahulu</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Level</label>
+                        <label class="form-label">Jenjang</label>
                         <select name="level" id="editLevel" class="form-select">
-                            <option value="">Select Level</option>
+                            <option value="">Pilih Jenjang</option>
                             <option value="SMA">SMA</option>
                             <option value="SMK">SMK</option>
+                            <option value="MA">MA</option>
+                            <option value="MAK">MAK</option>
+                            <option value="SMAK">SMAK</option>
+                            <option value="SMTK">SMTK</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Address</label>
-                        <textarea name="address" id="editAddress" class="form-control" rows="3"></textarea>
+                        <label class="form-label">Status Sekolah</label>
+                        <select id="editStatus" name="status" class="form-select">
+                            <option value="">Pilih Status Sekolah</option>
+                            <option value="negeri">Negeri</option>
+                            <option value="swasta">Swasta</option>
+                        </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-0">
@@ -215,6 +236,56 @@
                     <i class="fas fa-trash me-1"></i> Delete
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="schoolDeleteModal" tabindex="-1" aria-labelledby="schoolDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="schoolDeleteModalLabel">
+                    <i class="fas fa-trash-alt text-danger me-2"></i>
+                    Hapus Sekolah
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="mb-2">
+                    Apakah Anda yakin ingin menghapus sekolah:
+                </p>
+
+                <div class="alert alert-warning mb-0">
+                    <strong id="deleteSchoolName">-</strong>
+                    <br>
+                    <small class="text-muted">
+                        Data sekolah yang dihapus tidak dapat dikembalikan.
+                    </small>
+                </div>
+
+                <input type="hidden" id="deleteSchoolId">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Batal
+                </button>
+
+                <button type="button"
+                        class="btn btn-danger"
+                        id="btnDeleteSchool">
+                    <i class="fas fa-trash me-1"></i>
+                    Hapus
+                </button>
+            </div>
+
         </div>
     </div>
 </div>
