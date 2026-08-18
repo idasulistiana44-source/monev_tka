@@ -23,9 +23,10 @@ class VisitModel extends Model
 
     public function getList($keyword = '', $status = '', $userId = null)
     {
-        $builder = $this->db->table('visits v');
-        $builder->select('v.id, v.school_id, v.visit_date, v.status, v.notes, v.created_at, v.updated_at, s.npsn, s.school_name AS school_name, s.level');
-        $builder->join('schools s', 's.id = v.school_id', 'left');
+        $builder=$this->db->table('visits v');
+        $builder->select('v.id,v.school_id,v.visit_date,v.status,v.notes,v.created_at,v.updated_at,s.npsn,s.school_name AS school_name,s.level,s.region_id,r.name AS region_name');
+        $builder->join('schools s','s.id=v.school_id','left');
+        $builder->join('region r','r.id=s.region_id','left');
 
         // FILTER PETUGAS: Jika $userId diisi, filter hanya kegiatan Monev yang diikuti petugas tersebut
         if ($userId !== null && (int)$userId > 0) {

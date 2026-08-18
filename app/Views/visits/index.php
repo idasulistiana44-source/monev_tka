@@ -1,11 +1,13 @@
 <script>
-window.VISITS_URLS={
-    data:'<?= site_url('visits/data') ?>',
-    regions:'<?= site_url('regions/data') ?>',
-    schools:'<?= site_url('visits/schools') ?>',
-    officers:'<?= site_url('visits/officers') ?>',
-    create:'<?= site_url('visits/create') ?>',
-    delete:'<?= site_url('visits/delete') ?>'
+const URLS = {
+    data: '<?= site_url('visits/data') ?>',
+    regions: '<?= site_url('regions/data') ?>',
+    schools: '<?= site_url('visits/schools') ?>',
+    officers: '<?= site_url('visits/officers') ?>',
+    create: '<?= site_url('visits/create') ?>',
+    edit: '<?= site_url('visits/edit') ?>',
+    update: '<?= site_url('visits/update') ?>',
+    delete: '<?= site_url('visits/delete') ?>'
 };
 window.VISITS_CSRF_NAME='<?= csrf_token() ?>';
 window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
@@ -47,6 +49,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                             <th width="55">No</th>
                             <th>NPSN</th>
                             <th>Sekolah</th>
+                            <th> Wilayah</th>
                             <th>Level</th>
                             <th>Tanggal Monev</th>
                             <th>Tim Monev</th>
@@ -101,6 +104,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="visitAddForm">
+                <input type="hidden" id="visitEditId" name="visit_id" value="">
                 <div class="modal-body">
                     <div class="visit-form-section">
                         <div class="visit-section-title"><i class="fas fa-map-marker-alt"></i><span>1. Wilayah</span></div>
@@ -146,21 +150,103 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="btnSaveVisit"><i class="fas fa-save me-1"></i>Buat Kegiatan</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveVisit"><i class="fas fa-save me-1"></i>Tambah</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="visitEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content visit-modal">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>
+                        Edit Kegiatan Monev
+                    </h5>
+                    <small class="text-muted">
+                        Ubah data kegiatan Monev.
+                    </small>
+                </div>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+            <form id="visitEditForm">
+                <input type="hidden" id="editVisitId" name="visit_id">
+                <div class="modal-body">
+                    <div class="visit-form-section">
+                        <div class="visit-section-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>1. Wilayah</span>
+                        </div>
+                        <label class="form-label">
+                            Wilayah <span class="text-danger">*</span>
+                        </label>
+                        <select id="editVisitRegion" name="region_id" class="form-select" required>
+                            <option value="">Pilih Wilayah</option>
+                        </select>
+                    </div>
+                    <div class="visit-form-section">
+                        <div class="visit-section-title">
+                            <i class="fas fa-school"></i>
+                            <span>2. Sekolah</span>
+                        </div>
+                        <label class="form-label">
+                            Sekolah <span class="text-danger">*</span>
+                        </label>
+                        <select id="editVisitSchool" name="school_id" class="form-select" required disabled>
+                            <option value="">Pilih wilayah terlebih dahulu</option>
+                        </select>
+                    </div>
+                    <div class="visit-form-section">
+                        <div class="visit-section-title">
+                            <i class="fas fa-users"></i>
+                            <span>3. Tim Monev</span>
+                        </div>
+                        <label class="form-label">
+                            Petugas Monev <span class="text-danger">*</span>
+                        </label>
+                        <select id="editVisitOfficerSelect" name="user_ids[]" class="form-select" multiple required>
+                        </select>
+                    </div>
+                    <div class="visit-form-section">
+                        <div class="visit-section-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>4. Pelaksanaan</span>
+                        </div>
+                        <label class="form-label">
+                            Tanggal Monev <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" id="editVisitDate" name="visit_date" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnUpdateVisit">
+                        <i class="fas fa-save me-1"></i>
+                        Simpan Perubahan
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 <script>
-window.VISITS_URLS={
-    data:'<?= site_url('visits/data') ?>',
-    regions:'<?= site_url('regions/data') ?>',
-    schools:'<?= site_url('visits/schools') ?>',
-    officers:'<?= site_url('visits/officers') ?>',
-    create:'<?= site_url('visits/create') ?>',
-    delete:'<?= site_url('visits/delete') ?>'
+window.VISITS_URLS = {
+    data: '<?= site_url('visits/data') ?>',
+    regions: '<?= site_url('regions/data') ?>',
+    schools: '<?= site_url('visits/schools') ?>',
+    officers: '<?= site_url('visits/officers') ?>',
+    create: '<?= site_url('visits/create') ?>',
+    edit: '<?= site_url('visits/edit') ?>',
+    update: '<?= site_url('visits/update') ?>',
+    delete: '<?= site_url('visits/delete') ?>'
 };
-window.VISITS_CSRF_NAME='<?= csrf_token() ?>';
-window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
+
+window.VISITS_CSRF_NAME = '<?= csrf_token() ?>';
+window.VISITS_CSRF_HASH = '<?= csrf_hash() ?>';
 </script>

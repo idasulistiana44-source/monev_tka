@@ -40,6 +40,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('visits/save-answers/(:num)', 'Visits::saveAnswers/$1');
         $routes->post('visits/start/(:num)', 'Visits::start/$1');
         $routes->post('visits/complete/(:num)', 'Visits::complete/$1');
+        $routes->get('visits/edit/(:num)', 'Visits::edit/$1');
+        $routes->post('visits/update', 'Visits::update');
 
         // Reports / Rekap Monev
         $routes->get('reports', 'ReportController::index');

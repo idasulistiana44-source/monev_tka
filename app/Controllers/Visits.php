@@ -54,50 +54,55 @@ class Visits extends BaseController
         }
     }
 
-   public function schools()
-    {
-        try {
-            $regionId=(int)$this->request->getGet('region_id');
-            if($regionId<=0){
-                return $this->response->setJSON([
-                    'status'=>false,
-                    'message'=>'Wilayah wajib dipilih.'
-                ]);
-            }
-            $existingVisits=$this->db->table('visits')
-                ->select('school_id')
-                ->get()
-                ->getResultArray();
-            $usedSchoolIds=array_filter(array_column($existingVisits,'school_id'));
-            $builder=$this->db->table('schools')
-                ->select('id,npsn,school_name,level,city_id,district_id,region_id');
-            if($regionId!==10){
-                $builder->where('region_id',$regionId);
-            }
-            if(!empty($usedSchoolIds)){
-                $builder->whereNotIn('id',$usedSchoolIds);
-            }
-            $rows=$builder->orderBy('school_name','ASC')
-                ->get()
-                ->getResultArray();
-            foreach($rows as &$row){
-                $row['name']=$row['school_name'];
-            }
-            unset($row);
-            return $this->response->setJSON([
-                'status'=>true,
-                'data'=>$rows,
-                'csrfHash'=>csrf_hash()
-            ]);
-        } catch(\Throwable $e){
-            log_message('error','VISITS SCHOOLS ERROR: '.$e->getMessage());
-            return $this->response->setStatusCode(500)->setJSON([
-                'status'=>false,
-                'message'=>'Gagal mengambil data sekolah: '.$e->getMessage(),
-                'csrfHash'=>csrf_hash()
-            ]);
+    public function schools()
+{
+    try {
+        $regionId=(int)$this->request->getGet('region_id');
+        $editVisitId=(int)$this->request->getGet('edit_visit_id');
+
+        $builder=$this->db->table('schools')
+            ->select('id,npsn,school_name,level,city_id,district_id,region_id');
+
+        if($regionId>0 && $regionId!==10){
+            $builder->where('region_id',$regionId);
         }
+
+        $existingVisits=$this->db->table('visits')
+            ->select('school_id')
+            ->where('id !=',$editVisitId)
+            ->get()
+            ->getResultArray();
+
+        $usedSchoolIds=array_filter(array_column($existingVisits,'school_id'));
+
+        if(!empty($usedSchoolIds)){
+            $builder->whereNotIn('id',$usedSchoolIds);
+        }
+
+        $rows=$builder
+            ->orderBy('school_name','ASC')
+            ->get()
+            ->getResultArray();
+
+        foreach($rows as &$row){
+            $row['name']=$row['school_name'];
+        }
+        unset($row);
+
+        return $this->response->setJSON([
+            'status'=>true,
+            'data'=>$rows,
+            'csrfHash'=>csrf_hash()
+        ]);
+    }catch(\Throwable $e){
+        log_message('error','VISITS SCHOOLS ERROR: '.$e->getMessage());
+        return $this->response->setStatusCode(500)->setJSON([
+            'status'=>false,
+            'message'=>'Gagal mengambil data sekolah: '.$e->getMessage(),
+            'csrfHash'=>csrf_hash()
+        ]);
     }
+}
 
    public function officers()
     {
@@ -137,6 +142,7 @@ class Visits extends BaseController
         $schoolId=(int)$this->request->getPost('school_id');
         $visitDate=trim((string)$this->request->getPost('visit_date'));
         $userIds=$this->request->getPost('user_ids')??$this->request->getPost('user_ids[]');
+        
         if(empty($userIds)){
             $json=$this->request->getJSON(true);
             $userIds=$json['user_ids']??[];
@@ -689,5 +695,303 @@ class Visits extends BaseController
             ->countAllResults();
 
         return $isTeamMember > 0;
+    }
+    public function edit($id = null)
+    {
+        try {
+            $id = (int) $id;
+
+            if ($id <= 0) {
+                return $this->response->setJSON([
+                    'status' => false,
+                    'message' => 'ID kegiatan Monev tidak valid.',
+                    'csrfHash' => csrf_hash()
+                ]);
+            }
+
+            $visit = $this->db->table('visits v')
+                ->select('
+                    v.id,
+                    v.school_id,
+                    v.visit_date,
+                    v.status,
+                    s.region_id
+                ')
+                ->join('schools s', 's.id = v.school_id', 'left')
+                ->where('v.id', $id)
+                ->get()
+                ->getRowArray();
+
+            if (!$visit) {
+                return $this->response->setJSON([
+                    'status' => false,
+                    'message' => 'Kegiatan Monev tidak ditemukan.',
+                    'csrfHash' => csrf_hash()
+                ]);
+            }
+
+            // EDIT HANYA BOLEH SAAT DRAFT
+            if ($visit['status'] !== 'DRAFT') {
+                return $this->response->setJSON([
+                    'status' => false,
+                    'message' => 'Kegiatan Monev hanya dapat diedit saat status DRAFT.',
+                    'csrfHash' => csrf_hash()
+                ]);
+            }
+
+            $members = $this->db->table('visit_team')
+                ->select('user_id')
+                ->where('visit_id', $id)
+                ->get()
+                ->getResultArray();
+
+            $userIds = array_map(
+                'intval',
+                array_column($members, 'user_id')
+            );
+
+            return $this->response->setJSON([
+                'status' => true,
+                'data' => [
+                    'id'         => (int) $visit['id'],
+                    'region_id'  => (int) $visit['region_id'],
+                    'school_id'  => (int) $visit['school_id'],
+                    'visit_date' => $visit['visit_date'],
+                    'user_ids'   => $userIds
+                ],
+                'csrfHash' => csrf_hash()
+            ]);
+
+        } catch (\Throwable $e) {
+
+            log_message(
+                'error',
+                'VISITS EDIT ERROR: ' . $e->getMessage()
+            );
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status' => false,
+                    'message' => 'Gagal mengambil data kegiatan Monev.',
+                    'csrfHash' => csrf_hash()
+                ]);
+        }
+    }
+
+    public function update()
+    {
+        if(!$this->request->isAJAX()){
+            return $this->response->setStatusCode(400)->setJSON([
+                'status'=>false,
+                'message'=>'Request tidak valid.',
+                'csrfHash'=>csrf_hash()
+            ]);
+        }
+
+        try{
+            $rawPost=$this->request->getPost();
+
+            log_message('error','=== UPDATE VISIT START ===');
+            log_message('error','RAW POST: '.json_encode($rawPost));
+
+            $visitId=(int)$this->request->getPost('visit_id');
+            $regionId=(int)$this->request->getPost('region_id');
+            $schoolId=(int)$this->request->getPost('school_id');
+            $visitDate=trim((string)$this->request->getPost('visit_date'));
+
+            $userIds=$this->request->getPost('user_ids');
+
+            if(!is_array($userIds)){
+                $userIds=$userIds ? [$userIds] : [];
+            }
+
+            $userIds=array_values(array_unique(array_filter(array_map('intval',$userIds))));
+
+            log_message('error','PARSED DATA: '.json_encode([
+                'visit_id'=>$visitId,
+                'region_id'=>$regionId,
+                'school_id'=>$schoolId,
+                'visit_date'=>$visitDate,
+                'user_ids'=>$userIds
+            ]));
+
+            if($visitId<=0){
+                throw new \RuntimeException('ID kegiatan Monev tidak valid.');
+            }
+
+            if($regionId<=0){
+                throw new \RuntimeException('Wilayah wajib dipilih.');
+            }
+
+            if($schoolId<=0){
+                throw new \RuntimeException('Sekolah wajib dipilih.');
+            }
+
+            if($visitDate===''){
+                throw new \RuntimeException('Tanggal Monev wajib diisi.');
+            }
+
+            if(!$this->isValidDate($visitDate)){
+                throw new \RuntimeException('Format tanggal Monev tidak valid.');
+            }
+
+            if(count($userIds)<1){
+                throw new \RuntimeException('Minimal satu petugas harus dipilih.');
+            }
+
+            $visit=$this->db->table('visits')
+                ->select('id,status,school_id,visit_date')
+                ->where('id',$visitId)
+                ->get()
+                ->getRowArray();
+
+            log_message('error','VISIT LAMA: '.json_encode($visit));
+
+            if(!$visit){
+                throw new \RuntimeException('Kegiatan Monev tidak ditemukan.');
+            }
+
+            if($visit['status']!=='DRAFT'){
+                throw new \RuntimeException('Kegiatan Monev hanya dapat diedit saat status DRAFT.');
+            }
+
+            $school=$this->db->table('schools')
+                ->select('id,region_id,school_name')
+                ->where('id',$schoolId)
+                ->get()
+                ->getRowArray();
+
+            log_message('error','SCHOOL: '.json_encode($school));
+
+            if(!$school){
+                throw new \RuntimeException('Sekolah tidak ditemukan.');
+            }
+
+            if($regionId!==10 && (int)$school['region_id']!==$regionId){
+                throw new \RuntimeException('Sekolah yang dipilih tidak berada pada wilayah yang dipilih.');
+            }
+
+            $validUsers=$this->db->table('users')
+                ->select('id')
+                ->whereIn('id',$userIds)
+                ->where('role','petugas')
+                ->where('is_active',1)
+                ->get()
+                ->getResultArray();
+
+            $validUserIds=array_map('intval',array_column($validUsers,'id'));
+            sort($validUserIds);
+
+            $checkUserIds=$userIds;
+            sort($checkUserIds);
+
+            log_message('error','VALID USERS: '.json_encode($validUserIds));
+            log_message('error','REQUEST USERS: '.json_encode($checkUserIds));
+
+            if($validUserIds!==$checkUserIds){
+                throw new \RuntimeException('Ada petugas yang tidak valid, tidak aktif, atau bukan petugas.');
+            }
+
+            $this->db->transBegin();
+
+            log_message('error','TRANSACTION DIMULAI');
+
+            $updateData=[
+                'school_id'=>$schoolId,
+                'visit_date'=>$visitDate,
+                'updated_at'=>date('Y-m-d H:i:s')
+            ];
+
+            log_message('error','UPDATE VISITS DATA: '.json_encode($updateData));
+
+            $updateResult=$this->db->table('visits')
+                ->where('id',$visitId)
+                ->update($updateData);
+
+            log_message('error','UPDATE VISITS RESULT: '.($updateResult?'TRUE':'FALSE'));
+            log_message('error','UPDATE VISITS DB ERROR: '.json_encode($this->db->error()));
+
+            if(!$updateResult){
+                throw new \RuntimeException('Gagal update tabel visits: '.json_encode($this->db->error()));
+            }
+
+            $deleteResult=$this->db->table('visit_team')
+                ->where('visit_id',$visitId)
+                ->delete();
+
+            log_message('error','DELETE TEAM RESULT: '.($deleteResult?'TRUE':'FALSE'));
+            log_message('error','DELETE TEAM DB ERROR: '.json_encode($this->db->error()));
+
+            if(!$deleteResult){
+                throw new \RuntimeException('Gagal menghapus tim lama: '.json_encode($this->db->error()));
+            }
+
+            $teamRows=[];
+
+            foreach($userIds as $userId){
+                $teamRows[]=[
+                    'visit_id'=>$visitId,
+                    'user_id'=>$userId,
+                    'role'=>'anggota'
+                ];
+            }
+
+            log_message('error','TEAM BARU: '.json_encode($teamRows));
+
+            $insertResult=$this->db->table('visit_team')->insertBatch($teamRows);
+
+            log_message('error','INSERT TEAM RESULT: '.($insertResult?'TRUE':'FALSE'));
+            log_message('error','INSERT TEAM DB ERROR: '.json_encode($this->db->error()));
+
+            if(!$insertResult){
+                throw new \RuntimeException('Gagal memasukkan tim baru: '.json_encode($this->db->error()));
+            }
+
+            if($this->db->transStatus()===false){
+                throw new \RuntimeException('Transaksi database gagal.');
+            }
+
+            $this->db->transCommit();
+
+            log_message('error','TRANSACTION COMMIT BERHASIL');
+
+            $after=$this->db->table('visits')
+                ->select('id,school_id,visit_date,status,updated_at')
+                ->where('id',$visitId)
+                ->get()
+                ->getRowArray();
+
+            log_message('error','DATA SETELAH UPDATE: '.json_encode($after));
+
+            log_message('error','=== UPDATE VISIT SUCCESS ===');
+
+            return $this->response->setJSON([
+                'status'=>true,
+                'message'=>'Kegiatan Monev berhasil diperbarui.',
+                'csrfHash'=>csrf_hash()
+            ]);
+
+        }catch(\Throwable $e){
+
+            if($this->db->transStatus()!==false){
+                $this->db->transRollback();
+            }
+
+            log_message('error','=== UPDATE VISIT ERROR ===');
+            log_message('error','ERROR MESSAGE: '.$e->getMessage());
+            log_message('error','ERROR FILE: '.$e->getFile());
+            log_message('error','ERROR LINE: '.$e->getLine());
+            log_message('error','DB ERROR: '.json_encode($this->db->error()));
+            log_message('error','TRACE: '.$e->getTraceAsString());
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status'=>false,
+                    'message'=>$e->getMessage(),
+                    'csrfHash'=>csrf_hash()
+                ]);
+        }
     }
 }

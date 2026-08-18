@@ -4,6 +4,7 @@
     let schools=[];
     let officers=[];
     let searchTimer=null;
+    let editChangingRegion=false;
     function request(url,options){
         options=options||{};
         return $.ajax({
@@ -77,18 +78,52 @@
                 team='<span class="text-muted">Belum ada petugas</span>';
             }
             let action='';
-            if(row.status==='DRAFT'){
-                action='<a href="'+baseVisitUrl('visits/form/'+row.id)+'" class="btn btn-sm btn-primary"><i class="fas fa-play me-1"></i>Mulai</a>';
-                action+='<button type="button" class="btn btn-sm btn-outline-danger btn-delete-visit" data-id="'+escapeAttr(row.id)+'" data-school="'+escapeAttr(row.school_name||'')+'"><i class="fas fa-trash"></i></button>';
-            }else if(row.status==='IN_PROGRESS'){
-                action='<a href="'+baseVisitUrl('visits/form/'+row.id)+'" class="btn btn-sm btn-primary"><i class="fas fa-edit me-1"></i>Lanjutkan</a>';
-            }else{
-                action='<a href="'+baseVisitUrl('visits/form/'+row.id)+'" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye me-1"></i>Lihat</a>';
+            if(row.status === 'DRAFT'){
+
+                action =
+                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
+                    'class="btn btn-sm btn-primary" title="Mulai Monev">'+
+                    '<i class="fas fa-play me-1"></i>Mulai'+
+                    '</a>';
+
+                action +=
+                    '<button type="button" '+
+                    'class="btn btn-sm btn-outline-primary btn-edit-visit" '+
+                    'data-id="'+escapeAttr(row.id)+'" '+
+                    'title="Edit Kegiatan">'+
+                    '<i class="fas fa-edit"></i>'+
+                    '</button>';
+
+                action +=
+                    '<button type="button" '+
+                    'class="btn btn-sm btn-outline-danger btn-delete-visit" '+
+                    'data-id="'+escapeAttr(row.id)+'" '+
+                    'data-school="'+escapeAttr(row.school_name||'')+'" '+
+                    'title="Hapus">'+
+                    '<i class="fas fa-trash"></i>'+
+                    '</button>';
+
+            }else if(row.status === 'IN_PROGRESS'){
+
+                action =
+                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
+                    'class="btn btn-sm btn-primary" title="Lanjutkan Monev">'+
+                    '<i class="fas fa-edit me-1"></i>Lanjutkan'+
+                    '</a>';
+
+            }else if(row.status === 'COMPLETED'){
+
+                action =
+                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
+                    'class="btn btn-sm btn-outline-primary" title="Lihat Monev">'+
+                    '<i class="fas fa-eye me-1"></i>Lihat'+
+                    '</a>';
             }
             html+='<tr>';
             html+='<td>'+(index+1)+'</td>';
             html+='<td><strong>'+escapeHtml(row.npsn||'-')+'</strong></td>';
             html+='<td><strong>'+escapeHtml(row.school_name||'-')+'</strong></td>';
+            html+='<td>'+escapeHtml(row.region_name||'-')+'</td>';
             html+='<td>'+escapeHtml(row.level||'-')+'</td>';
             html+='<td>'+formatDate(row.visit_date)+'</td>';
             html+='<td><div class="visit-team-list">'+team+'</div></td>';
@@ -553,4 +588,258 @@
             $('#visitSchoolInfo').hide();
         });
     });
+    $(document).on('click','.btn-edit-visit',function(e){
+    e.preventDefault();
+    const visitId=$(this).data('id');
+    if(!visitId){
+        notify('ID kegiatan Monev tidak ditemukan.','error');
+        return;
+    }
+    openEditVisitModal(visitId);
+});
+
+    function openEditVisitModal(visitId){
+        
+        const modalElement=document.getElementById('visitEditModal');
+        if(!modalElement){
+            notify('Modal Edit belum tersedia.','error');
+            return;
+        }
+        initEditVisitSelect2();
+        $('#editVisitId').val(visitId);
+        $('#editVisitRegion').val(null).trigger('change');
+        $('#editVisitSchool').prop('disabled',true).html('<option value="">Pilih wilayah terlebih dahulu</option>').trigger('change');
+        $('#editVisitOfficerSelect').prop('disabled',true).val(null).trigger('change');
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+        request(URLS.edit+'/'+visitId,{
+            type:'GET'
+        }).done(function(res){
+            if(res&&res.csrfHash){
+                window.VISITS_CSRF_HASH=res.csrfHash;
+            }
+            if(!res||res.status===false){
+                notify(res&&res.message?res.message:'Data kegiatan gagal dimuat.','error');
+                return;
+            }
+            const data=res.data||{};
+            const userIds=Array.isArray(data.user_ids)?data.user_ids.map(String):[];
+            $('#editVisitId').val(data.id||visitId);
+            $('#editVisitDate').val(data.visit_date||'');
+            loadEditRegions(data.region_id,data.school_id,userIds,data.visit_date);
+        }).fail(function(xhr){
+            notify(xhr.responseJSON&&xhr.responseJSON.message?xhr.responseJSON.message:'Gagal mengambil data kegiatan Monev.','error');
+        });
+    }
+    function loadEditRegions(regionId,schoolId,userIds,visitDate){
+        const select=$('#editVisitRegion');
+        select.prop('disabled',true).html('<option value="">Memuat wilayah...</option>').trigger('change');
+        request(URLS.regions,{
+            type:'GET'
+        }).done(function(res){
+            if(!res||res.status===false){
+                notify(res&&res.message?res.message:'Data wilayah gagal dimuat.','error');
+                return;
+            }
+            const rows=Array.isArray(res.data)?res.data:[];
+            let html='<option value="">Pilih Wilayah</option>';
+            $.each(rows,function(index,row){
+                html+='<option value="'+escapeAttr(row.id)+'">'+escapeHtml(row.name||row.region_name||'-')+'</option>';
+            });
+            select.html(html).prop('disabled',false).val(String(regionId)).trigger('change');
+            loadEditSchools(regionId,schoolId,userIds,visitDate);
+        }).fail(function(xhr){
+            notify(xhr.responseJSON&&xhr.responseJSON.message?xhr.responseJSON.message:'Gagal memuat wilayah.','error');
+        });
+    }
+    function loadEditSchools(regionId,schoolId,userIds,visitDate){
+        const select=$('#editVisitSchool');
+        select.prop('disabled',true).html('<option value="">Memuat sekolah...</option>').trigger('change');
+        request(URLS.schools,{
+            type:'GET',
+            data:{
+                region_id:regionId,
+                edit_visit_id:$('#editVisitId').val()
+            }
+        }).done(function(res){
+            if(!res||res.status===false){
+                notify(res&&res.message?res.message:'Data sekolah gagal dimuat.','error');
+                return;
+            }
+            const rows=Array.isArray(res.data)?res.data:[];
+            let html='<option value="">Pilih Sekolah</option>';
+            $.each(rows,function(index,row){
+                const id=String(row.id);
+                const name=row.school_name||row.name||'-';
+                const text=(row.npsn?row.npsn+' - ':'')+name;
+                html+='<option value="'+escapeAttr(id)+'">'+escapeHtml(text)+'</option>';
+            });
+            select.html(html).prop('disabled',false);
+            if(schoolId){
+                select.val(String(schoolId)).trigger('change.select2');
+            }else{
+                select.val(null).trigger('change.select2');
+            }
+            if(schoolId&&userIds.length){
+                loadEditOfficers(userIds,visitDate);
+            }
+            editChangingRegion=false;
+        }).fail(function(xhr){
+            notify(xhr.responseJSON&&xhr.responseJSON.message?xhr.responseJSON.message:'Gagal memuat sekolah.','error');
+        });
+    }
+    function loadEditOfficers(userIds,visitDate){
+        const select=$('#editVisitOfficerSelect');
+        select.prop('disabled',true).html('').trigger('change');
+        request(URLS.officers,{type:'GET'}).done(function(res){
+            if(!res||res.status===false){
+                notify(res&&res.message?res.message:'Data petugas gagal dimuat.','error');
+                return;
+            }
+            const rows=Array.isArray(res.data)?res.data:[];
+            let html='';
+            $.each(rows,function(index,row){
+                html+='<option value="'+escapeAttr(row.id)+'">'+escapeHtml(row.name||row.full_name||'-')+'</option>';
+            });
+            select.html(html);
+            select.val(userIds.map(String)).prop('disabled',false);
+            $('#editVisitDate').prop('disabled',false).val(visitDate||'');
+        
+        }).fail(function(xhr){
+            notify(xhr.responseJSON&&xhr.responseJSON.message?xhr.responseJSON.message:'Gagal memuat petugas.','error');
+        });
+    }
+
+   $('#editVisitRegion').on('change',function(){
+        const regionId=$(this).val();
+        const school=$('#editVisitSchool');
+        if(!regionId){
+            school.prop('disabled',true).html('<option value="">Pilih wilayah terlebih dahulu</option>').trigger('change.select2');
+            return;
+        }
+        school.prop('disabled',true).html('<option value="">Memuat sekolah...</option>').trigger('change.select2');
+        loadEditSchools(regionId,null,[]);
+    });
+    $('#editVisitSchool').on('change',function(){
+        const schoolId=$(this).val();
+        const officer=$('#editVisitOfficerSelect');
+        if(!schoolId){
+            return;
+        }
+        officer.prop('disabled',false);
+    });
+    $('#editVisitOfficerSelect').on('change',function(){
+        const ids=$(this).val()||[];
+        $('#editVisitDate').prop('disabled',ids.length===0);
+    });
+    $('#editVisitForm').on('submit',function(e){
+        e.preventDefault();
+        updateVisit();
+    });
+    function updateVisit(){
+    console.log('UPDATE VISIT DIPANGGIL');
+
+    const formData=new FormData();
+    formData.append('visit_id',$('#editVisitId').val()||'');
+    formData.append('region_id',$('#editVisitRegion').val()||'');
+    formData.append('school_id',$('#editVisitSchool').val()||'');
+    formData.append('visit_date',$('#editVisitDate').val()||'');
+
+    const userIds=$('#editVisitOfficerSelect').val()||[];
+
+    console.log('DATA UPDATE:',{
+        visit_id:$('#editVisitId').val(),
+        region_id:$('#editVisitRegion').val(),
+        school_id:$('#editVisitSchool').val(),
+        visit_date:$('#editVisitDate').val(),
+        user_ids:userIds
+    });
+
+    userIds.forEach(function(id){
+        formData.append('user_ids[]',id);
+    });
+
+    formData.append(VISITS_CSRF_NAME,VISITS_CSRF_HASH);
+
+    $('#btnUpdateVisit').prop('disabled',true);
+
+    $.ajax({
+        url:VISITS_URLS.update,
+        type:'POST',
+        data:formData,
+        processData:false,
+        contentType:false,
+        dataType:'json'
+    }).done(function(res){
+        console.log('UPDATE RESPONSE:',res);
+
+        if(res&&res.csrfHash){
+            window.VISITS_CSRF_HASH=res.csrfHash;
+        }
+
+        if(!res||res.status===false){
+            notify(res&&res.message?res.message:'Data gagal diperbarui.','error');
+            return;
+        }
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('visitEditModal')).hide();
+        notify(res.message||'Kegiatan Monev berhasil diperbarui.','success');
+        loadVisits();
+    }).fail(function(xhr){
+        console.error('UPDATE VISIT ERROR:',xhr.responseText);
+        notify(xhr.responseJSON&&xhr.responseJSON.message?xhr.responseJSON.message:'Gagal memperbarui kegiatan Monev.','error');
+    }).always(function(){
+        $('#btnUpdateVisit').prop('disabled',false);
+    });
+}
+    function initEditVisitSelect2(){
+    const modalParent=$('#visitEditModal');
+    $('#editVisitRegion').select2({
+        width:'100%',
+        placeholder:'Pilih Wilayah',
+        allowClear:true,
+        dropdownParent:modalParent,
+        language:{
+            noResults:function(){
+                return 'Wilayah tidak ditemukan';
+            },
+            searching:function(){
+                return 'Mencari...';
+            }
+        }
+    });
+    $('#editVisitSchool').select2({
+        width:'100%',
+        placeholder:'Pilih Sekolah',
+        allowClear:true,
+        dropdownParent:modalParent,
+        language:{
+            noResults:function(){
+                return 'Sekolah tidak ditemukan';
+            },
+            searching:function(){
+                return 'Mencari...';
+            }
+        }
+    });
+    $('#editVisitOfficerSelect').select2({
+        width:'100%',
+        placeholder:'Pilih Petugas Monev',
+        allowClear:true,
+        closeOnSelect:false,
+        dropdownParent:modalParent,
+        language:{
+            noResults:function(){
+                return 'Petugas tidak ditemukan';
+            },
+            searching:function(){
+                return 'Mencari...';
+            }
+        }
+    });
+    }
+    $(document).on('submit','#visitEditForm',function(e){
+    e.preventDefault();
+    console.log('FORM EDIT SUBMIT');
+    updateVisit();
+});
 })();
