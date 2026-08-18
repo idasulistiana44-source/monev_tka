@@ -44,12 +44,11 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('visits/update', 'Visits::update');
 
         // Reports / Rekap Monev
-        $routes->get('reports', 'ReportController::index');
-        $routes->post('reports/data', 'ReportController::getData');
-        $routes->post('reports/get_data', 'ReportController::getData');
-        $routes->post('reports/update-followup-status', 'ReportController::updateFollowupStatus');
-        $routes->post('reports/export-excel', 'ReportController::exportExcel');
-        $routes->post('reports/export-pdf', 'ReportController::exportPdf');
+        $routes->get('reports','Reports::index');
+        $routes->get('reports/regions','Reports::regions');
+        $routes->get('reports/data','Reports::data');
+        $routes->get('reports/export-excel','Reports::exportExcel');
+        $routes->get('reports/pdf/(:num)','Reports::pdf/$1');
     });
 
     // --------------------------------------

@@ -21,6 +21,8 @@ if(str_starts_with($pageName,'visits/instrument')){
     $pageAsset='monev';
 }elseif(str_starts_with($pageName,'reports/index')){
     $pageAsset='reports';
+}elseif(str_starts_with($pageName,'monev/index')){
+    $pageAsset='monev';
 }
 
 ?>

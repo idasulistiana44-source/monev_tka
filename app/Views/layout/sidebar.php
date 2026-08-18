@@ -62,7 +62,7 @@
         <li class="<?= url_is('reports') || url_is('reports/*') ? 'active' : '' ?>">
             <a href="<?= base_url('reports') ?>">
                 <i class="fas fa-chart-bar"></i>
-                <span class="sidebar-menu-text">Rekap Monev</span>
+                <span class="sidebar-menu-text">Laporan Monev</span>
             </a>
         </li>
     </ul>
