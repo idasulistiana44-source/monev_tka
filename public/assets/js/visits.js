@@ -79,13 +79,11 @@
             }
             let action='';
             if(row.status === 'DRAFT'){
-
                 action =
                     '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
                     'class="btn btn-sm btn-primary" title="Mulai Monev">'+
                     '<i class="fas fa-play me-1"></i>Mulai'+
                     '</a>';
-
                 action +=
                     '<button type="button" '+
                     'class="btn btn-sm btn-outline-primary btn-edit-visit" '+
@@ -93,7 +91,20 @@
                     'title="Edit Kegiatan">'+
                     '<i class="fas fa-edit"></i>'+
                     '</button>';
-
+            }else if(row.status === 'IN_PROGRESS'){
+                action =
+                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
+                    'class="btn btn-sm btn-primary" title="Lanjutkan Monev">'+
+                    '<i class="fas fa-edit me-1"></i>Lanjutkan'+
+                    '</a>';
+            }else if(row.status === 'COMPLETED' || row.status === 'VERIFIED'){
+                action =
+                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
+                    'class="btn btn-sm btn-outline-primary" title="Lihat Monev">'+
+                    '<i class="fas fa-eye me-1"></i>Lihat'+
+                    '</a>';
+            }
+            if(window.IS_ADMIN){
                 action +=
                     '<button type="button" '+
                     'class="btn btn-sm btn-outline-danger btn-delete-visit" '+
@@ -102,22 +113,6 @@
                     'title="Hapus">'+
                     '<i class="fas fa-trash"></i>'+
                     '</button>';
-
-            }else if(row.status === 'IN_PROGRESS'){
-
-                action =
-                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
-                    'class="btn btn-sm btn-primary" title="Lanjutkan Monev">'+
-                    '<i class="fas fa-edit me-1"></i>Lanjutkan'+
-                    '</a>';
-
-            }else if(row.status === 'COMPLETED'){
-
-                action =
-                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
-                    'class="btn btn-sm btn-outline-primary" title="Lihat Monev">'+
-                    '<i class="fas fa-eye me-1"></i>Lihat'+
-                    '</a>';
             }
             html+='<tr>';
             html+='<td>'+(index+1)+'</td>';
@@ -128,6 +123,7 @@
             html+='<td>'+formatDate(row.visit_date)+'</td>';
             html+='<td><div class="visit-team-list">'+team+'</div></td>';
             html+='<td>'+renderStatus(row.status)+'</td>';
+            html+='<td>'+(row.submitted_by_name?escapeHtml(row.submitted_by_name):'-')+'</td>';
             html+='<td><div class="visit-actions">'+action+'</div></td>';
             html+='</tr>';
         });

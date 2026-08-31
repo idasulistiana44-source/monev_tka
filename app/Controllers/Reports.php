@@ -49,7 +49,18 @@ class Reports extends BaseController
             $status=is_string($status)?trim($status):'';
             $dateFrom=is_string($dateFrom)?trim($dateFrom):'';
             $dateTo=is_string($dateTo)?trim($dateTo):'';
-            $data=$this->reportsModel->getReports($keyword,$regionId,$status,$dateFrom,$dateTo);
+            $userRole=strtolower((string)session()->get('role'));
+            $userId=(int)session()->get('user_id');
+
+            $data=$this->reportsModel->getReports(
+                $keyword,
+                $regionId,
+                $status,
+                $dateFrom,
+                $dateTo,
+                $userRole,
+                $userId
+            );
             return $this->response->setJSON([
                 'status'=>true,
                 'data'=>$data,
@@ -73,19 +84,40 @@ class Reports extends BaseController
             $status=$this->request->getGet('status');
             $dateFrom=$this->request->getGet('date_from');
             $dateTo=$this->request->getGet('date_to');
+
             $keyword=is_string($keyword)?trim($keyword):'';
             $regionId=is_string($regionId)?trim($regionId):'';
             $status=is_string($status)?trim($status):'';
             $dateFrom=is_string($dateFrom)?trim($dateFrom):'';
             $dateTo=is_string($dateTo)?trim($dateTo):'';
-            $data=$this->reportsModel->getReports($keyword,$regionId,$status,$dateFrom,$dateTo);
+
+            $userRole=strtolower((string)session()->get('role'));
+            $userId=(int)session()->get('user_id');
+
+            $data=$this->reportsModel->getReports(
+                $keyword,
+                $regionId,
+                $status,
+                $dateFrom,
+                $dateTo,
+                $userRole,
+                $userId
+            );
+
             return $this->response->setJSON([
                 'status'=>true,
                 'data'=>$data,
+                'total'=>count($data),
                 'csrfHash'=>csrf_hash()
             ]);
+
         }catch(\Throwable $e){
-            log_message('error','REPORT EXPORT ERROR: '.$e->getMessage());
+
+            log_message(
+                'error',
+                'REPORT EXPORT ERROR: '.$e->getMessage()
+            );
+
             return $this->response->setStatusCode(500)->setJSON([
                 'status'=>false,
                 'message'=>'Gagal menyiapkan data export.',
@@ -95,538 +127,721 @@ class Reports extends BaseController
         }
     }
  
-  public function pdf($id)
-{
-    try {
-        $data = $this->reportsModel->getReport((int) $id);
+    public function pdf($id)
+    {
+        try {
+            $userRole=strtolower((string)session()->get('role'));
+            $userId=(int)session()->get('user_id');
 
-        if (!$data) {
-            throw new \RuntimeException('Data Monev tidak ditemukan.');
-        }
-
-        $data['answers']   = $data['answers'] ?? [];
-        $data['documents'] = $data['documents'] ?? [];
-        $data['photos']    = $data['photos'] ?? [];
-
-        $timestamp = time();
-
-        $outputPdf = WRITEPATH
-            . 'uploads/laporan_monev_'
-            . (int) $id
-            . '_'
-            . $timestamp
-            . '.pdf';
-
-        $pdf = new \setasign\Fpdi\Fpdi();
-
-        $pdf->SetAutoPageBreak(false);
-
-        /*
-        |--------------------------------------------------------------------------
-        | 1. HALAMAN UTAMA
-        |--------------------------------------------------------------------------
-        */
-
-        $data['pdf_section'] = 'main';
-
-        $html = view('reports/pdf', [
-            'data' => $data
-        ]);
-
-        $dompdf = new \Dompdf\Dompdf();
-
-        $dompdf->set_option('isRemoteEnabled', true);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-
-        $mainPdf = WRITEPATH
-            . 'uploads/report_main_'
-            . (int) $id
-            . '_'
-            . $timestamp
-            . '.pdf';
-
-        file_put_contents(
-            $mainPdf,
-            $dompdf->output()
-        );
-
-        $this->appendPdfPages(
-            $pdf,
-            $mainPdf
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 2. BERKAS YANG DIUPLOAD
-        |--------------------------------------------------------------------------
-        */
-
-        $documentIndex = 0;
-
-        foreach ($data['documents'] as $document) {
-
-            $url = trim(
-                (string) ($document['answer'] ?? '')
+            $data=$this->reportsModel->getReport(
+                (int)$id,
+                $userRole,
+                $userId
             );
 
-            if ($url === '') {
-                continue;
+            if (!$data) {
+                throw new \RuntimeException('Data Monev tidak ditemukan.');
             }
 
-            $path = parse_url(
-                $url,
-                PHP_URL_PATH
-            );
+            $data['answers']   = $data['answers'] ?? [];
+            $data['documents'] = $data['documents'] ?? [];
+            $data['photos']    = $data['photos'] ?? [];
 
-            $path = urldecode(
-                $path ?: $url
-            );
+            $timestamp = time();
 
-            $fileName = basename($path);
+            $outputPdf = WRITEPATH
+                . 'uploads/laporan_monev_'
+                . (int) $id
+                . '_'
+                . $timestamp
+                . '.pdf';
+
+            $pdf = new \setasign\Fpdi\Fpdi();
+
+            $pdf->SetAutoPageBreak(false);
 
             /*
             |--------------------------------------------------------------------------
-            | Lokasi berkas
+            | 1. HALAMAN UTAMA
             |--------------------------------------------------------------------------
             */
 
-            $filePath = FCPATH
-                . 'uploads/monev/berkas/'
-                . $fileName;
+            $data['pdf_section'] = 'main';
 
-            if (!is_file($filePath)) {
-
-                $filePath = FCPATH
-                    . ltrim($path, '/');
-            }
-
-            if (!is_file($filePath)) {
-
-                log_message(
-                    'error',
-                    'BERKAS TIDAK DITEMUKAN: ' . $url
-                );
-
-                continue;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Hanya PDF
-            |--------------------------------------------------------------------------
-            */
-
-            $extension = strtolower(
-                pathinfo(
-                    $filePath,
-                    PATHINFO_EXTENSION
-                )
-            );
-
-            if ($extension !== 'pdf') {
-                continue;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Berkas pertama
-            | Tempelkan header C pada halaman pertama
-            |--------------------------------------------------------------------------
-            */
-
-            if ($documentIndex === 0) {
-
-                $this->appendFirstDocumentWithHeader(
-                    $pdf,
-                    $filePath
-                );
-
-            } else {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Berkas berikutnya langsung append
-                |--------------------------------------------------------------------------
-                */
-
-                $this->appendPdfPages(
-                    $pdf,
-                    $filePath
-                );
-            }
-
-            $documentIndex++;
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 3. FOTO DOKUMENTASI
-        |--------------------------------------------------------------------------
-        */
-
-        if (!empty($data['photos'])) {
-
-            $data['pdf_section'] = 'photos';
-
-            $photoHtml = view('reports/pdf', [
+            $html = view('reports/pdf', [
                 'data' => $data
             ]);
 
-            $photoDompdf = new \Dompdf\Dompdf();
+            $dompdf = new \Dompdf\Dompdf();
 
-            $photoDompdf->set_option(
-                'isRemoteEnabled',
-                true
-            );
+            $dompdf->set_option('isRemoteEnabled', true);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
 
-            $photoDompdf->loadHtml(
-                $photoHtml
-            );
-
-            $photoDompdf->setPaper(
-                'A4',
-                'portrait'
-            );
-
-            $photoDompdf->render();
-
-            $photoPdf = WRITEPATH
-                . 'uploads/report_photos_'
+            $mainPdf = WRITEPATH
+                . 'uploads/report_main_'
                 . (int) $id
                 . '_'
                 . $timestamp
                 . '.pdf';
 
             file_put_contents(
-                $photoPdf,
-                $photoDompdf->output()
+                $mainPdf,
+                $dompdf->output()
             );
 
             $this->appendPdfPages(
                 $pdf,
-                $photoPdf
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 4. SIMPAN PDF FINAL
-        |--------------------------------------------------------------------------
-        */
-
-        $pdf->Output(
-            'F',
-            $outputPdf
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 5. HAPUS FILE SEMENTARA
-        |--------------------------------------------------------------------------
-        */
-
-        @unlink($mainPdf);
-
-        if (isset($photoPdf)) {
-            @unlink($photoPdf);
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 6. DOWNLOAD
-        |--------------------------------------------------------------------------
-        */
-
-        return $this->response
-            ->download(
-                $outputPdf,
-                null
-            )
-            ->setFileName(
-                'Laporan_Monev_'
-                . ($data['school_name'] ?? $id)
-                . '.pdf'
+                $mainPdf
             );
 
-    } catch (\Throwable $e) {
 
-        log_message(
-            'error',
-            'REPORT PDF ERROR: '
-            . $e->getMessage()
-        );
+            /*
+            |--------------------------------------------------------------------------
+            | 2. BERKAS YANG DIUPLOAD
+            |--------------------------------------------------------------------------
+            */
 
-        return $this->response
-            ->setStatusCode(500)
-            ->setJSON([
-                'status' => false,
-                'message' => 'Gagal memuat laporan PDF.',
-                'debug' => $e->getMessage(),
-                'csrfHash' => csrf_hash()
-            ]);
+            $documentIndex = 0;
+
+            foreach ($data['documents'] as $document) {
+
+                $url = trim(
+                    (string) ($document['answer'] ?? '')
+                );
+
+                if ($url === '') {
+                    continue;
+                }
+
+                $path = parse_url(
+                    $url,
+                    PHP_URL_PATH
+                );
+
+                $path = urldecode(
+                    $path ?: $url
+                );
+
+                $fileName = basename($path);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Lokasi berkas
+                |--------------------------------------------------------------------------
+                */
+
+                $filePath = FCPATH
+                    . 'uploads/monev/berkas/'
+                    . $fileName;
+
+                if (!is_file($filePath)) {
+
+                    $filePath = FCPATH
+                        . ltrim($path, '/');
+                }
+
+                if (!is_file($filePath)) {
+
+                    log_message(
+                        'error',
+                        'BERKAS TIDAK DITEMUKAN: ' . $url
+                    );
+
+                    continue;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Hanya PDF
+                |--------------------------------------------------------------------------
+                */
+
+                $extension = strtolower(
+                    pathinfo(
+                        $filePath,
+                        PATHINFO_EXTENSION
+                    )
+                );
+
+                if ($extension !== 'pdf') {
+                    continue;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Berkas pertama
+                | Tempelkan header C pada halaman pertama
+                |--------------------------------------------------------------------------
+                */
+
+                if ($documentIndex === 0) {
+
+                    $this->appendFirstDocumentWithHeader(
+                        $pdf,
+                        $filePath
+                    );
+
+                } else {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Berkas berikutnya langsung append
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $this->appendPdfPages(
+                        $pdf,
+                        $filePath
+                    );
+                }
+
+                $documentIndex++;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3. FOTO DOKUMENTASI
+            |--------------------------------------------------------------------------
+            */
+
+            if (!empty($data['photos'])) {
+
+                $data['pdf_section'] = 'photos';
+
+                $photoHtml = view('reports/pdf', [
+                    'data' => $data
+                ]);
+
+                $photoDompdf = new \Dompdf\Dompdf();
+
+                $photoDompdf->set_option(
+                    'isRemoteEnabled',
+                    true
+                );
+
+                $photoDompdf->loadHtml(
+                    $photoHtml
+                );
+
+                $photoDompdf->setPaper(
+                    'A4',
+                    'portrait'
+                );
+
+                $photoDompdf->render();
+
+                $photoPdf = WRITEPATH
+                    . 'uploads/report_photos_'
+                    . (int) $id
+                    . '_'
+                    . $timestamp
+                    . '.pdf';
+
+                file_put_contents(
+                    $photoPdf,
+                    $photoDompdf->output()
+                );
+
+                $this->appendPdfPages(
+                    $pdf,
+                    $photoPdf
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 4. SIMPAN PDF FINAL
+            |--------------------------------------------------------------------------
+            */
+
+            $pdf->Output(
+                'F',
+                $outputPdf
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 5. HAPUS FILE SEMENTARA
+            |--------------------------------------------------------------------------
+            */
+
+            @unlink($mainPdf);
+
+            if (isset($photoPdf)) {
+                @unlink($photoPdf);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 6. DOWNLOAD
+            |--------------------------------------------------------------------------
+            */
+
+            return $this->response
+                ->download(
+                    $outputPdf,
+                    null
+                )
+                ->setFileName(
+                    'Laporan_Monev_'
+                    . ($data['school_name'] ?? $id)
+                    . '.pdf'
+                );
+
+        } catch (\Throwable $e) {
+
+            log_message(
+                'error',
+                'REPORT PDF ERROR: '
+                . $e->getMessage()
+            );
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status' => false,
+                    'message' => 'Gagal memuat laporan PDF.',
+                    'debug' => $e->getMessage(),
+                    'csrfHash' => csrf_hash()
+                ]);
+        }
     }
-}
 
-
-/*
-|--------------------------------------------------------------------------
-| APPEND PDF BIASA
-|--------------------------------------------------------------------------
-*/
-
-private function appendPdfPages(
-    $pdf,
-    $filePath
-) {
-    $pageCount = $pdf->setSourceFile(
+    private function appendPdfPages(
+        $pdf,
         $filePath
-    );
-
-    for (
-        $pageNo = 1;
-        $pageNo <= $pageCount;
-        $pageNo++
     ) {
-
-        $template = $pdf->importPage(
-            $pageNo
+        $pageCount = $pdf->setSourceFile(
+            $filePath
         );
 
-        $size = $pdf->getTemplateSize(
-            $template
-        );
+        for (
+            $pageNo = 1;
+            $pageNo <= $pageCount;
+            $pageNo++
+        ) {
 
-        $orientation =
-            $size['width'] > $size['height']
-                ? 'L'
-                : 'P';
+            $template = $pdf->importPage(
+                $pageNo
+            );
 
-        $pdf->AddPage(
-            $orientation,
-            [
-                $size['width'],
-                $size['height']
-            ]
-        );
+            $size = $pdf->getTemplateSize(
+                $template
+            );
 
-        $pdf->useTemplate(
-            $template
-        );
+            $orientation =
+                $size['width'] > $size['height']
+                    ? 'L'
+                    : 'P';
+
+            $pdf->AddPage(
+                $orientation,
+                [
+                    $size['width'],
+                    $size['height']
+                ]
+            );
+
+            $pdf->useTemplate(
+                $template
+            );
+        }
     }
-}
+    private function appendFirstDocumentWithHeader($pdf,$filePath) 
+    {
+            $pageCount = $pdf->setSourceFile(
+                $filePath
+            );
+            $template = $pdf->importPage(1);
 
+            $size = $pdf->getTemplateSize(
+                $template
+            );
+            $pageWidth = 210;
+            $pageHeight = 297;
 
-/*
-|--------------------------------------------------------------------------
-| HALAMAN PERTAMA BERKAS + HEADER C
-|--------------------------------------------------------------------------
-*/
+            $pdf->AddPage(
+                'P',
+                [
+                    $pageWidth,
+                    $pageHeight
+                ]
+            );
 
-private function appendFirstDocumentWithHeader(
-    $pdf,
-    $filePath
-) {
-    $pageCount = $pdf->setSourceFile(
-        $filePath
-    );
+        $pdf->SetFont(
+            'Arial',
+            'B',
+            13
+        );
 
-    /*
-    |--------------------------------------------------------------------------
-    | Ambil halaman pertama
-    |--------------------------------------------------------------------------
-    */
+        $pdf->SetFillColor(
+            238,
+            238,
+            238
+        );
 
-    $template = $pdf->importPage(1);
+        $pdf->SetXY(
+            0,
+            10
+        );
 
-    $size = $pdf->getTemplateSize(
-        $template
-    );
+        $pdf->Cell(
+            210,
+            8,
+            '',
+            0,
+            1,
+            'L',
+            true
+        );
 
-    /*
-    |--------------------------------------------------------------------------
-    | Gunakan ukuran A4
-    |--------------------------------------------------------------------------
-    */
+        $pdf->SetXY(
+            5,
+            10
+        );
 
-    $pageWidth = 210;
-    $pageHeight = 297;
+        $pdf->Cell(
+            200,
+            8,
+            'C. BERKAS YANG DIUPLOAD',
+            0,
+            1,
+            'L',
+            false
+        );
 
-    $pdf->AddPage(
-        'P',
-        [
-            $pageWidth,
+        $documentTop = 7;
+
+        $availableHeight =
             $pageHeight
-        ]
-    );
+            - $documentTop
+            - 2;
 
-    /*
-|--------------------------------------------------------------------------
-| Header C. BERKAS YANG DIUPLOAD
-|--------------------------------------------------------------------------
-*/
+        $availableWidth =
+            $pageWidth
+            - 4;
 
-$pdf->SetFont(
-    'Arial',
-    'B',
-    13
-);
+        $scaleWidth =
+            $availableWidth
+            / $size['width'];
 
-$pdf->SetFillColor(
-    238,
-    238,
-    238
-);
+        $scaleHeight =
+            $availableHeight
+            / $size['height'];
 
-/*
-|--------------------------------------------------------------------------
-| Background full lebar halaman A4
-|--------------------------------------------------------------------------
-*/
-
-$pdf->SetXY(
-    0,
-    10
-);
-
-$pdf->Cell(
-    210,
-    8,
-    '',
-    0,
-    1,
-    'L',
-    true
-);
-
-/*
-|--------------------------------------------------------------------------
-| Tulisan header
-|--------------------------------------------------------------------------
-*/
-
-$pdf->SetXY(
-    5,
-    10
-);
-
-$pdf->Cell(
-    200,
-    8,
-    'C. BERKAS YANG DIUPLOAD',
-    0,
-    1,
-    'L',
-    false
-);
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Posisi dokumen di bawah header
-    |--------------------------------------------------------------------------
-    */
-
-    $documentTop = 7;
-
-    $availableHeight =
-        $pageHeight
-        - $documentTop
-        - 2;
-
-    $availableWidth =
-        $pageWidth
-        - 4;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Hitung skala supaya dokumen masuk
-    |--------------------------------------------------------------------------
-    */
-
-    $scaleWidth =
-        $availableWidth
-        / $size['width'];
-
-    $scaleHeight =
-        $availableHeight
-        / $size['height'];
-
-    $scale = min(
-        $scaleWidth,
-        $scaleHeight
-    );
-
-    $documentWidth =
-        $size['width']
-        * $scale;
-
-    $documentHeight =
-        $size['height']
-        * $scale;
-
-    $documentX =
-        ($pageWidth - $documentWidth)
-        / 2;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Masukkan halaman pertama PDF berkas
-    |--------------------------------------------------------------------------
-    */
-
-    $pdf->useTemplate(
-        $template,
-        $documentX,
-        $documentTop,
-        $documentWidth,
-        $documentHeight
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Halaman kedua dan seterusnya
-    |--------------------------------------------------------------------------
-    */
-
-    for (
-        $pageNo = 2;
-        $pageNo <= $pageCount;
-        $pageNo++
-    ) {
-
-        $template = $pdf->importPage(
-            $pageNo
+        $scale = min(
+            $scaleWidth,
+            $scaleHeight
         );
 
-        $size = $pdf->getTemplateSize(
-            $template
-        );
+        $documentWidth =
+            $size['width']
+            * $scale;
 
-        $orientation =
-            $size['width'] > $size['height']
-                ? 'L'
-                : 'P';
+        $documentHeight =
+            $size['height']
+            * $scale;
 
-        $pdf->AddPage(
-            $orientation,
-            [
-                $size['width'],
-                $size['height']
-            ]
-        );
+        $documentX =
+            ($pageWidth - $documentWidth)
+            / 2;
 
         $pdf->useTemplate(
-            $template
+            $template,
+            $documentX,
+            $documentTop,
+            $documentWidth,
+            $documentHeight
         );
+
+
+        for (
+            $pageNo = 2;
+            $pageNo <= $pageCount;
+            $pageNo++
+        ) {
+
+            $template = $pdf->importPage(
+                $pageNo
+            );
+
+            $size = $pdf->getTemplateSize(
+                $template
+            );
+
+            $orientation =
+                $size['width'] > $size['height']
+                    ? 'L'
+                    : 'P';
+
+            $pdf->AddPage(
+                $orientation,
+                [
+                    $size['width'],
+                    $size['height']
+                ]
+            );
+
+            $pdf->useTemplate(
+                $template
+            );
+        }
+    } 
+    public function exportAllPdf()
+    {
+        try{
+            $keyword=$this->request->getGet('keyword');
+            $regionId=$this->request->getGet('region_id');
+            $status=$this->request->getGet('status');
+            $dateFrom=$this->request->getGet('date_from');
+            $dateTo=$this->request->getGet('date_to');
+
+            $keyword=is_string($keyword)?trim($keyword):'';
+            $regionId=is_string($regionId)?trim($regionId):'';
+            $status=is_string($status)?trim($status):'';
+            $dateFrom=is_string($dateFrom)?trim($dateFrom):'';
+            $dateTo=is_string($dateTo)?trim($dateTo):'';
+
+            $userRole=strtolower((string)session()->get('role'));
+            $userId=(int)session()->get('user_id');
+
+            $reports=$this->reportsModel->getReports(
+                $keyword,
+                $regionId,
+                $status,
+                $dateFrom,
+                $dateTo,
+                $userRole,
+                $userId
+            );
+
+            if(empty($reports)){
+                return $this->response->setStatusCode(404)->setJSON([
+                    'status'=>false,
+                    'message'=>'Tidak ada laporan Monev yang dapat diekspor.',
+                    'csrfHash'=>csrf_hash()
+                ]);
+            }
+
+            $timestamp=time();
+
+            $outputPdf=WRITEPATH
+                .'uploads/laporan_monev_all_'
+                .$timestamp
+                .'.pdf';
+
+            $pdf=new \setasign\Fpdi\Fpdi();
+            $pdf->SetAutoPageBreak(false);
+
+            foreach($reports as $report){
+
+                $id=(int)$report['id'];
+
+                $data=$this->reportsModel->getReport(
+                    $id,
+                    $userRole,
+                    $userId
+                );
+
+                if(!$data){
+                    continue;
+                }
+
+                $data['answers']=$data['answers']??[];
+                $data['documents']=$data['documents']??[];
+                $data['photos']=$data['photos']??[];
+
+                $mainHtml=view('reports/pdf',[
+                    'data'=>array_merge(
+                        $data,
+                        ['pdf_section'=>'main']
+                    )
+                ]);
+
+                $dompdf=new \Dompdf\Dompdf();
+
+                $dompdf->set_option(
+                    'isRemoteEnabled',
+                    true
+                );
+
+                $dompdf->loadHtml($mainHtml);
+                $dompdf->setPaper('A4','portrait');
+                $dompdf->render();
+
+                $mainPdf=WRITEPATH
+                    .'uploads/report_all_main_'
+                    .$id
+                    .'_'
+                    .$timestamp
+                    .'.pdf';
+
+                file_put_contents(
+                    $mainPdf,
+                    $dompdf->output()
+                );
+
+                $this->appendPdfPages(
+                    $pdf,
+                    $mainPdf
+                );
+
+                @unlink($mainPdf);
+
+                $documentIndex=0;
+
+                foreach($data['documents'] as $document){
+
+                    $url=trim(
+                        (string)($document['answer']??'')
+                    );
+
+                    if($url===''){
+                        continue;
+                    }
+
+                    $path=parse_url(
+                        $url,
+                        PHP_URL_PATH
+                    );
+
+                    $path=urldecode(
+                        $path?:$url
+                    );
+
+                    $fileName=basename($path);
+
+                    $filePath=FCPATH
+                        .'uploads/monev/berkas/'
+                        .$fileName;
+
+                    if(!is_file($filePath)){
+                        $filePath=FCPATH
+                            .ltrim($path,'/');
+                    }
+
+                    if(!is_file($filePath)){
+                        log_message(
+                            'error',
+                            'EXPORT ALL BERKAS TIDAK DITEMUKAN: '.$url
+                        );
+                        continue;
+                    }
+
+                    $extension=strtolower(
+                        pathinfo(
+                            $filePath,
+                            PATHINFO_EXTENSION
+                        )
+                    );
+
+                    if($extension!=='pdf'){
+                        continue;
+                    }
+
+                    if($documentIndex===0){
+
+                        $this->appendFirstDocumentWithHeader(
+                            $pdf,
+                            $filePath
+                        );
+
+                    }else{
+
+                        $this->appendPdfPages(
+                            $pdf,
+                            $filePath
+                        );
+                    }
+
+                    $documentIndex++;
+                }
+
+                if(!empty($data['photos'])){
+
+                    $data['pdf_section']='photos';
+
+                    $photoHtml=view('reports/pdf',[
+                        'data'=>$data
+                    ]);
+
+                    $photoDompdf=new \Dompdf\Dompdf();
+
+                    $photoDompdf->set_option(
+                        'isRemoteEnabled',
+                        true
+                    );
+
+                    $photoDompdf->loadHtml(
+                        $photoHtml
+                    );
+
+                    $photoDompdf->setPaper(
+                        'A4',
+                        'portrait'
+                    );
+
+                    $photoDompdf->render();
+
+                    $photoPdf=WRITEPATH
+                        .'uploads/report_all_photos_'
+                        .$id
+                        .'_'
+                        .$timestamp
+                        .'.pdf';
+
+                    file_put_contents(
+                        $photoPdf,
+                        $photoDompdf->output()
+                    );
+
+                    $this->appendPdfPages(
+                        $pdf,
+                        $photoPdf
+                    );
+
+                    @unlink($photoPdf);
+                }
+            }
+
+            $pdf->Output(
+                'F',
+                $outputPdf
+            );
+
+            $filename='Laporan_Monev_All_'.date('Ymd_His').'.pdf';
+
+            return $this->response
+                ->download(
+                    $outputPdf,
+                    null
+                )
+                ->setFileName(
+                    $filename
+                );
+
+        }catch(\Throwable $e){
+
+            log_message(
+                'error',
+                'REPORT EXPORT ALL PDF ERROR: '.$e->getMessage()
+            );
+
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'status'=>false,
+                    'message'=>'Gagal menyiapkan seluruh laporan PDF.',
+                    'debug'=>$e->getMessage(),
+                    'csrfHash'=>csrf_hash()
+                ]);
+        }
     }
-} 
 
 }

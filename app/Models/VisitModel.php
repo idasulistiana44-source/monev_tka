@@ -14,6 +14,8 @@ class VisitModel extends Model
         'officer_id',
         'status',
         'completed_at',
+        'created_by',
+        'submitted_by',
         'created_at',
         'updated_at'
     ];
@@ -24,9 +26,39 @@ class VisitModel extends Model
     public function getList($keyword = '', $status = '', $userId = null)
     {
         $builder=$this->db->table('visits v');
-        $builder->select('v.id,v.school_id,v.visit_date,v.status,v.created_at,v.updated_at,s.npsn,s.school_name AS school_name,s.level,s.region_id,r.name AS region_name');
+        $builder->select('
+            v.id,
+            v.school_id,
+            v.visit_date,
+            v.status,
+            v.created_at,
+            v.updated_at,
+
+            v.created_by,
+            creator.name AS created_by_name,
+
+            v.submitted_by,
+            submitter.name AS submitted_by_name,
+
+            s.npsn,
+            s.school_name AS school_name,
+            s.level,
+            s.region_id,
+            r.name AS region_name
+        ');
         $builder->join('schools s','s.id=v.school_id','left');
         $builder->join('region r','r.id=s.region_id','left');
+        $builder->join(
+            'users creator',
+            'creator.id = v.created_by',
+            'left'
+        );
+
+        $builder->join(
+            'users submitter',
+            'submitter.id = v.submitted_by',
+            'left'
+        );
 
         // FILTER PETUGAS: Jika $userId diisi, filter hanya kegiatan Monev yang diikuti petugas tersebut
         if ($userId !== null && (int)$userId > 0) {
@@ -117,7 +149,8 @@ class VisitModel extends Model
             'school_id'  => (int)$schoolId,
             'visit_date' => $visitDate,
             'status'     => 'DRAFT',
-            'notes'      => null
+            'created_by'=>(int)session()->get('user_id'),
+            'created_at'=>date('Y-m-d H:i:s')
         ]);
 
         $visitId = (int)$this->getInsertID();
@@ -141,22 +174,22 @@ class VisitModel extends Model
         }
 
         $teamRows = [];
+
         foreach ($userIds as $userId) {
             $teamRows[] = [
                 'visit_id' => $visitId,
-                'user_id'  => $userId,
-                'role'     => 'anggota'
+                'user_id'  => $userId
             ];
         }
 
         $this->db->table('visit_team')->insertBatch($teamRows);
-        $savedCount = $this->db->affectedRows();
 
-        if ($savedCount !== count($teamRows)) {
-            $this->db->transRollback();
-            throw new \RuntimeException('Jumlah petugas yang tersimpan tidak sesuai dengan petugas yang dipilih.');
-        }
+    if ($this->db->error()['code'] !== 0) {
+        $this->db->transRollback();
 
+        throw new \RuntimeException('Gagal menyimpan petugas Monev.');
+    }
+            
         $this->db->transComplete();
 
         if ($this->db->transStatus() === false) {
@@ -200,31 +233,48 @@ class VisitModel extends Model
 
     public function deleteVisit($id)
     {
-        $id = (int)$id;
-        $this->db->transStart();
+        $id=(int)$id;
 
-        if ($this->db->tableExists('visit_answers')) {
-            $this->db->table('visit_answers')->where('visit_id', $id)->delete();
-        }
-        if ($this->db->tableExists('visit_team')) {
-            $this->db->table('visit_team')->where('visit_id', $id)->delete();
-        }
-        if ($this->db->tableExists('visit_notes')) {
-            $this->db->table('visit_notes')->where('visit_id', $id)->delete();
-        }
-        if ($this->db->tableExists('visit_photos')) {
-            $this->db->table('visit_photos')->where('visit_id', $id)->delete();
+        if($id<=0){
+            throw new \InvalidArgumentException('ID kegiatan Monev tidak valid.');
         }
 
-        $this->where('id', $id)->delete();
+        $db=$this->db;
 
-        $this->db->transComplete();
+        $db->transBegin();
 
-        if ($this->db->transStatus() === false) {
-            throw new \RuntimeException('Gagal menghapus kegiatan Monev.');
+        try{
+            $db->table('visit_answers')
+                ->where('visit_id',$id)
+                ->delete();
+
+            $db->table('visit_team')
+                ->where('visit_id',$id)
+                ->delete();
+
+            $db->table('visits')
+                ->where('id',$id)
+                ->delete();
+
+            if($db->transStatus()===false){
+                throw new \RuntimeException('Gagal menghapus data kegiatan Monev.');
+            }
+
+            $db->transCommit();
+
+            return true;
+
+        }catch(\Throwable $e){
+
+            $db->transRollback();
+
+            log_message(
+                'error',
+                'DELETE VISIT '.$id.' ERROR: '.$e->getMessage()
+            );
+
+            throw $e;
         }
-
-        return true;
     }
 
     public function getInstrumentData($visitId)
@@ -362,64 +412,86 @@ class VisitModel extends Model
 
     public function completeVisit($id)
     {
-        $id    = (int)$id;
-        $visit = $this->find($id);
+        $id=(int)$id;
+        $visit=$this->find($id);
 
-        if (!$visit) {
+        if(!$visit){
             return [
-                'status'  => false,
-                'message' => 'Kegiatan Monev tidak ditemukan.'
+                'status'=>false,
+                'message'=>'Kegiatan Monev tidak ditemukan.'
             ];
         }
 
-        if ($visit['status'] === 'COMPLETED') {
+        if($visit['status']==='COMPLETED'){
             return [
-                'status'  => false,
-                'message' => 'Kegiatan Monev sudah selesai.'
+                'status'=>false,
+                'message'=>'Kegiatan Monev sudah selesai.'
             ];
         }
 
-        $required = $this->db->table('instruments')
-            ->select('id, code, question')
-            ->where('is_active', 1)
-            ->where('is_required', 1)
+        $required=$this->db->table('instruments')
+            ->select('id,code,question')
+            ->where('is_active',1)
+            ->where('is_required',1)
             ->get()
             ->getResultArray();
 
-        if ($required) {
-            $answered = $this->db->table('visit_answers')
+        if($required){
+            $answered=$this->db->table('visit_answers')
                 ->select('question_id')
-                ->where('visit_id', $id)
+                ->where('visit_id',$id)
                 ->get()
                 ->getResultArray();
 
-            $answeredIds = [];
-            foreach ($answered as $item) {
-                $answeredIds[] = (int)$item['question_id'];
+            $answeredIds=[];
+            foreach($answered as $item){
+                $answeredIds[]=(int)$item['question_id'];
             }
 
-            $missing = [];
-            foreach ($required as $item) {
-                if (!in_array((int)$item['id'], $answeredIds, true)) {
-                    $missing[] = $item['code'] . ' - ' . $item['question'];
+            $missing=[];
+            foreach($required as $item){
+                if(!in_array((int)$item['id'],$answeredIds,true)){
+                    $missing[]=$item['code'].' - '.$item['question'];
                 }
             }
 
-            if (!empty($missing)) {
+            if(!empty($missing)){
                 return [
-                    'status'  => false,
-                    'message' => 'Masih ada instrumen wajib yang belum diisi.',
-                    'missing' => $missing
+                    'status'=>false,
+                    'message'=>'Masih ada instrumen wajib yang belum diisi.',
+                    'missing'=>$missing
                 ];
             }
         }
 
-        $this->updateStatus($id, 'COMPLETED');
+        $userId=(int)session()->get('user_id');
+
+        $this->db->transBegin();
+
+        $this->db->table('visits')
+            ->where('id',$id)
+            ->update([
+                'status'=>'COMPLETED',
+                'submitted_by'=>$userId,
+                'updated_at'=>date('Y-m-d H:i:s')
+            ]);
+
+        if($this->db->transStatus()===false){
+            $this->db->transRollback();
+
+            return [
+                'status'=>false,
+                'message'=>'Gagal menyelesaikan kegiatan Monev.'
+            ];
+        }
+
+        $this->db->transCommit();
 
         return [
-            'status'       => true,
-            'message'      => 'Kegiatan Monev berhasil diselesaikan.',
-            'status_value' => 'COMPLETED'
+            'status'=>true,
+            'message'=>'Kegiatan Monev berhasil diselesaikan.',
+            'status_value'=>'COMPLETED',
+            'submitted_by'=>$userId
         ];
     }
 }

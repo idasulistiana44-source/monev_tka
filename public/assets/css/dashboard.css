@@ -1,183 +1,179 @@
 /* =========================================================
-   DASHBOARD CONTENT
+   DASHBOARD
 ========================================================= */
-.dashboard-content{padding:26px 28px;width:100%;box-sizing:border-box}
+.dashboard-content{padding:24px 28px 40px;width:100%;box-sizing:border-box;background:#f8f9fb}
+.dashboard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.dashboard-header h1{margin:0;color:#343a40;font-size:26px;font-weight:700}
+.dashboard-header p{margin:5px 0 0;color:#6c757d;font-size:13px}
 
 /* =========================================================
-   DASHBOARD HEADER
+   FILTER
 ========================================================= */
-.dashboard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.dashboard-header h1{margin:0;color:#343a40;font-size:28px;font-weight:700;line-height:1.2}
-.dashboard-header p{margin:6px 0 0;color:#6c757d;font-size:14px;line-height:1.5}
+.dashboard-filter{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;align-items:end;gap:10px;margin-bottom:18px;padding:16px 18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.filter-group{min-width:0}
+.filter-group label{display:block;margin-bottom:5px;color:#495057;font-size:11px;font-weight:600}
+.dashboard-filter .form-control,.dashboard-filter .form-select{width:100%;min-height:36px;padding:6px 9px;border:1px solid #dee2e6;border-radius:6px;background:#fff;color:#495057;font-size:11px;box-sizing:border-box}
+.filter-actions{display:flex;gap:6px}
 
 /* =========================================================
-   DASHBOARD STATISTICS
+   STATISTICS
 ========================================================= */
-.dashboard-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px;width:100%}
-.stat-card{position:relative;min-height:118px;padding:20px;background:#fff;border:1px solid #e9ecef;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);box-sizing:border-box;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}
-.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.08)}
-.stat-card-content{display:flex;align-items:center;justify-content:space-between;width:100%;height:100%}
-.stat-card-label{margin-bottom:6px;color:#6c757d;font-size:13px;font-weight:500}
-.stat-card-value{color:#343a40;font-size:30px;font-weight:700;line-height:1.2}
-.stat-card-icon{width:56px;height:56px;min-width:56px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:21px}
+.dashboard-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat-card{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:105px;padding:16px 18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);box-sizing:border-box}
+.stat-card-icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:9px;background:#eaf2ff;color:#0d6efd;font-size:18px}
+.stat-card-label{margin-bottom:4px;color:#6c757d;font-size:11px}
+.stat-card-value{color:#343a40;font-size:25px;font-weight:700;line-height:1.2}
+.stat-card-note{margin-top:4px;color:#adb5bd;font-size:9px}
 
 /* =========================================================
-   STAT CARD COLORS
+   DASHBOARD GRID
 ========================================================= */
-.stat-card-primary .stat-card-icon{background:#e7f1ff;color:#007bff}
-.stat-card-success .stat-card-icon{background:#e8f7ee;color:#198754}
-.stat-card-warning .stat-card-icon{background:#fff4d6;color:#f59f00}
-.stat-card-danger .stat-card-icon{background:#fde8e8;color:#dc3545}
+.dashboard-charts{display:grid;grid-template-columns:1fr;gap:15px;margin-bottom:15px}
+.dashboard-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}
 
 /* =========================================================
-   DASHBOARD CHARTS
+   PANEL
 ========================================================= */
-.dashboard-charts{display:grid;grid-template-columns:2fr 1fr;gap:16px;width:100%;margin-bottom:18px}
-.chart-container{position:relative;width:100%;height:300px}
+.dashboard-panel{background:#fff;border:1px solid #e9ecef;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden}
+.dashboard-panel-header{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 18px;border-bottom:1px solid #eef1f5}
+.dashboard-panel-header>div{min-width:0}
+.dashboard-panel-title{margin:0;color:#343a40;font-size:14px;font-weight:600}
+.dashboard-panel-subtitle{margin:4px 0 0;color:#8a949e;font-size:10px;line-height:1.4}
+.dashboard-panel-header>.form-select{width:260px;min-width:220px;min-height:35px;padding:6px 9px;border:1px solid #dee2e6;border-radius:6px;background:#fff;color:#495057;font-size:11px}
+.dashboard-panel-body{padding:18px}
+
+/* =========================================================
+   CHART
+========================================================= */
+.chart-container{position:relative;width:100%;height:320px}
+.chart-container.chart-medium{height:270px}
+.chart-container.chart-small{height:225px}
 .chart-container canvas{width:100%!important;height:100%!important}
 
 /* =========================================================
-   DASHBOARD ROW
+   SUMMARY
 ========================================================= */
-.dashboard-row{display:grid;grid-template-columns:7fr 5fr;gap:16px;width:100%;margin-bottom:18px}
+.dashboard-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid #eef1f5}
+.dashboard-summary>div{padding:10px 11px;background:#f8f9fa;border-radius:6px}
+.dashboard-summary span{display:block;margin-bottom:3px;color:#868e96;font-size:9px}
+.dashboard-summary strong{color:#343a40;font-size:15px;font-weight:700}
 
 /* =========================================================
-   DASHBOARD PANEL
+   HIGHLIGHT
 ========================================================= */
-.dashboard-panel{width:100%;height:100%;background:#fff;border:1px solid #e9ecef;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden;box-sizing:border-box}
-.dashboard-panel-header{min-height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #e9ecef;box-sizing:border-box}
-.dashboard-panel-title{margin:0;color:#343a40;font-size:15px;font-weight:600}
-.dashboard-panel-body{padding:20px;box-sizing:border-box}
-.panel-link{color:#007bff;font-size:12px;text-decoration:none}
-.panel-link:hover{color:#0056b3;text-decoration:underline}
+.dashboard-highlight{display:flex;align-items:center;gap:10px;margin-top:13px;padding:11px 13px;background:#f8fbff;border:1px solid #e5effb;border-radius:7px}
+.dashboard-highlight>i{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:7px;background:#eaf2ff;color:#0d6efd}
+.dashboard-highlight span{display:block;color:#7d8790;font-size:9px}
+.dashboard-highlight strong{display:block;margin-top:2px;color:#343a40;font-size:15px}
+.dashboard-highlight small{color:#868e96;font-size:9px}
 
 /* =========================================================
-   PROGRESS
+   TABLE
 ========================================================= */
-.progress-item{margin-bottom:20px}
-.progress-item:last-child{margin-bottom:0}
-.progress-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;color:#495057;font-size:13px}
-.progress-label span:first-child{color:#495057}
-.progress-label span:last-child{color:#343a40;font-weight:600}
-.progress{width:100%;height:8px;overflow:hidden;background:#e9ecef;border-radius:10px}
-.progress-bar{height:100%;min-width:0;border-radius:10px;transition:width .4s ease}
-.bg-secondary{background:#6c757d}
-.bg-warning{background:#ffc107}
-.bg-success{background:#198754}
-.bg-primary{background:#007bff}
+.dashboard-table{margin-top:18px;padding-top:16px;border-top:1px solid #eef1f5}
+.dashboard-table-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
+.dashboard-table-header>div{min-width:0}
+.dashboard-table-header h4{margin:0;color:#343a40;font-size:12px;font-weight:600}
+.dashboard-table-header span{display:block;margin-top:2px;color:#929ba3;font-size:9px}
+.dashboard-table-header>.form-select{width:200px;min-height:34px;padding:6px 9px;border:1px solid #dee2e6;border-radius:6px;background:#fff;color:#495057;font-size:10px}
+.table-responsive{width:100%;overflow-x:auto}
+.monev-table{width:100%;border-collapse:collapse}
+.monev-table th{padding:9px 10px;background:#f8f9fa;border-bottom:1px solid #e6eaee;color:#56616b;font-size:10px;font-weight:600;text-align:left;white-space:nowrap}
+.monev-table td{padding:9px 10px;border-bottom:1px solid #eef1f4;color:#495057;font-size:10px;vertical-align:middle}
+.monev-table tbody tr:hover{background:#fafbfc}
+.monev-table tbody tr:last-child td{border-bottom:0}
+.table-empty{text-align:center!important;padding:25px 10px!important;color:#adb5bd!important}
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+.monev-pagination{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:10px}
+.monev-pagination button{min-width:28px;height:28px;padding:4px 7px;border:1px solid #dce2e8;border-radius:5px;background:#fff;color:#59636c;font-size:10px;cursor:pointer}
+.monev-pagination button:hover{background:#f4f6f8}
+.monev-pagination button.active{background:#0d6efd;border-color:#0d6efd;color:#fff}
+.monev-pagination button:disabled{opacity:.45;cursor:not-allowed}
 
 /* =========================================================
    READINESS
 ========================================================= */
-.readiness-box{margin-top:25px;padding-top:20px;border-top:1px solid #f1f3f5}
-.readiness-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#495057;font-size:13px}
-.readiness-header strong{color:#007bff;font-size:15px}
-.readiness-description{margin-top:8px;color:#868e96;font-size:11px;line-height:1.5}
+.readiness-summary>div:nth-child(1){border-left:3px solid #198754}
+.readiness-summary>div:nth-child(2){border-left:3px solid #0d6efd}
+.readiness-summary>div:nth-child(3){border-left:3px solid #ffc107}
+.readiness-summary>div:nth-child(4){border-left:3px solid #dc3545}
 
 /* =========================================================
-   STATUS BADGE
+   EXPORT
 ========================================================= */
-.status-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:600;line-height:1}
-.status-badge-draft{background:#f1f3f5;color:#495057}
-.status-badge-submitted{background:#fff3cd;color:#856404}
-.status-badge-verified{background:#d1e7dd;color:#0f5132}
+.dashboard-export{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:2px;padding:16px 18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.dashboard-export h3{margin:0;color:#343a40;font-size:13px;font-weight:600}
+.dashboard-export p{margin:3px 0 0;color:#929ba3;font-size:9px}
+.dashboard-export .dashboard-btn{margin-left:5px}
 
 /* =========================================================
-   VISIT TABLE
+   BUTTON
 ========================================================= */
-.visit-table-wrapper{width:100%;overflow-x:auto}
-.visit-table{width:100%;border-collapse:collapse;border-spacing:0}
-.visit-table th{padding:11px 12px;background:#f8f9fa;border-bottom:1px solid #e9ecef;color:#495057;font-size:11px;font-weight:600;text-align:left;white-space:nowrap}
-.visit-table td{padding:11px 12px;border-bottom:1px solid #f1f3f5;color:#495057;font-size:12px;vertical-align:middle}
-.visit-table tbody tr:hover{background:#f8f9fa}
-.visit-table tbody tr:last-child td{border-bottom:0}
-
-/* =========================================================
-   EMPTY STATE
-========================================================= */
-.empty-state{padding:35px 10px;text-align:center;color:#868e96}
-.empty-state-icon{margin-bottom:10px;color:#adb5bd;font-size:32px}
-.empty-state-title{margin-bottom:5px;color:#495057;font-size:13px;font-weight:600}
-.empty-state-text{color:#868e96;font-size:11px;line-height:1.5}
-
-/* =========================================================
-   INFO
-========================================================= */
-.info-item{display:flex;align-items:center;padding:13px 0;border-bottom:1px solid #f1f3f5}
-.info-item:last-child{border-bottom:0}
-.info-icon{width:38px;height:38px;min-width:38px;display:flex;align-items:center;justify-content:center;margin-right:12px;border-radius:8px;background:#e7f1ff;color:#007bff}
-.info-title{margin-bottom:2px;color:#343a40;font-size:13px;font-weight:600}
-.info-text{color:#868e96;font-size:11px}
-
-/* =========================================================
-   DASHBOARD FILTER
-========================================================= */
-.dashboard-filter{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.dashboard-filter .form-control,.dashboard-filter .form-select{min-height:38px;border:1px solid #dee2e6;border-radius:6px;font-size:13px}
-.dashboard-filter .form-control:focus,.dashboard-filter .form-select:focus{border-color:#86b7fe;box-shadow:0 0 0 .15rem rgba(13,110,253,.15)}
-
-/* =========================================================
-   DASHBOARD BUTTON
-========================================================= */
-.dashboard-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:7px 14px;border:0;border-radius:6px;background:#007bff;color:#fff;font-size:12px;font-weight:500;cursor:pointer;transition:background .2s ease}
-.dashboard-btn:hover{background:#0069d9}
-
-/* =========================================================
-   DASHBOARD LOADING
-========================================================= */
-.dashboard-loading{display:flex;align-items:center;justify-content:center;min-height:120px;color:#868e96;font-size:13px}
-.dashboard-loading i{margin-right:8px}
-
-/* =========================================================
-   SIDEBAR COLLAPSED
-========================================================= */
-body.sidebar-collapsed .app-main{margin-left:70px}
+.dashboard-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:35px;padding:6px 12px;border:0;border-radius:6px;background:#0d6efd;color:#fff;font-size:10px;font-weight:500;cursor:pointer;white-space:nowrap}
+.dashboard-btn:hover{background:#0b5ed7}
+.dashboard-btn-light{background:#f1f3f5;color:#495057}
+.dashboard-btn-light:hover{background:#e9ecef}
+.dashboard-btn-outline{background:#fff;border:1px solid #0d6efd;color:#0d6efd}
+.dashboard-btn-outline:hover{background:#eaf2ff}
+.dashboard-btn-success{background:#198754}
+.dashboard-btn-success:hover{background:#157347}
 
 /* =========================================================
    RESPONSIVE TABLET
 ========================================================= */
 @media(max-width:1200px){
-    .dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .dashboard-charts{grid-template-columns:1fr}
-    .dashboard-row{grid-template-columns:1fr}
+.dashboard-filter{grid-template-columns:1fr 1fr}
+.filter-actions{grid-column:1 / -1}
+.dashboard-stats{grid-template-columns:repeat(2,1fr)}
+.dashboard-row{grid-template-columns:1fr}
 }
 
 /* =========================================================
    RESPONSIVE MOBILE
 ========================================================= */
-@media(max-width:991.98px){
-    .dashboard-content{padding:20px}
-    .dashboard-header{align-items:flex-start;flex-direction:column;gap:8px}
-    .dashboard-header h1{font-size:24px}
-    .dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .dashboard-charts,.dashboard-row{grid-template-columns:1fr}
-    .dashboard-filter{flex-direction:column;align-items:stretch}
+@media(max-width:767px){
+.dashboard-content{padding:18px 14px 30px}
+.dashboard-header{align-items:flex-start;flex-direction:column}
+.dashboard-header h1{font-size:22px}
+.dashboard-header p{font-size:11px}
+.dashboard-filter{grid-template-columns:1fr}
+.filter-actions{grid-column:auto}
+.dashboard-stats{grid-template-columns:1fr 1fr;gap:9px}
+.stat-card{min-height:95px;padding:13px}
+.stat-card-value{font-size:22px}
+.stat-card-icon{width:40px;height:40px;font-size:16px}
+.dashboard-panel-header{align-items:flex-start;flex-direction:column}
+.dashboard-panel-header>.form-select{width:100%;min-width:0}
+.dashboard-panel-body{padding:15px}
+.dashboard-summary{grid-template-columns:1fr 1fr}
+.dashboard-table-header{align-items:flex-start;flex-direction:column}
+.dashboard-table-header>.form-select{width:100%}
+.chart-container{height:280px}
+.chart-container.chart-medium{height:235px}
+.chart-container.chart-small{height:210px}
+.dashboard-export{align-items:flex-start;flex-direction:column}
+.dashboard-export>div:last-child{width:100%}
+.dashboard-export .dashboard-btn{width:calc(50% - 5px);margin:0 3px}
 }
 
 /* =========================================================
    RESPONSIVE SMALL MOBILE
 ========================================================= */
-@media(max-width:600px){
-    .dashboard-stats{grid-template-columns:1fr}
-    .dashboard-header h1{font-size:22px}
-    .dashboard-content{padding:15px}
-    .stat-card{min-height:105px;padding:16px}
-    .stat-card-value{font-size:26px}
-    .stat-card-icon{width:48px;height:48px;min-width:48px;font-size:18px}
-    .dashboard-panel-header{padding:0 15px}
-    .dashboard-panel-body{padding:15px}
+@media(max-width:480px){
+.dashboard-content{padding:15px 10px 25px}
+.dashboard-header h1{font-size:20px}
+.dashboard-filter{padding:14px}
+.dashboard-stats{grid-template-columns:1fr}
+.dashboard-panel-header{padding:13px 14px}
+.dashboard-panel-body{padding:14px}
+.dashboard-panel-title{font-size:13px}
+.chart-container{height:250px}
+.chart-container.chart-medium{height:220px}
+.chart-container.chart-small{height:195px}
+.dashboard-summary{grid-template-columns:1fr 1fr}
+.dashboard-export .dashboard-btn{width:100%;margin:3px 0}
+.monev-pagination{justify-content:center}
 }
-/* =========================================================
-   panel Visitasi Terbaru
-========================================================= */
-.visit-list{display:flex;flex-direction:column;gap:0}
-.visit-item{display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid #eef1f5}
-.visit-item:last-child{border-bottom:none}
-.visit-icon{width:42px;height:42px;min-width:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#eff6ff;color:#2563eb;font-size:17px}
-.visit-info{flex:1;min-width:0}
-.visit-school{font-size:14px;font-weight:600;color:#1f2937;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.visit-meta{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280}
-.visit-meta span{display:inline-flex;align-items:center}
-.visit-meta-divider{color:#cbd5e1}
-.visit-status{flex-shrink:0;margin-left:auto}
-.status-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;white-space:nowrap}

@@ -242,66 +242,60 @@ class Visits extends BaseController
         }
     }
 
-   public function delete($id)
+    public function delete($id)
     {
-        if (!$this->request->isAJAX()) {
+        if(!$this->request->isAJAX()){
             return $this->response->setStatusCode(400)->setJSON([
-                'status'  => false,
-                'message' => 'Request tidak valid.'
+                'status'=>false,
+                'message'=>'Request tidak valid.'
             ]);
         }
 
-        $id = (int)$id;
+        $id=(int)$id;
 
-        if ($id <= 0) {
+        if($id<=0){
             return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'ID kegiatan Monev tidak valid.'
+                'status'=>false,
+                'message'=>'ID kegiatan Monev tidak valid.'
             ]);
         }
 
-        try {
-            $visit = $this->visitModel->find($id);
+        try{
+            $userRole=strtolower((string)session()->get('role'));
 
-            if (!$visit) {
-                return $this->response->setJSON([
-                    'status'  => false,
-                    'message' => 'Kegiatan Monev tidak ditemukan.'
+            if($userRole!=='admin'){
+                return $this->response->setStatusCode(403)->setJSON([
+                    'status'=>false,
+                    'message'=>'Anda tidak memiliki hak untuk menghapus kegiatan Monev.'
                 ]);
             }
 
-            $userRole = strtolower((string)session()->get('role'));
+            $visit=$this->visitModel->find($id);
 
-            // HAK AKSES DAN STATUS HAPUS:
-            // 1. Admin: Boleh menghapus status DRAFT dan COMPLETED (tidak boleh menghapus yang sedang IN_PROGRESS)
-            // 2. Petugas / Non-Admin: Hanya boleh menghapus status DRAFT
-            if ($userRole === 'admin') {
-                if (($visit['status'] ?? '') === 'IN_PROGRESS') {
-                    return $this->response->setJSON([
-                        'status'  => false,
-                        'message' => 'Kegiatan Monev yang sedang berlangsung (IN_PROGRESS) tidak dapat dihapus.'
-                    ]);
-                }
-            } else {
-                if (($visit['status'] ?? '') !== 'DRAFT') {
-                    return $this->response->setJSON([
-                        'status'  => false,
-                        'message' => 'Petugas hanya dapat menghapus kegiatan Monev yang berstatus DRAFT.'
-                    ]);
-                }
+            if(!$visit){
+                return $this->response->setJSON([
+                    'status'=>false,
+                    'message'=>'Kegiatan Monev tidak ditemukan.'
+                ]);
             }
 
             $this->visitModel->deleteVisit($id);
 
             return $this->response->setJSON([
-                'status'  => true,
-                'message' => 'Kegiatan Monev berhasil dihapus.'
+                'status'=>true,
+                'message'=>'Kegiatan Monev beserta seluruh data terkait berhasil dihapus.'
             ]);
-        } catch (\Throwable $e) {
-            log_message('error', 'VISITS DELETE ERROR: ' . $e->getMessage());
+
+        }catch(\Throwable $e){
+
+            log_message(
+                'error',
+                'VISITS DELETE ERROR: '.$e->getMessage()
+            );
+
             return $this->response->setStatusCode(500)->setJSON([
-                'status'  => false,
-                'message' => $e->getMessage()
+                'status'=>false,
+                'message'=>$e->getMessage()
             ]);
         }
     }
@@ -497,152 +491,428 @@ class Visits extends BaseController
     {
         try {
             if (!$id) {
-                return $this->response
-                    ->setStatusCode(400)
-                    ->setJSON([
-                        'status' => false,
-                        'message' => 'ID Visitasi tidak valid.',
-                        'csrf_hash' => csrf_hash()
-                    ]);
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => false,
+                    'message' => 'ID Visitasi tidak valid.',
+                    'csrf_hash' => csrf_hash()
+                ]);
             }
+
             $visit = $this->visitModel->getDetail($id);
+
             if (!$visit) {
-                return $this->response
-                    ->setStatusCode(404)
-                    ->setJSON([
-                        'status' => false,
-                        'message' => 'Kegiatan Monev tidak ditemukan.',
-                        'csrf_hash' => csrf_hash()
-                    ]);
+                return $this->response->setStatusCode(404)->setJSON([
+                    'status' => false,
+                    'message' => 'Kegiatan Monev tidak ditemukan.',
+                    'csrf_hash' => csrf_hash()
+                ]);
             }
+
             $answers = $this->request->getPost('answers');
+
             if (!is_array($answers)) {
                 $answers = [];
             }
+
             $uploadedFiles = [];
             $oldFilesToDelete = [];
+
             $files = $this->request->getFiles();
+
             if (!empty($files['files']) && is_array($files['files'])) {
+
                 foreach ($files['files'] as $questionId => $file) {
-                    if (!$file || !$file->isValid()) {
-                        if ($file && $file->getError() !== UPLOAD_ERR_NO_FILE) {
-                            throw new \RuntimeException('Upload file gagal: ' . $file->getErrorString());
-                        }
-                        continue;
-                    }
+
                     $questionId = (int) $questionId;
+
                     if ($questionId <= 0) {
                         continue;
                     }
+
+                    /*
+                    * Ambil informasi instrumen SEBELUM
+                    * mengecek error upload.
+                    */
                     $instrument = $this->visitModel->db
                         ->table('instruments')
                         ->select('id, answer_type')
                         ->where('id', $questionId)
                         ->get()
                         ->getRowArray();
+
                     if (!$instrument) {
-                        throw new \RuntimeException('Instrumen tidak ditemukan untuk file yang diupload.');
+                        throw new \RuntimeException(
+                            'Instrumen tidak ditemukan untuk file yang diupload.'
+                        );
                     }
-                    $type = strtolower($instrument['answer_type'] ?? '');
+
+                    $type = strtolower(trim($instrument['answer_type'] ?? ''));
+
+                    /*
+                    * Tentukan batas berdasarkan tipe instrumen.
+                    */
+                    if ($type === 'pdf') {
+                        $maxSize = 3 * 1024 * 1024;
+                        $fileSize = $file->getSize();
+                          log_message(
+                                'error',
+                                'PDF SIZE CHECK: '.$fileSize.' bytes | MAX: '.$maxSize.' bytes'
+                            );
+                            if ($fileSize > $maxSize) {
+                                $sizeMB = round($fileSize / 1024 / 1024, 2);
+
+                                throw new \RuntimeException(
+                                    'Ukuran PDF terlalu besar. Ukuran file: ' .
+                                    $sizeMB .
+                                    ' MB. Maksimal 3 MB.'
+                                );
+                            }
+                        $typeLabel = 'PDF';
+                        $maxLabel = '3 MB';
+                    } elseif ($type === 'photo') {
+                        $maxSize = 2 * 1024 * 1024;
+                        $typeLabel = 'foto';
+                        $maxLabel = '2 MB';
+                    } else {
+                        throw new \RuntimeException(
+                            'Instrumen tersebut bukan instrumen upload file.'
+                        );
+                    }
+
+                    /*
+                    * FILE TIDAK VALID
+                    */
+                    if (!$file || !$file->isValid()) {
+
+                        if ($file && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+
+                            /*
+                            * PHP menolak file karena upload_max_filesize.
+                            *
+                            * Tetap gunakan tipe instrumen supaya
+                            * pesan tidak salah menjadi PDF.
+                            */
+                            if ($file->getError() === UPLOAD_ERR_INI_SIZE) {
+                                throw new \RuntimeException(
+                                    'Ukuran ' . $typeLabel .
+                                    ' terlalu besar. Maksimal ' .
+                                    $maxLabel . '.'
+                                );
+                            }
+
+                            if ($file->getError() === UPLOAD_ERR_FORM_SIZE) {
+                                throw new \RuntimeException(
+                                    'Ukuran ' . $typeLabel .
+                                    ' terlalu besar. Maksimal ' .
+                                    $maxLabel . '.'
+                                );
+                            }
+
+                            throw new \RuntimeException(
+                                'File ' . $typeLabel .
+                                ' gagal diunggah. Silakan coba kembali.'
+                            );
+                        }
+
+                        continue;
+                    }
+
+                    /*
+                    * VALIDASI UKURAN FILE
+                    */
+                    if ($file->getSize() > $maxSize) {
+
+                        throw new \RuntimeException(
+                            'Ukuran ' . $typeLabel .
+                            ' terlalu besar. Maksimal ' .
+                            $maxLabel . '.'
+                        );
+                    }
+
+                    /*
+                    * NAMA SEKOLAH
+                    */
                     $schoolName = $visit['school_name'] ?? 'SEKOLAH';
                     $schoolName = strtoupper(trim($schoolName));
-                    $schoolName = preg_replace('/[^A-Z0-9]+/i', '_', $schoolName);
+                    $schoolName = preg_replace(
+                        '/[^A-Z0-9]+/i',
+                        '_',
+                        $schoolName
+                    );
                     $schoolName = trim($schoolName, '_');
+
+                    /*
+                    * AMBIL FILE LAMA
+                    */
                     $oldAnswer = $this->visitModel->db
                         ->table('visit_answers')
                         ->select('answer')
-                        ->where('visit_id', $id)
+                        ->where('visit_id', (int) $id)
                         ->where('question_id', $questionId)
                         ->get()
                         ->getRowArray();
+
+                    /*
+                    * PDF
+                    */
                     if ($type === 'pdf') {
-                        $maxSize = 5 * 1024 * 1024;
-                        if ($file->getSize() > $maxSize) {
-                            throw new \RuntimeException('Ukuran PDF maksimal 5 MB.');
-                        }
+
                         if ($file->getMimeType() !== 'application/pdf') {
-                            throw new \RuntimeException('File harus berupa PDF.');
+                            throw new \RuntimeException(
+                                'File harus berupa PDF.'
+                            );
                         }
-                        $extension = strtolower($file->guessExtension());
+
+                        $extension = strtolower(
+                            $file->guessExtension()
+                        );
+
                         if ($extension !== 'pdf') {
-                            throw new \RuntimeException('Ekstensi file harus .pdf.');
+                            throw new \RuntimeException(
+                                'Ekstensi file harus .pdf.'
+                            );
                         }
+
                         $uploadPath = FCPATH . 'uploads/monev/berkas/';
                         $baseUrl = base_url('uploads/monev/berkas/');
                         $baseName = $schoolName . '_BERKAS_';
-                    } elseif ($type === 'photo') {
-                        $maxSize = 3 * 1024 * 1024;
-                        if ($file->getSize() > $maxSize) {
-                            throw new \RuntimeException('Ukuran foto maksimal 3 MB.');
-                        }
+                    }
+
+                    /*
+                    * FOTO
+                    */
+                    elseif ($type === 'photo') {
+
                         $mime = $file->getMimeType();
-                        $allowedMime = ['image/jpeg', 'image/png'];
+
+                        $allowedMime = [
+                            'image/jpeg',
+                            'image/png'
+                        ];
+
                         if (!in_array($mime, $allowedMime, true)) {
-                            throw new \RuntimeException('Foto harus berformat JPG, JPEG, atau PNG.');
+                            throw new \RuntimeException(
+                                'Foto harus berformat JPG, JPEG, atau PNG.'
+                            );
                         }
-                        $extension = strtolower($file->guessExtension());
-                        if (!in_array($extension, ['jpg', 'jpeg', 'png'], true)) {
-                            throw new \RuntimeException('Ekstensi foto tidak diperbolehkan.');
+
+                        $extension = strtolower(
+                            $file->guessExtension()
+                        );
+
+                        if (!in_array(
+                            $extension,
+                            ['jpg', 'jpeg', 'png'],
+                            true
+                        )) {
+                            throw new \RuntimeException(
+                                'Ekstensi foto tidak diperbolehkan.'
+                            );
                         }
+
                         if ($extension === 'jpeg') {
                             $extension = 'jpg';
                         }
+
                         $uploadPath = FCPATH . 'uploads/monev/foto/';
                         $baseUrl = base_url('uploads/monev/foto/');
                         $baseName = $schoolName . '_FOTO_';
-                    } else {
-                        throw new \RuntimeException('Instrumen tersebut bukan instrumen upload file.');
                     }
+
+                    /*
+                    * BUAT FOLDER
+                    */
                     if (!is_dir($uploadPath)) {
                         mkdir($uploadPath, 0775, true);
                     }
+
+                    /*
+                    * CARI NOMOR FILE BERIKUTNYA
+                    */
                     $counter = 1;
 
+                    $existingFiles = glob(
+                        $uploadPath .
+                        $baseName .
+                        '*.' .
+                        $extension
+                    );
+
+                    if (!empty($existingFiles)) {
+
+                        $numbers = [];
+
+                        foreach ($existingFiles as $existingFile) {
+
+                            $existingName = basename($existingFile);
+
+                            if (preg_match(
+                                '/_(\d+)\.[^.]+$/',
+                                $existingName,
+                                $matches
+                            )) {
+                                $numbers[] = (int) $matches[1];
+                            }
+                        }
+
+                        if (!empty($numbers)) {
+                            $counter = max($numbers) + 1;
+                        }
+                    }
+
+                    /*
+                    * PERHATIKAN FILE LAMA
+                    */
                     if ($oldAnswer && !empty($oldAnswer['answer'])) {
-                        $oldPath = parse_url($oldAnswer['answer'], PHP_URL_PATH);
+
+                        $oldPath = parse_url(
+                            $oldAnswer['answer'],
+                            PHP_URL_PATH
+                        );
 
                         if ($oldPath) {
+
                             $oldFileName = basename($oldPath);
 
-                            if (preg_match('/_(\d+)\.[^.]+$/', $oldFileName, $matches)) {
-                                $counter = ((int) $matches[1]) + 1;
+                            if (preg_match(
+                                '/_(\d+)\.[^.]+$/',
+                                $oldFileName,
+                                $matches
+                            )) {
+
+                                $oldNumber = (int) $matches[1];
+
+                                if ($oldNumber >= $counter) {
+                                    $counter = $oldNumber + 1;
+                                }
                             }
                         }
                     }
 
-                    $newName = $baseName . $counter . '.' . $extension;
-                    $newFilePath = $uploadPath . $newName;
-                    $file->move($uploadPath, $newName, true);
-                    $fileUrl = $baseUrl . $newName;
-                    $uploadedFiles[$questionId] = $fileUrl;
+                    /*
+                    * NAMA FILE BARU
+                    */
+                    $newName =
+                        $baseName .
+                        $counter .
+                        '.' .
+                        $extension;
+
+                    $newFilePath =
+                        $uploadPath .
+                        $newName;
+
+                    while (is_file($newFilePath)) {
+
+                        $counter++;
+
+                        $newName =
+                            $baseName .
+                            $counter .
+                            '.' .
+                            $extension;
+
+                        $newFilePath =
+                            $uploadPath .
+                            $newName;
+                    }
+
+                    /*
+                    * PINDAHKAN FILE
+                    */
+                    $file->move(
+                        $uploadPath,
+                        $newName
+                    );
+
+                    $fileUrl =
+                        $baseUrl .
+                        $newName;
+
+                    $uploadedFiles[$questionId] =
+                        $fileUrl;
+
+                    /*
+                    * HAPUS FILE LAMA NANTI
+                    */
                     if ($oldAnswer && !empty($oldAnswer['answer'])) {
-                        $oldPath = parse_url($oldAnswer['answer'], PHP_URL_PATH);
+
+                        $oldPath = parse_url(
+                            $oldAnswer['answer'],
+                            PHP_URL_PATH
+                        );
+
                         if ($oldPath) {
-                            $oldFilePath = FCPATH . ltrim($oldPath, '/');
-                            if (is_file($oldFilePath) && realpath($oldFilePath) !== realpath($newFilePath)) {
-                                $oldFilesToDelete[] = $oldFilePath;
+
+                            $oldFileName =
+                                basename($oldPath);
+
+                            $oldFilePath =
+                                FCPATH .
+                                ltrim(
+                                    $oldPath,
+                                    '/'
+                                );
+
+                            if (
+                                is_file($oldFilePath) &&
+                                realpath($oldFilePath) !==
+                                realpath($newFilePath)
+                            ) {
+                                $oldFilesToDelete[] =
+                                    $oldFilePath;
                             }
                         }
                     }
                 }
             }
-            foreach ($uploadedFiles as $questionId => $fileUrl) {
-                $answers[$questionId] = $fileUrl;
+
+            /*
+            * MASUKKAN URL FILE KE ANSWERS
+            */
+            foreach (
+                $uploadedFiles as $questionId => $fileUrl
+            ) {
+                $answers[$questionId] =
+                    $fileUrl;
             }
-            $result = $this->visitModel->saveAnswers($id, $answers);
-            foreach ($oldFilesToDelete as $oldFilePath) {
+
+            /*
+            * SIMPAN JAWABAN
+            */
+            $result =
+                $this->visitModel->saveAnswers(
+                    $id,
+                    $answers
+                );
+
+            /*
+            * HAPUS FILE LAMA
+            */
+            foreach (
+                $oldFilesToDelete as $oldFilePath
+            ) {
                 if (is_file($oldFilePath)) {
-                    unlink($oldFilePath);
+                    @unlink($oldFilePath);
                 }
             }
+
             return $this->response->setJSON([
                 'status' => true,
                 'message' => 'Draft jawaban berhasil disimpan.',
-                'visit_status' => $result['status'] ?? 'IN_PROGRESS',
+                'visit_status' =>
+                    $result['status'] ?? 'IN_PROGRESS',
                 'csrf_hash' => csrf_hash()
             ]);
+
         } catch (\Throwable $th) {
-            log_message('error', 'Error saveAnswers: ' . $th->getMessage());
+
+            log_message(
+                'error',
+                'Error saveAnswers: ' .
+                $th->getMessage()
+            );
+
             return $this->response
                 ->setStatusCode(500)
                 ->setJSON([
@@ -659,9 +929,6 @@ class Visits extends BaseController
         return $dateObject !== false && $dateObject->format('Y-m-d') === $date;
     }
 
-    /**
-     * Helper privat untuk mengecek apakah user terotentikasi memiliki akses ke data visit terkait.
-     */
     private function isUserAuthorizedForVisit(array $visit): bool
     {
         $role   = strtolower((string)session()->get('role'));

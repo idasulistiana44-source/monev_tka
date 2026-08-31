@@ -136,19 +136,57 @@ body.sidebar-collapsed .sidebar-menu-text{display:none}
    RESPONSIVE TABLET
 ========================================================= */
 @media(max-width:991.98px){
-.app-sidebar{width:250px;min-width:250px;transform:translateX(-250px)}
-.app-sidebar.show{transform:translateX(0)}
-.app-navbar{left:0!important}
-.app-main{margin-left:0!important}
-.app-footer{margin-left:0!important}
-body.sidebar-collapsed .app-sidebar{width:250px;min-width:250px}
-body.sidebar-collapsed .sidebar-brand-text,body.sidebar-collapsed .sidebar-menu-text{display:block}
-body.sidebar-collapsed .sidebar-menu a{justify-content:flex-start;padding-left:12px;padding-right:12px}
-body.sidebar-collapsed .sidebar-menu i{margin-right:8px}
-.navbar-title span{display:none}
-.navbar-user-info,.navbar-chevron{display:none}
-}
+    .app-sidebar{
+        width:250px;
+        min-width:250px;
+        transform:translateX(-250px);
+        transition:transform .3s ease;
+        z-index:1050;
+    }
 
+    .app-sidebar.show{
+        transform:translateX(0);
+    }
+
+    .app-navbar{
+        left:0!important;
+    }
+
+    .app-main{
+        margin-left:0!important;
+    }
+
+    .app-footer{
+        margin-left:0!important;
+    }
+
+    body.sidebar-collapsed .app-sidebar{
+        width:250px;
+        min-width:250px;
+    }
+
+    body.sidebar-collapsed .sidebar-brand-text,
+    body.sidebar-collapsed .sidebar-menu-text{
+        display:block;
+    }
+
+    body.sidebar-collapsed .sidebar-menu a{
+        justify-content:flex-start;
+        padding-left:12px;
+        padding-right:12px;
+    }
+
+    body.sidebar-collapsed .sidebar-menu i{
+        margin-right:8px;
+    }
+    .navbar-title span{
+        display:none;
+    }
+    .navbar-user-info,
+    .navbar-chevron{
+        display:none;
+    }
+}
 
 /* =========================================================
    RESPONSIVE SMALL MOBILE
@@ -184,3 +222,9 @@ input[type="number"] {
 .select2-container .select2-search--inline .select2-search__field {
     height: 20px !important;
 }
+/* =========================================================
+   LOADING
+========================================================= */
+.school-loading{height:180px!important;text-align:center!important;color:#6c757d!important}
+.school-spinner{width:24px;height:24px;margin:0 auto 10px;border:3px solid #e9ecef;border-top-color:#007bff;border-radius:50%;animation:schoolSpin .7s linear infinite}
+@keyframes schoolSpin{to{transform:rotate(360deg)}}

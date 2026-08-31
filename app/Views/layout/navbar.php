@@ -1,3 +1,24 @@
+<?php
+use Config\Database;
+
+$userId=(int)session()->get('user_id');
+$userName='Pengguna';
+$userRole='petugas';
+
+if($userId>0){
+    $db=Database::connect();
+    $user=$db->table('users')
+        ->select('name,role')
+        ->where('id',$userId)
+        ->get()
+        ->getRowArray();
+
+    if($user){
+        $userName=$user['name']??'Pengguna';
+        $userRole=strtolower((string)($user['role']??'petugas'));
+    }
+}
+?>
 <nav class="app-navbar">
     <div class="navbar-left">
         <button type="button" id="sidebarToggle" class="navbar-toggle" title="Buka/Tutup Sidebar">
@@ -47,8 +68,8 @@
                     <i class="fas fa-user"></i>
                 </div>
                 <div class="navbar-user-info">
-                    <strong>Administrator</strong>
-                    <small>Admin Monev</small>
+                    <strong><?= esc($userName) ?></strong>
+                    <small><?= $userRole==='admin'?'Admin Monev':'Petugas Monev' ?></small>
                 </div>
                 <i class="fas fa-chevron-down navbar-chevron"></i>
             </button>

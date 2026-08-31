@@ -30,12 +30,14 @@ class Users extends BaseController
             ]
         ]);
     }
-
     public function data()
     {
-        // Mengambil data user beserta multiple region
         $users = $this->userModel->getUsers();
-        $data  = [];
+        usort($users, function ($a, $b) {
+            return $b['id'] <=> $a['id'];
+        });
+
+        $data = [];
 
         foreach ($users as $user) {
             $data[] = [
@@ -45,15 +47,10 @@ class Users extends BaseController
                 'role'         => $user['role'],
                 'is_active'    => (int) $user['is_active'],
                 'institution'  => $user['institution'] ?? '',
-
-                // Multiple region
                 'region_ids'   => $user['region_ids'] ?? [],
                 'region_names' => $user['region_names'] ?? [],
                 'region_name'  => $user['region_name'] ?? '-',
-
-                // Tetap dikirim untuk kompatibilitas sementara
                 'region_id'    => $user['region_id'] ?? null,
-
                 'created_at'   => $user['created_at']
             ];
         }
@@ -81,7 +78,6 @@ class Users extends BaseController
         $isActive    = (string) $this->request->getPost('is_active');
         $institution = trim((string) $this->request->getPost('institution'));
 
-        // Multiple region
         $regionIds = $this->request->getPost('region_id');
 
         if (!is_array($regionIds)) {
@@ -122,7 +118,6 @@ class Users extends BaseController
             $errors['institution'] = 'Institusi wajib diisi.';
         }
 
-        // Validasi multiple region
         $regionIds = array_values(array_unique(array_filter(
             array_map('intval', $regionIds),
             fn($id) => $id > 0
@@ -141,10 +136,6 @@ class Users extends BaseController
             ]);
         }
 
-        /*
-         * region_id lama tetap disimpan untuk sementara.
-         * Kita gunakan region pertama sebagai nilai kompatibilitas.
-         */
         $data = [
             'name'        => $name,
             'username'    => $username,
@@ -169,7 +160,6 @@ class Users extends BaseController
             ]);
         }
 
-        // Simpan semua wilayah ke user_regions
         $regionsSaved = $this->userModel->syncUserRegions(
             $id,
             $regionIds
@@ -228,7 +218,6 @@ class Users extends BaseController
             ]);
         }
 
-        // Multiple region
         $regionIds = $this->request->getPost('region_id');
 
         if (!is_array($regionIds)) {
@@ -276,7 +265,6 @@ class Users extends BaseController
             ]);
         }
 
-        // Sinkronkan multiple region
         $regionsSaved = $this->userModel->syncUserRegions(
             $id,
             $regionIds

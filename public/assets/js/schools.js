@@ -49,7 +49,7 @@ function loadSchools(){
     }
     tbody.html(
         '<tr><td colspan="10" class="school-loading">' +
-        '<div class="school-spinner"></div>Loading school data...' +
+        '<div class="school-spinner"></div>Loading data sekolah...' +
         '</td></tr>'
     );
 

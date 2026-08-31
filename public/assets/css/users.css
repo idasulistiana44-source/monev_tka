@@ -2,7 +2,6 @@
    USERS PAGE
 ========================================================= */
 .users-page{padding:26px 28px}
-
 /* =========================================================
    PAGE HEADER
 ========================================================= */
@@ -53,26 +52,22 @@
 .users-card #userTable th:nth-child(5){width:120px}
 .users-card #userTable th:last-child{width:150px}
 .users-card #userTable td:last-child{width:150px}
-
 /* =========================================================
    USER NAME
 ========================================================= */
 .user-name-cell{display:flex;align-items:center;gap:9px;min-width:0}
 .user-table-avatar{width:30px;height:30px;min-width:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f1f3f5;color:#6c757d;font-size:12px}
 .user-name-cell strong{display:block;overflow:hidden;color:#343a40;font-size:13px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
-
 /* =========================================================
    BADGE
 ========================================================= */
 .users-card .badge{display:inline-block;padding:5px 9px;border-radius:5px;font-size:11px;font-weight:600;line-height:1.2}
-
 /* =========================================================
    USER ACTION BUTTONS
 ========================================================= */
 .user-action-buttons{display:flex;align-items:center;justify-content:flex-start;gap:5px;flex-wrap:nowrap;white-space:nowrap}
 .user-action-buttons .btn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:0 0 32px;border-radius:6px}
 .user-action-buttons .btn i{font-size:12px}
-
 /* =========================================================
    DATATABLE BOTTOM
 ========================================================= */
@@ -81,7 +76,6 @@
 .users-card .dataTables_paginate .paginate_button{min-width:34px;height:34px;padding:7px 10px!important;margin-left:2px;border:1px solid #dee2e6!important;border-radius:5px!important;color:#495057!important;font-size:12px!important}
 .users-card .dataTables_paginate .paginate_button.current{background:#0d6efd!important;border-color:#0d6efd!important;color:#fff!important}
 .users-card .dataTables_paginate .paginate_button:hover{background:#e9ecef!important;border-color:#dee2e6!important;color:#343a40!important}
-
 /* =========================================================
    USER MODAL
 ========================================================= */
@@ -93,7 +87,6 @@
 .user-modal .modal-footer{padding:15px 20px;border-top:1px solid #e9ecef}
 .user-modal .form-label{margin-bottom:6px;color:#495057;font-size:12px;font-weight:600}
 .user-modal .form-control,.user-modal .form-select{min-height:38px;font-size:12px}
-
 /* =========================================================
    MODAL ALERT
 ========================================================= */
@@ -138,7 +131,6 @@
 /* =========================================================
    SELECT2 - WILAYAH VERIFIKASI
 ========================================================= */
-
 .region-select + .select2-container {
     width: 100% !important;
 }

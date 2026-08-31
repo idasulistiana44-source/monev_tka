@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $(selector).removeClass('show').html('');
     }
 });
-// VALIDASI INPUT NUMBER
+
 $(document).on('keydown', 'input[type="number"]', function(e) {
   const invalidKeys = ['e', 'E', '-', '+', '.', ',', 'ArrowUp', 'ArrowDown'];
   if (invalidKeys.includes(e.key)) {
@@ -63,9 +63,21 @@ $(document).on('keydown', 'input[type="number"]', function(e) {
   }
 });
 $(document).on('wheel', 'input[type="number"]', function(e) {
-  $(this).blur(); // Melepas fokus agar scroll page tetap berjalan normal
+  $(this).blur(); 
 });
 $(document).on('input', 'input[type="number"]', function() {
   this.value = this.value.replace(/[^0-9]/g, '');
 });
-//////
+
+if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (window.innerWidth <= 991.98) {
+            document.querySelector('.app-sidebar').classList.toggle('show');
+        } else {
+            document.body.classList.toggle('sidebar-collapsed');
+        }
+    });
+}

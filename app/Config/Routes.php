@@ -49,6 +49,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->get('reports/data','Reports::data');
         $routes->get('reports/export-excel','Reports::exportExcel');
         $routes->get('reports/pdf/(:num)','Reports::pdf/$1');
+        $routes->get('reports/exportAllPdf', 'Reports::exportAllPdf');
     });
 
     // --------------------------------------

@@ -74,13 +74,6 @@
 .school-action-buttons .btn-status-inactive{color:#6c757d}
 
 /* =========================================================
-   LOADING
-========================================================= */
-.school-loading{height:180px!important;text-align:center!important;color:#6c757d!important}
-.school-spinner{width:24px;height:24px;margin:0 auto 10px;border:3px solid #e9ecef;border-top-color:#007bff;border-radius:50%;animation:schoolSpin .7s linear infinite}
-@keyframes schoolSpin{to{transform:rotate(360deg)}}
-
-/* =========================================================
    EMPTY DATA
 ========================================================= */
 .school-empty{padding:45px 20px;text-align:center}

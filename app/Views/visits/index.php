@@ -54,6 +54,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                             <th>Tanggal Monev</th>
                             <th>Tim Monev</th>
                             <th>Status</th>
+                            <th>Submit by</th>
                             <th width="180">Aksi</th>
                         </tr>
                     </thead>
@@ -144,7 +145,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                         <div class="visit-section-title"><i class="fas fa-calendar-alt"></i><span>4. Pelaksanaan</span></div>
                         <div class="mb-0">
                             <label class="form-label">Tanggal Monev <span class="text-danger">*</span></label>
-                            <input type="date" id="visitDate" name="visit_date" class="form-control" required>
+                             <input type="date" id="visitDate" name="visit_date" class="form-control" min="<?= date('Y-m-d') ?>"required>
                         </div>
                     </div>
                 </div>
@@ -246,7 +247,7 @@ window.VISITS_URLS = {
     update: '<?= site_url('visits/update') ?>',
     delete: '<?= site_url('visits/delete') ?>'
 };
-
+window.IS_ADMIN=<?= strtolower((string)session()->get('role'))==='admin'?'true':'false' ?>;
 window.VISITS_CSRF_NAME = '<?= csrf_token() ?>';
 window.VISITS_CSRF_HASH = '<?= csrf_hash() ?>';
 </script>

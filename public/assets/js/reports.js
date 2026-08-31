@@ -125,4 +125,50 @@ $(document).ready(function(){
     loadRegions();
     loadReports();
 });
+document.addEventListener('DOMContentLoaded',function(){
+
+    const btnExportAllPdf=document.getElementById('btnExportAllPdf');
+
+    if(!btnExportAllPdf)return;
+
+    btnExportAllPdf.addEventListener('click',function(){
+
+        const params=new URLSearchParams();
+
+        const keyword=document.getElementById('reportKeyword');
+        const region=document.getElementById('reportRegion');
+        const status=document.getElementById('reportStatus');
+        const dateFrom=document.getElementById('reportDateFrom');
+        const dateTo=document.getElementById('reportDateTo');
+
+        if(keyword && keyword.value.trim()!==''){
+            params.set('keyword',keyword.value.trim());
+        }
+
+        if(region && region.value!==''){
+            params.set('region_id',region.value);
+        }
+
+        if(status && status.value!==''){
+            params.set('status',status.value);
+        }
+
+        if(dateFrom && dateFrom.value!==''){
+            params.set('date_from',dateFrom.value);
+        }
+
+        if(dateTo && dateTo.value!==''){
+            params.set('date_to',dateTo.value);
+        }
+
+        const query=params.toString();
+
+        const url=
+            window.reportsConfig.exportAllPdfUrl+
+            (query?'?'+query:'');
+
+        window.open(url,'_blank');
+    });
+
+});
 })();

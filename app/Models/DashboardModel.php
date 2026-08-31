@@ -4,30 +4,74 @@ use CodeIgniter\Model;
 class DashboardModel extends Model
 {
     protected $DBGroup='default';
+
+    private function baseVisitQuery($filters=[])
+    {
+        $builder=$this->db->table('visits v')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->whereIn('v.status',['completed','verified']);
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+        return $builder;
+    }
+
     public function getTotalSchools()
     {
         return $this->db->table('schools')->countAllResults();
     }
+
     public function getTotalOfficers()
     {
-        return $this->db->table('users')->where('role','petugas')->where('is_active',1)->countAllResults();
+        return $this->db->table('users')
+            ->where('role','petugas')
+            ->where('is_active',1)
+            ->countAllResults();
     }
+
     public function getTotalVisits()
     {
         return $this->db->table('visits')->countAllResults();
     }
-    public function getVisitedSchools()
+
+    public function getVisitedSchools($filters=[])
     {
-        return $this->db->table('visits')
-            ->select('school_id')
-            ->whereIn('status',['completed','verified'])
-            ->groupBy('school_id')
+        $builder=$this->baseVisitQuery($filters);
+        return $builder
+            ->select('v.school_id')
+            ->groupBy('v.school_id')
             ->countAllResults();
     }
+
+    public function getDashboardSummary($filters=[])
+    {
+        $visited=$this->getVisitedSchools($filters);
+        $totalVisits=$this->baseVisitQuery($filters)->countAllResults();
+        $readiness=$this->getInfrastructureReadiness($filters);
+        $totalReady=array_sum($readiness);
+        $good=($readiness['Sangat Baik']??0)+($readiness['Baik']??0);
+        $readinessPercent=$totalReady>0?round(($good/$totalReady)*100,1):0;
+        return [
+            'totalSchools'=>$visited,
+            'visitedSchools'=>$visited,
+            'totalVisits'=>$totalVisits,
+            'readinessPercent'=>$readinessPercent
+        ];
+    }
+
     public function getVisitStatus()
     {
         $result=$this->db->table('visits')
-            ->select('status, COUNT(*) AS total')
+            ->select('status,COUNT(*) AS total')
             ->groupBy('status')
             ->get()
             ->getResultArray();
@@ -52,13 +96,13 @@ class DashboardModel extends Model
         }
         return $data;
     }
-    public function getVisitsByLevel()
+
+    public function getVisitsByLevel($filters=[])
     {
-        $result=$this->db->table('visits v')
-            ->select('s.level, COUNT(DISTINCT v.school_id) AS total')
-            ->join('schools s','s.id=v.school_id','inner')
+        $builder=$this->baseVisitQuery($filters);
+        $result=$builder
+            ->select('s.level,COUNT(DISTINCT v.school_id) AS total')
             ->whereIn('s.level',['SMA','SMK','MA'])
-            ->whereIn('v.status',['completed','verified'])
             ->groupBy('s.level')
             ->get()
             ->getResultArray();
@@ -75,12 +119,29 @@ class DashboardModel extends Model
         }
         return $data;
     }
-    public function getInfrastructureReadiness()
+
+    public function getInfrastructureReadiness($filters=[])
     {
-        $result=$this->db->table('visit_answers')
-            ->select('answer, COUNT(*) AS total')
-            ->where('question_id',18)
-            ->groupBy('answer')
+        $builder=$this->db->table('visit_answers va')
+            ->select('va.answer,COUNT(*) AS total')
+            ->join('visits v','v.id=va.visit_id','inner')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->where('va.question_id',18)
+            ->whereIn('v.status',['completed','verified']);
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+        $result=$builder
+            ->groupBy('va.answer')
             ->get()
             ->getResultArray();
         $data=[
@@ -90,19 +151,246 @@ class DashboardModel extends Model
             'Kurang Memadai'=>0
         ];
         foreach($result as $row){
-            if(isset($data[$row['answer']])){
-                $data[$row['answer']]=(int)$row['total'];
+            $answer=trim($row['answer']??'');
+            if(isset($data[$answer])){
+                $data[$answer]=(int)$row['total'];
             }
         }
         return $data;
     }
-    public function getVisitsByRegion()
+
+    public function getInfrastructureData($filters=[])
     {
-        $result=$this->db->table('visits v')
-            ->select('r.region_code, COUNT(DISTINCT v.school_id) AS total')
-            ->join('schools s','s.id=v.school_id','inner')
+        $questions=[
+            1=>'INF-01',
+            2=>'INF-02',
+            3=>'INF-03',
+            4=>'INF-04',
+            5=>'INF-05',
+            6=>'INF-06',
+            7=>'INF-07',
+            8=>'INF-08'
+        ];
+        $result=[];
+        foreach($questions as $questionId=>$code){
+            $builder=$this->baseVisitQuery($filters);
+            $rows=$builder
+                ->select('s.id,s.school_name,s.npsn,va.answer')
+                ->join('visit_answers va','va.visit_id=v.id AND va.question_id='.$questionId,'left')
+                ->orderBy('s.school_name','ASC')
+                ->get()
+                ->getResultArray();
+            $data=[];
+            foreach($rows as $row){
+                $value=is_numeric($row['answer']??null)?(int)$row['answer']:0;
+                $data[]=[
+                    'school_id'=>(int)$row['id'],
+                    'school_name'=>$row['school_name'],
+                    'npsn'=>$row['npsn'],
+                    'value'=>$value
+                ];
+            }
+            $result[$code]=[
+                'code'=>$code,
+                'data'=>$data
+            ];
+        }
+        return $result;
+    }
+
+    public function getElectricityData($filters=[])
+    {
+        $builder=$this->baseVisitQuery($filters);
+        $rows=$builder
+            ->select('s.id,s.school_name,s.npsn,va.answer')
+            ->join('visit_answers va','va.visit_id=v.id AND va.question_id=9','left')
+            ->orderBy('s.school_name','ASC')
+            ->get()
+            ->getResultArray();
+        $schools=[];
+        $distribution=[];
+        foreach($rows as $row){
+            $value=trim($row['answer']??'');
+            if($value===''){
+                continue;
+            }
+            $schools[]=[
+                'school_id'=>(int)$row['id'],
+                'school_name'=>$row['school_name'],
+                'npsn'=>$row['npsn'],
+                'value'=>$value
+            ];
+            if(!isset($distribution[$value])){
+                $distribution[$value]=0;
+            }
+            $distribution[$value]++;
+        }
+        uksort($distribution,function($a,$b){
+            return $this->extractNumber($a)<=>$this->extractNumber($b);
+        });
+        return [
+            'distribution'=>$distribution,
+            'data'=>$schools
+        ];
+    }
+
+    public function getInternetData($filters=[])
+    {
+        $builder=$this->baseVisitQuery($filters);
+        $rows=$builder
+            ->select('s.id,s.school_name,s.npsn,va.answer')
+            ->join('visit_answers va','va.visit_id=v.id AND va.question_id=10','left')
+            ->orderBy('s.school_name','ASC')
+            ->get()
+            ->getResultArray();
+        $schools=[];
+        $distribution=[];
+        foreach($rows as $row){
+            $value=trim($row['answer']??'');
+            if($value===''){
+                continue;
+            }
+            $value=$this->normalizeInternet($value);
+            $schools[]=[
+                'school_id'=>(int)$row['id'],
+                'school_name'=>$row['school_name'],
+                'npsn'=>$row['npsn'],
+                'value'=>$value
+            ];
+            if(!isset($distribution[$value])){
+                $distribution[$value]=0;
+            }
+            $distribution[$value]++;
+        }
+        return [
+            'distribution'=>$distribution,
+            'data'=>$schools
+        ];
+    }
+
+    public function getBandwidthData($questionId,$filters=[])
+    {
+        $builder=$this->baseVisitQuery($filters);
+        $rows=$builder
+            ->select('s.id,s.school_name,s.npsn,va.answer')
+            ->join('visit_answers va','va.visit_id=v.id AND va.question_id='.$questionId,'left')
+            ->orderBy('s.school_name','ASC')
+            ->get()
+            ->getResultArray();
+        $schools=[];
+        $distribution=[];
+        foreach($rows as $row){
+            $value=trim($row['answer']??'');
+            if($value===''){
+                continue;
+            }
+            $label=$this->normalizeBandwidth($value);
+            $schools[]=[
+                'school_id'=>(int)$row['id'],
+                'school_name'=>$row['school_name'],
+                'npsn'=>$row['npsn'],
+                'value'=>$label,
+                'numeric_value'=>$this->extractNumber($label)
+            ];
+            if(!isset($distribution[$label])){
+                $distribution[$label]=0;
+            }
+            $distribution[$label]++;
+        }
+        uksort($distribution,function($a,$b){
+            return $this->extractNumber($a)<=>$this->extractNumber($b);
+        });
+        return [
+            'distribution'=>$distribution,
+            'data'=>$schools
+        ];
+    }
+
+    public function getStudentData($filters=[])
+    {
+        $questions=[
+            13=>'total',
+            14=>'ikut',
+            15=>'tidak_ikut'
+        ];
+        $data=[];
+        foreach($questions as $questionId=>$field){
+            $builder=$this->baseVisitQuery($filters);
+            $rows=$builder
+                ->select('s.id,s.school_name,s.npsn,va.answer')
+                ->join('visit_answers va','va.visit_id=v.id AND va.question_id='.$questionId,'left')
+                ->get()
+                ->getResultArray();
+            foreach($rows as $row){
+                $id=(int)$row['id'];
+                if(!isset($data[$id])){
+                    $data[$id]=[
+                        'school_id'=>$id,
+                        'school_name'=>$row['school_name'],
+                        'npsn'=>$row['npsn'],
+                        'total'=>0,
+                        'ikut'=>0,
+                        'tidak_ikut'=>0
+                    ];
+                }
+                $data[$id][$field]=(int)($row['answer']??0);
+            }
+        }
+        foreach($data as &$row){
+            $row['percentage']=$row['total']>0?round(($row['ikut']/$row['total'])*100,1):0;
+        }
+        return array_values($data);
+    }
+
+    public function getSessionData($filters=[])
+    {
+        return $this->getCategoricalSchoolData(16,$filters);
+    }
+
+    public function getWaveData($filters=[])
+    {
+        return $this->getCategoricalSchoolData(17,$filters);
+    }
+
+    private function getCategoricalSchoolData($questionId,$filters=[])
+    {
+        $builder=$this->baseVisitQuery($filters);
+        $rows=$builder
+            ->select('s.id,s.school_name,s.npsn,va.answer')
+            ->join('visit_answers va','va.visit_id=v.id AND va.question_id='.$questionId,'left')
+            ->orderBy('s.school_name','ASC')
+            ->get()
+            ->getResultArray();
+        $distribution=[];
+        $data=[];
+        foreach($rows as $row){
+            $value=trim($row['answer']??'');
+            if($value===''){
+                continue;
+            }
+            $data[]=[
+                'school_id'=>(int)$row['id'],
+                'school_name'=>$row['school_name'],
+                'npsn'=>$row['npsn'],
+                'value'=>$value
+            ];
+            if(!isset($distribution[$value])){
+                $distribution[$value]=0;
+            }
+            $distribution[$value]++;
+        }
+        return [
+            'distribution'=>$distribution,
+            'data'=>$data
+        ];
+    }
+
+    public function getVisitsByRegion($filters=[])
+    {
+        $builder=$this->baseVisitQuery($filters);
+        $result=$builder
+            ->select('r.region_code,COUNT(DISTINCT v.school_id) AS total')
             ->join('region r','r.id=s.region_id','inner')
-            ->whereIn('v.status',['completed','verified'])
             ->groupBy('r.id,r.region_code')
             ->orderBy('r.id','ASC')
             ->get()
@@ -128,6 +416,7 @@ class DashboardModel extends Model
         }
         return $data;
     }
+
     public function getRecentVisits($limit=10)
     {
         return $this->db->table('visits v')
@@ -141,5 +430,38 @@ class DashboardModel extends Model
             ->limit($limit)
             ->get()
             ->getResultArray();
+    }
+
+    private function normalizeInternet($value)
+    {
+        $value=strtoupper(trim($value));
+        $value=str_replace([' ','-','_'],'',$value);
+        if(strpos($value,'LAN')!==false && strpos($value,'WIFI')!==false){
+            return 'LAN + WiFi';
+        }
+        if(strpos($value,'WIFI')!==false){
+            return 'WiFi';
+        }
+        if(strpos($value,'LAN')!==false){
+            return 'LAN';
+        }
+        return trim($value);
+    }
+
+    private function normalizeBandwidth($value)
+    {
+        $number=$this->extractNumber($value);
+        if($number<=0){
+            return trim($value);
+        }
+        return $number.' Mbps';
+    }
+
+    private function extractNumber($value)
+    {
+        if(preg_match('/[\d,.]+/',(string)$value,$match)){
+            return (float)str_replace(',','.',$match[0]);
+        }
+        return 0;
     }
 }

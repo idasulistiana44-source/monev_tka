@@ -1,3 +1,9 @@
+<script>
+window.reportsConfig={
+    exportExcelUrl:"<?= site_url('reports/exportExcel') ?>",
+    exportAllPdfUrl:"<?= site_url('reports/exportAllPdf') ?>"
+};
+</script>
 <div class="container-fluid reports-page">
     <div class="reports-header">
         <div class="reports-title">
@@ -34,15 +40,6 @@
                     </select>
                 </div>
                 <div class="col-xl-2 col-lg-3 col-md-6">
-                    <label for="reportStatus">Status</label>
-                    <select id="reportStatus" class="form-select">
-                        <option value="">Semua Status</option>
-                        <option value="DRAFT">Draft</option>
-                        <option value="IN_PROGRESS">Sedang Berjalan</option>
-                        <option value="COMPLETED">Selesai</option>
-                    </select>
-                </div>
-                <div class="col-xl-2 col-lg-3 col-md-6">
                     <label for="reportDateFrom">Dari Tanggal</label>
                     <input type="date" id="reportDateFrom" class="form-control">
                 </div>
@@ -65,6 +62,14 @@
                 <h5>Rekap Pelaksanaan Monev</h5>
                 <span><strong id="reportTotal">0</strong> kegiatan ditemukan</span>
             </div>
+        </div>
+        <div class="reports-toolbar-actions">
+            <!-- <button type="button" class="btn btn-success" id="btnExportExcel">
+                <i class="fas fa-file-excel me-1"></i>Export Excel
+            </button> -->
+            <button type="button" class="btn btn-danger" id="btnExportAllPdf">
+                <i class="fas fa-file-pdf me-1"></i>Export All PDF
+            </button>
         </div>
     </div>
     <div class="reports-table-card">
