@@ -50,6 +50,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->get('reports/export-excel','Reports::exportExcel');
         $routes->get('reports/pdf/(:num)','Reports::pdf/$1');
         $routes->get('reports/exportAllPdf', 'Reports::exportAllPdf');
+
     });
 
     // --------------------------------------
@@ -88,6 +89,45 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('instruments/section-store', 'Instruments::sectionStore');
         $routes->post('instruments/section-update/(:num)', 'Instruments::sectionUpdate/$1');
         $routes->post('instruments/section-delete/(:num)', 'Instruments::sectionDelete/$1');
+
     });
+
+    $routes->group('report-templates', function ($routes) {
+
+        $routes->get('/', 'ReportTemplates::index');
+
+        $routes->get('data', 'ReportTemplates::data');
+
+        $routes->get('get/(:num)', 'ReportTemplates::get/$1');
+
+        $routes->post('save', 'ReportTemplates::save');
+
+        $routes->delete('delete/(:num)', 'ReportTemplates::delete/$1');
+
+        $routes->post(
+            'toggle/(:num)',
+            'ReportTemplates::toggleStatus/$1'
+        );
+
+    });
+    $routes->get('template-report', 'TemplateReportController::index');
+$routes->get('template-report/data', 'TemplateReportController::getTemplate');
+$routes->post('template-report/save', 'TemplateReportController::save');
+$routes->get(
+    'template-report/editor',
+    'EditorTemplateController::index'
+);
+
+$routes->get(
+    'template-report/editor/data',
+    'EditorTemplateController::getData'
+);
+
+$routes->post(
+    'template-report/editor/save',
+    'EditorTemplateController::save'
+);
+
+
 
 });

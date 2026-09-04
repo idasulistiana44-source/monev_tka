@@ -1,174 +1,338 @@
-(function(){
-'use strict';
-const BASE_URL=String(window.BASE_URL||window.location.origin).replace(/\/+$/,'');
-const REPORTS_URLS={
-    regions:BASE_URL+'/reports/regions',
-    data:BASE_URL+'/reports/data',
-    exportExcel:BASE_URL+'/reports/export-excel',
-    pdf:BASE_URL+'/reports/pdf'
-};
-function escapeHtml(value){
-    return $('<div>').text(value??'').html();
-}
-function loadRegions(){
-    $.ajax({
-        url:REPORTS_URLS.regions,
-        type:'GET',
-        dataType:'json'
-    }).done(function(res){
-        if(!res||res.status===false){
-            notify(res?.message||'Gagal memuat wilayah.','error');
-            return;
+(function () {
+    'use strict';
+
+    const config = window.reportsConfig || {};
+
+    function escapeHtml(value) {
+        return $('<div>').text(value ?? '').html();
+    }
+
+    function notifyMessage(message, type) {
+        if (typeof notify === 'function') {
+            notify(message, type);
+        } else {
+            console.error(message);
         }
-        const select=$('#reportRegion');
-        select.html('<option value="">Semua Wilayah</option>');
-        (res.data||[]).forEach(function(row){
-            select.append('<option value="'+escapeHtml(row.id)+'">'+escapeHtml(row.name)+'</option>');
+    }
+
+    function loadRegions() {
+        const select = $('#reportRegion');
+
+        select.html(
+            '<option value="">Memuat wilayah...</option>'
+        );
+
+        $.ajax({
+            url: config.regionsUrl,
+            type: 'GET',
+            dataType: 'json',
+            cache: false
+        }).done(function (res) {
+            if (!res || res.status === false) {
+                select.html(
+                    '<option value="">Semua Wilayah</option>'
+                );
+
+                notifyMessage(
+                    res?.message || 'Gagal memuat wilayah.',
+                    'error'
+                );
+
+                return;
+            }
+
+            select.html(
+                '<option value="">Semua Wilayah</option>'
+            );
+
+            (res.data || []).forEach(function (row) {
+                select.append(
+                    $('<option>', {
+                        value: row.id,
+                        text: row.name
+                    })
+                );
+            });
+        }).fail(function (xhr) {
+            console.error(
+                'REGIONS ERROR',
+                xhr.status,
+                xhr.responseText
+            );
+
+            select.html(
+                '<option value="">Semua Wilayah</option>'
+            );
+
+            notifyMessage(
+                'Gagal memuat wilayah.',
+                'error'
+            );
         });
-    }).fail(function(xhr){
-        console.error('REPORT REGION ERROR:',xhr.responseText);
-        notify('Gagal memuat wilayah.','error');
-    });
-}
-function getFilters(){
-    return {
-        keyword:$('#reportKeyword').val()||'',
-        region_id:$('#reportRegion').val()||'',
-        status:$('#reportStatus').val()||'',
-        date_from:$('#reportDateFrom').val()||'',
-        date_to:$('#reportDateTo').val()||''
-    };
-}
-function loadReports(){
-    const filters=getFilters();
-    $('#reportsTableBody').html('<tr><td colspan="8" class="text-center py-5"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data...</td></tr>');
-    $.ajax({
-        url:REPORTS_URLS.data,
-        type:'GET',
-        data:filters,
-        dataType:'json'
-    }).done(function(res){
-        if(!res||res.status===false){
-            $('#reportsTableBody').html('<tr><td colspan="8" class="text-center text-danger py-5">Gagal memuat data.</td></tr>');
-            notify(res?.message||'Gagal memuat data laporan.','error');
+    }
+
+    function getFilters() {
+        return {
+            keyword: $('#reportKeyword').val().trim(),
+            region_id: $('#reportRegion').val(),
+            date_from: $('#reportDateFrom').val(),
+            date_to: $('#reportDateTo').val()
+        };
+    }
+
+    function loadReports() {
+        const tbody = $('#reportsTableBody');
+
+        tbody.html(`
+            <tr>
+                <td colspan="8" class="reports-loading">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Memuat data laporan...
+                </td>
+            </tr>
+        `);
+
+        $.ajax({
+            url: config.dataUrl,
+            type: 'GET',
+            data: getFilters(),
+            dataType: 'json',
+            cache: false
+        }).done(function (res) {
+            console.log('REPORT DATA', res);
+
+            if (!res || res.status === false) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="8" class="text-center text-danger py-5">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Gagal memuat data laporan.
+                        </td>
+                    </tr>
+                `);
+
+                notifyMessage(
+                    res?.message || 'Gagal memuat data laporan.',
+                    'error'
+                );
+
+                return;
+            }
+
+            renderReports(res.data || []);
+        }).fail(function (xhr) {
+            console.error(
+                'REPORT DATA ERROR',
+                xhr.status,
+                xhr.responseText
+            );
+
+            let message = 'Gagal memuat data laporan.';
+
+            try {
+                const response = JSON.parse(
+                    xhr.responseText
+                );
+
+                if (response.message) {
+                    message = response.message;
+                }
+            } catch (e) {
+            }
+
+            tbody.html(`
+                <tr>
+                    <td colspan="8" class="text-center text-danger py-5">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        ${escapeHtml(message)}
+                    </td>
+                </tr>
+            `);
+
+            notifyMessage(
+                message,
+                'error'
+            );
+        });
+    }
+
+    function renderReports(data) {
+        const tbody = $('#reportsTableBody');
+
+        $('#reportTotal').text(data.length);
+
+        if (!data.length) {
+            tbody.html(`
+                <tr>
+                    <td colspan="8" class="reports-empty">
+                        <i class="fas fa-inbox"></i>
+                        <div>Tidak ada data Monev.</div>
+                    </td>
+                </tr>
+            `);
+
             return;
         }
-        renderReports(res.data||[]);
-    }).fail(function(xhr){
-        console.error('REPORT DATA ERROR:',xhr.responseText);
-        $('#reportsTableBody').html('<tr><td colspan="8" class="text-center text-danger py-5">Gagal memuat data laporan.</td></tr>');
-        notify(xhr.responseJSON?.message||'Gagal memuat data laporan.','error');
-    });
-}
-function renderReports(data){
-    const tbody=$('#reportsTableBody');
-    $('#reportTotal').text(data.length);
-    if(!data.length){
-        tbody.html('<tr><td colspan="8" class="text-center text-muted py-5"><i class="fas fa-inbox fa-2x mb-2"></i><div>Tidak ada data Monev.</div></td></tr>');
-        return;
-    }
-    let html='';
-    data.forEach(function(row,index){
-        const statusClass={
-            DRAFT:'secondary',
-            IN_PROGRESS:'warning',
-            COMPLETED:'success'
-        }[row.status]||'secondary';
-        const statusText={
-            DRAFT:'Draft',
-            IN_PROGRESS:'Sedang Berjalan',
-            COMPLETED:'Selesai'
-        }[row.status]||row.status;
-        html+='<tr>';
-        html+='<td>'+(index+1)+'</td>';
-        html+='<td><strong>'+escapeHtml(row.region_name||'-')+'</strong></td>';
-        html+='<td><div class="fw-semibold">'+escapeHtml(row.school_name||'-')+'</div><small class="text-muted">'+escapeHtml(row.level||'')+'</small></td>';
-        html+='<td>'+escapeHtml(row.npsn||'-')+'</td>';
-        html+='<td>'+formatDate(row.visit_date)+'</td>';
-        html+='<td>'+escapeHtml(row.member_names||'-')+'</td>';
-        html+='<td><span class="badge bg-'+statusClass+'">'+escapeHtml(statusText)+'</span></td>';
-        html+='<td><button type="button" class="btn btn-sm btn-danger btn-report-pdf" data-id="'+escapeHtml(row.id)+'"><i class="fas fa-file-pdf me-1"></i>PDF</button></td>';
-        html+='</tr>';
-    });
-    tbody.html(html);
-}
-function formatDate(value){
-    if(!value)return '-';
-    const parts=String(value).split('-');
-    if(parts.length!==3)return escapeHtml(value);
-    return parts[2]+'-'+parts[1]+'-'+parts[0];
-}
-function exportExcel(){
-    const filters=getFilters();
-    const query=$.param(filters);
-    window.location.href=REPORTS_URLS.exportExcel+'?'+query;
-}
-$(document).on('click','#btnSearchReport',function(){
-    loadReports();
-});
 
-$(document).on('click','#btnExportReport',function(){
-    exportExcel();
-});
-$(document).on('click','.btn-report-pdf',function(){
-    const id=$(this).data('id');
-    if(!id)return;
-    window.open(REPORTS_URLS.pdf+'/'+encodeURIComponent(id),'_blank');
-});
-$(document).on('keypress','#reportKeyword',function(e){
-    if(e.which===13){
-        e.preventDefault();
+        let html = '';
+
+        data.forEach(function (row, index) {
+            const status = row.status || '';
+
+            const statusClass = {
+                DRAFT: 'secondary',
+                IN_PROGRESS: 'warning',
+                COMPLETED: 'success'
+            }[status] || 'secondary';
+
+            const statusText = {
+                DRAFT: 'Draft',
+                IN_PROGRESS: 'Sedang Berjalan',
+                COMPLETED: 'Selesai'
+            }[status] || status || '-';
+
+            html += `
+                <tr>
+                    <td class="text-center">
+                        ${index + 1}
+                    </td>
+                    <td>
+                        <strong>
+                            ${escapeHtml(row.region_name || '-')}
+                        </strong>
+                    </td>
+                    <td>
+                        <div class="fw-semibold">
+                            ${escapeHtml(row.school_name || '-')}
+                        </div>
+                        <small class="text-muted">
+                            ${escapeHtml(row.level || '')}
+                        </small>
+                    </td>
+                    <td>
+                        ${escapeHtml(row.npsn || '-')}
+                    </td>
+                    <td>
+                        ${formatDate(row.visit_date)}
+                    </td>
+                    <td>
+                        ${escapeHtml(row.member_names || '-')}
+                    </td>
+                    <td>
+                        <span class="badge bg-${statusClass}">
+                            ${escapeHtml(statusText)}
+                        </span>
+                    </td>
+                    <td>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-danger btn-report-pdf"
+                            data-id="${escapeHtml(row.id)}">
+                            <i class="fas fa-file-pdf me-1"></i>
+                            PDF
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.html(html);
+    }
+
+    function formatDate(value) {
+        if (!value) {
+            return '-';
+        }
+
+        const parts = String(value)
+            .substring(0, 10)
+            .split('-');
+
+        if (parts.length !== 3) {
+            return escapeHtml(value);
+        }
+
+        return (
+            parts[2] +
+            '-' +
+            parts[1] +
+            '-' +
+            parts[0]
+        );
+    }
+
+    $(document).on(
+        'click',
+        '#btnSearchReport',
+        function () {
+            loadReports();
+        }
+    );
+
+    $(document).on(
+        'click',
+        '#btnResetReport',
+        function () {
+            $('#reportKeyword').val('');
+            $('#reportRegion').val('');
+            $('#reportDateFrom').val('');
+            $('#reportDateTo').val('');
+
+            loadReports();
+        }
+    );
+
+    $(document).on(
+        'keypress',
+        '#reportKeyword',
+        function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                loadReports();
+            }
+        }
+    );
+
+    $(document).on(
+        'click',
+        '.btn-report-pdf',
+        function () {
+            const id = $(this).data('id');
+
+            if (!id) {
+                return;
+            }
+
+            window.open(
+                config.pdfUrl +
+                '/' +
+                encodeURIComponent(id),
+                '_blank'
+            );
+        }
+    );
+
+    $(document).on(
+        'click',
+        '#btnExportAllPdf',
+        function () {
+            const query = $.param(
+                getFilters()
+            );
+
+            const url =
+                config.exportAllPdfUrl +
+                (query ? '?' + query : '');
+
+            window.open(
+                url,
+                '_blank'
+            );
+        }
+    );
+
+    $(document).ready(function () {
+        loadRegions();
         loadReports();
-    }
-});
-$(document).ready(function(){
-    loadRegions();
-    loadReports();
-});
-document.addEventListener('DOMContentLoaded',function(){
-
-    const btnExportAllPdf=document.getElementById('btnExportAllPdf');
-
-    if(!btnExportAllPdf)return;
-
-    btnExportAllPdf.addEventListener('click',function(){
-
-        const params=new URLSearchParams();
-
-        const keyword=document.getElementById('reportKeyword');
-        const region=document.getElementById('reportRegion');
-        const status=document.getElementById('reportStatus');
-        const dateFrom=document.getElementById('reportDateFrom');
-        const dateTo=document.getElementById('reportDateTo');
-
-        if(keyword && keyword.value.trim()!==''){
-            params.set('keyword',keyword.value.trim());
-        }
-
-        if(region && region.value!==''){
-            params.set('region_id',region.value);
-        }
-
-        if(status && status.value!==''){
-            params.set('status',status.value);
-        }
-
-        if(dateFrom && dateFrom.value!==''){
-            params.set('date_from',dateFrom.value);
-        }
-
-        if(dateTo && dateTo.value!==''){
-            params.set('date_to',dateTo.value);
-        }
-
-        const query=params.toString();
-
-        const url=
-            window.reportsConfig.exportAllPdfUrl+
-            (query?'?'+query:'');
-
-        window.open(url,'_blank');
     });
-
-});
 })();

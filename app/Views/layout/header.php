@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="<?= base_url('assets/plugins/fontawesome/css/brands.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/plugins/datatables/css/dataTables.bootstrap5.css') ?>">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('assets/css/layout.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/notification.css') ?>">
     <?php if(!empty($pageAsset)): ?>

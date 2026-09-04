@@ -17,6 +17,7 @@
 <script src="<?= base_url('assets/js/notification.js') ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
 <?= $this->renderSection('scripts') ?>
 <script>
 const BASE_URL="<?= base_url('/') ?>";
