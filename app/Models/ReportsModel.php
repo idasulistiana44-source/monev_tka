@@ -63,11 +63,11 @@ class ReportsModel extends Model
             return [];
         }
         $visitIds=array_map('intval',array_column($rows,'id'));
-        $teamRows=$this->db->table('visit_team vt')->select('vt.visit_id,vt.user_id,u.name')->join('users u','u.id=vt.user_id','left')->whereIn('vt.visit_id',$visitIds)->orderBy('u.name','ASC')->get()->getResultArray();
+        $teamRows=$this->db->table('visit_team vt')->select('vt.visit_id,vt.user_id,u.name,u.institution')->join('users u','u.id=vt.user_id','left')->whereIn('vt.visit_id',$visitIds)->orderBy('u.name','ASC')->get()->getResultArray();
         $teams=[];
         foreach($teamRows as $team){
             $visitId=(int)$team['visit_id'];
-            $teams[$visitId][]=['id'=>(int)$team['user_id'],'name'=>$team['name']??'Petugas'];
+            $teams[$visitId][]=['id'=>(int)$team['user_id'],'name'=>$team['name']??'Petugas','institution'=>$team['institution']??'-'];
         }
         foreach($rows as &$row){
             $row['members']=$teams[(int)$row['id']]??[];
@@ -81,7 +81,7 @@ class ReportsModel extends Model
     }
     public function getMembers($visitId)
     {
-        return $this->db->table('visit_team vt')->select('vt.id,vt.user_id,u.name')->join('users u','u.id=vt.user_id','left')->where('vt.visit_id',(int)$visitId)->orderBy('u.name','ASC')->get()->getResultArray();
+        return $this->db->table('visit_team vt')->select('vt.id,vt.user_id,u.name,u.institution')->join('users u','u.id=vt.user_id','left')->where('vt.visit_id',(int)$visitId)->orderBy('u.name','ASC')->get()->getResultArray();
     }
     public function getReport($id,$userRole='',$userId=0)
     {
@@ -132,7 +132,7 @@ class ReportsModel extends Model
                 }
             }
         }
-        $metrics=$this->buildMetrics($answerMap);
+        $metrics=$this->buildMetrics($answerMap,$visit['level']??'');
         return [
             'visit'=>$visit,
             'id'=>(int)$visit['id'],
@@ -202,7 +202,7 @@ class ReportsModel extends Model
         }
         return 0;
     }
-    protected function buildMetrics(array $a)
+    protected function buildMetrics(array $a, $level = '')
     {
         $pc=(int)$this->numberFrom($a['INF-01']??0);
         $laptopMilik=(int)$this->numberFrom($a['INF-02']??0);
@@ -216,103 +216,322 @@ class ReportsModel extends Model
         $jaringan=$a['INF-10']??'';
         $upload=(float)$this->numberFrom($a['INF-11']??0);
         $download=(float)$this->numberFrom($a['INF-12']??0);
+
         $totalSiswa=(int)$this->numberFrom($a['KTA-01']??0);
         $ikut=(int)$this->numberFrom($a['KTA-02']??0);
         $tidakIkut=(int)$this->numberFrom($a['KTA-03']??0);
         $sesi=max(1,(int)$this->numberFrom($a['KTA-04']??1));
-        $gelombang=$a['KTA-05']??'';
+        $gelombangText=trim((string)($a['KTA-05']??''));
         $kesiapan=$a['KTA-06']??'';
         $catatan=trim((string)($a['CAT-01']??''));
+
+        /*
+         * PENENTUAN SPESIFIKASI INFRASTRUKTUR SATUAN PENDIDIKAN
+         *
+         * Moda daring:
+         * - SMA/MA/SMK/MAK formal: maksimal 1 komputer untuk 6 peserta
+         *   (6 sesi berurutan).
+         * - SD/MI/SMP/MTs formal: maksimal 1 komputer untuk 12 peserta
+         *   (12 sesi berurutan).
+         * - Komputer cadangan: 10% dari komputer yang dibutuhkan.
+         *
+         * Rumus operasional:
+         * komputer utama = ceil(peserta / (sesi x gelombang))
+         *
+         * Jaringan daring:
+         * - minimal 16 Mbps untuk 40 klien
+         * - ekuivalen 0,4 Mbps/klien
+         * - koneksi khusus untuk TKA
+         * - LAN CAT5E 100/1000 atau AP stabil maksimal 20 klien/AP
+         *
+         * Catatan:
+         * Threshold "Sangat Baik/Baik/Cukup/Kurang Memadai"
+         * adalah klasifikasi monitoring internal, bukan nilai threshold
+         * tambahan yang tertulis sebagai angka di juknis.
+         */
+
+        $levelUpper=strtoupper((string)$level);
+
+        $isSmaSmk=str_contains($levelUpper,'SMA')
+            || str_contains($levelUpper,'SMK')
+            || str_contains($levelUpper,'MAK')
+            || str_contains($levelUpper,'MA');
+
+        $isSdSmp=str_contains($levelUpper,'SD')
+            || str_contains($levelUpper,'MI')
+            || str_contains($levelUpper,'SMP')
+            || str_contains($levelUpper,'MTS');
+
+        $isNonFormal=str_contains($levelUpper,'PAKET')
+            || str_contains($levelUpper,'NONFORMAL')
+            || str_contains($levelUpper,'NON FORMAL');
+
+        if($isNonFormal){
+            $ratioPesertaPerKomputer=$isSmaSmk?3:6;
+        }elseif($isSdSmp){
+            $ratioPesertaPerKomputer=12;
+        }else{
+            // Default konservatif untuk SMA/SMK bila jenjang tidak terbaca.
+            $ratioPesertaPerKomputer=6;
+        }
+
+        // Gelombang adalah nilai yang diinput pada instrumen KTA-05.
+        // Ambil angka pertama dari jawaban, misalnya "2 Gelombang".
+        $gelombangNumbers=[];
+        if(preg_match('/\d+/', $gelombangText, $gelombangMatch)){
+            $gelombang=(int)$gelombangMatch[0];
+        }else{
+            $gelombang=1;
+        }
+        $gelombang=max(1,$gelombang);
+
+        // Sesuai pola perhitungan juknis:
+        // kebutuhan komputer utama = jumlah peserta / (jumlah sesi x jumlah gelombang).
+        $faktorPelaksanaan=max(1,$sesi*$gelombang);
+
+        $kebutuhanPerSesi=(int)ceil(
+            $totalSiswa/$faktorPelaksanaan
+        );
+
+        $komputerUtama=$kebutuhanPerSesi;
+
+        // Cadangan perangkat = 10% dari kebutuhan komputer utama.
+        $komputerCadangan=$komputerUtama>0
+            ? (int)ceil($komputerUtama*0.10)
+            : 0;
+
+        $kebutuhanPerangkatJuknis=$komputerUtama+$komputerCadangan;
+
         $totalPerangkat=$pc+$laptopMilik+$laptopBukan;
-        $kebutuhanPerSesi=$sesi>0?ceil($totalSiswa/$sesi):$totalSiswa;
-        if($totalPerangkat>=$kebutuhanPerSesi){
-            $deviceStatus='Memadai';
+
+        // Rasio peserta per komputer untuk kebutuhan penjelasan/report.
+        $kapasitasPesertaPerKomputer = max(1, $faktorPelaksanaan);
+
+        // Status perangkat berdasarkan pemenuhan kebutuhan utama + cadangan.
+        if($totalPerangkat>=$kebutuhanPerangkatJuknis*1.10){
+            $deviceStatus='Sangat Baik';
+        }elseif($totalPerangkat>=$kebutuhanPerangkatJuknis){
+            $deviceStatus='Baik';
+        }elseif($totalPerangkat>=$komputerUtama){
+            $deviceStatus='Cukup';
         }else{
-            $deviceStatus='Tidak Memadai';
+            $deviceStatus='Kurang Memadai';
         }
+
+        /*
+         * Ruang TKA:
+         * maksimal 20 peserta per pengawas ruang.
+         * Setiap ruang ditangani 1 proktor.
+         * 1 ID proktor maksimal 40 komputer klien.
+         */
+        $pesertaPerSesi=$sesi>0
+            ? (int)ceil($totalSiswa/$sesi)
+            : $totalSiswa;
+
+        $kebutuhanRuang=max(1,(int)ceil($pesertaPerSesi/20));
+        $kebutuhanProktor=(int)ceil(max(1,$kebutuhanPerangkatJuknis)/40);
+        $kebutuhanPengawas=$kebutuhanRuang;
+
+        if($ruang>=$kebutuhanRuang){
+            $roomStatus='Baik';
+        }elseif($ruang>0){
+            $roomStatus='Cukup';
+        }else{
+            $roomStatus='Kurang Memadai';
+        }
+
+        /*
+         * Koneksi jaringan daring:
+         * minimum 16 Mbps untuk 40 klien, ekuivalen 0,4 Mbps/klien.
+         * Untuk penilaian kebutuhan aktual, tetap diberlakukan floor 16 Mbps.
+         */
+        $networkClients=max(1,$komputerUtama);
+        $networkNeed=max(16,round($networkClients*0.4,2));
+        $effectiveBandwidth=min($upload,$download);
+        $networkRatio=$networkNeed>0
+            ? round($effectiveBandwidth/$networkNeed,2)
+            : 0;
+
+        if($networkRatio>=1.50){
+            $networkStatus='Sangat Baik';
+        }elseif($networkRatio>=1.00){
+            $networkStatus='Baik';
+        }elseif($networkRatio>=0.75){
+            $networkStatus='Cukup';
+        }else{
+            $networkStatus='Kurang Memadai';
+        }
+
+        $networkDedicated=trim((string)$jaringan)!=='';
+        $apRequired=(int)ceil($networkClients/20);
+        $apCoverage=$apRequired>0
+            ? round(($accessPoint/$apRequired)*100,2)
+            : 100;
+
+        /*
+         * Kelistrikan:
+         * juknis menetapkan daya harus stabil dan cukup untuk seluruh perangkat,
+         * tanpa memberikan angka watt minimum universal. Karena itu status
+         * tidak dipaksakan dari satu angka watt tertentu.
+         */
+        $hasDaya=trim((string)$daya)!=='';
+        if($hasDaya && $ups>0){
+            $electricityStatus='Baik';
+        }elseif($hasDaya){
+            $electricityStatus='Cukup';
+        }else{
+            $electricityStatus='Kurang Memadai';
+        }
+
         $participantConsistent=($totalSiswa===($ikut+$tidakIkut));
-        $participantPercentage=$totalSiswa>0?round(($ikut/$totalSiswa)*100,2):0;
+        $participantPercentage=$totalSiswa>0
+            ? round(($ikut/$totalSiswa)*100,2)
+            : 0;
+
         if(!$participantConsistent){
-            $participantStatus='Perlu Verifikasi';
+            $participantStatus='Kurang Memadai';
         }elseif($participantPercentage>=100){
-            $participantStatus='Memadai';
+            $participantStatus='Sangat Baik';
         }elseif($participantPercentage>=90){
-            $participantStatus='Perlu Perhatian';
+            $participantStatus='Baik';
+        }elseif($participantPercentage>0){
+            $participantStatus='Cukup';
         }else{
-            $participantStatus='Tidak Memadai';
+            $participantStatus='Kurang Memadai';
         }
-        if($upload>=100&&$download>=100){
-            $networkStatus='Memadai';
-        }elseif($upload>=50&&$download>=50){
-            $networkStatus='Perlu Perhatian';
-        }else{
-            $networkStatus='Tidak Memadai';
-        }
-        $electricityStatus=$ups>0&&trim((string)$daya)!==''?'Memadai':'Perlu Perhatian';
+
+        // Kesiapan umum yang berasal dari jawaban instrumen.
         $kesiapanUpper=strtoupper((string)$kesiapan);
         if(str_contains($kesiapanUpper,'TIDAK')){
-            $kesiapanStatus='Tidak Memadai';
+            $kesiapanStatus='Kurang Memadai';
         }elseif(str_contains($kesiapanUpper,'PERLU')){
-            $kesiapanStatus='Perlu Perhatian';
+            $kesiapanStatus='Cukup';
+        }elseif($kesiapan!==''){
+            $kesiapanStatus='Baik';
         }else{
-            $kesiapanStatus='Memadai';
+            $kesiapanStatus='Cukup';
         }
+
         $findings=[];
         $recommendations=[];
-        if($deviceStatus==='Tidak Memadai'){
-            $findings[]='Ketersediaan perangkat belum memenuhi kebutuhan peserta per sesi.';
-            $recommendations[]='Melakukan penambahan atau penataan perangkat agar kebutuhan peserta pada setiap sesi dapat terpenuhi.';
+
+        if($deviceStatus==='Kurang Memadai'){
+            $findings[]='Jumlah komputer belum memenuhi kebutuhan utama sesuai jumlah peserta, sesi, gelombang, dan rasio penggunaan komputer berdasarkan juknis.';
+            $recommendations[]='Menambah atau menata komputer hingga kebutuhan komputer utama dan cadangan 10% terpenuhi.';
+        }elseif($deviceStatus==='Cukup'){
+            $findings[]='Jumlah komputer utama telah mencukupi, namun cadangan 10% belum sepenuhnya terpenuhi.';
+            $recommendations[]='Melengkapi komputer cadangan sekurang-kurangnya 10% dari kebutuhan komputer utama.';
         }
-        if($participantStatus==='Perlu Verifikasi'){
-            $findings[]='Data jumlah siswa kelas 12, peserta TKA-P, dan siswa yang tidak mengikuti TKA belum konsisten.';
-            $recommendations[]='Melakukan verifikasi dan pembaruan data peserta TKA-P.';
-        }elseif($participantStatus==='Tidak Memadai'){
-            $findings[]='Masih terdapat peserta kelas 12 yang belum mengikuti TKA-P.';
-            $recommendations[]='Melakukan koordinasi untuk memastikan peserta yang belum mengikuti TKA-P mendapatkan tindak lanjut sesuai ketentuan.';
+
+        if($roomStatus==='Kurang Memadai'){
+            $findings[]='Jumlah ruang yang disiapkan belum memenuhi kebutuhan berdasarkan batas maksimal 20 peserta per pengawas ruang.';
+            $recommendations[]='Menambah atau menata ruang pelaksanaan agar jumlah peserta per ruang sesuai ketentuan.';
+        }elseif($roomStatus==='Cukup'){
+            $findings[]='Ruang tersedia namun belum sepenuhnya memenuhi kebutuhan ideal berdasarkan jumlah peserta per sesi.';
+            $recommendations[]='Melakukan penataan pembagian peserta dan ruang serta memastikan rasio pengawas maksimal 20 peserta per ruang.';
         }
-        if($networkStatus==='Tidak Memadai'){
-            $findings[]='Bandwidth jaringan belum memenuhi kebutuhan minimal monitoring internal.';
-            $recommendations[]='Melakukan peningkatan kapasitas jaringan internet sebelum pelaksanaan TKA-P.';
-        }elseif($networkStatus==='Perlu Perhatian'){
-            $findings[]='Bandwidth jaringan perlu diperhatikan dan diuji kembali untuk memastikan kestabilan koneksi.';
-            $recommendations[]='Melakukan pengujian kestabilan jaringan dan menyiapkan dukungan koneksi tambahan bila diperlukan.';
+
+        if($networkStatus==='Kurang Memadai'){
+            $findings[]='Bandwidth efektif belum memenuhi kebutuhan minimal jaringan TKA untuk jumlah klien yang dilayani.';
+            $recommendations[]='Meningkatkan kapasitas bandwidth hingga sekurang-kurangnya memenuhi kebutuhan minimal hasil perhitungan dan memastikan koneksi khusus untuk TKA.';
+        }elseif($networkStatus==='Cukup'){
+            $findings[]='Bandwidth telah mendekati kebutuhan minimal dan masih memiliki cadangan kapasitas yang terbatas.';
+            $recommendations[]='Melakukan uji kestabilan jaringan kembali dan memastikan tidak ada penggunaan jaringan lain selama pelaksanaan TKA.';
         }
-        if($electricityStatus==='Perlu Perhatian'){
-            $findings[]='Dukungan listrik atau UPS perlu dipastikan kembali untuk menjaga keberlangsungan pelaksanaan.';
-            $recommendations[]='Memastikan daya listrik mencukupi dan UPS/perangkat pendukung berfungsi dengan baik.';
+
+        if(!$networkDedicated){
+            $findings[]='Informasi mengenai jaringan khusus pelaksanaan TKA belum tercatat pada hasil monitoring.';
+            $recommendations[]='Memastikan koneksi jaringan yang digunakan untuk TKA dikhususkan selama pelaksanaan.';
         }
-        if($kesiapanStatus==='Tidak Memadai'){
-            $findings[]='Sekolah belum dinyatakan siap secara infrastruktur berdasarkan hasil monitoring.';
-            $recommendations[]='Melakukan tindak lanjut terhadap aspek infrastruktur yang belum siap sebelum pelaksanaan.';
-        }elseif($kesiapanStatus==='Perlu Perhatian'){
-            $findings[]='Terdapat aspek infrastruktur yang masih memerlukan perhatian sebelum pelaksanaan.';
-            $recommendations[]='Melakukan pengecekan ulang terhadap aspek yang masih memerlukan perhatian.';
+
+        if($accessPoint>0 && $accessPoint<$apRequired){
+            $findings[]='Jumlah Access Point yang tersedia belum mencapai kebutuhan berdasarkan batas maksimal 20 klien per Access Point.';
+            $recommendations[]='Menambah atau menata Access Point agar akses stabil dapat melayani jumlah klien sesuai kebutuhan.';
         }
+
+        if($electricityStatus==='Kurang Memadai'){
+            $findings[]='Data daya listrik belum menunjukkan kepastian bahwa sumber listrik tersedia dan mencukupi untuk seluruh perangkat.';
+            $recommendations[]='Memastikan daya listrik stabil dan cukup untuk seluruh komputer serta perangkat jaringan sebelum pelaksanaan.';
+        }elseif($electricityStatus==='Cukup'){
+            $findings[]='Daya listrik tercatat, namun dukungan UPS belum tercatat.';
+            $recommendations[]='Memastikan ketersediaan dan fungsi UPS/perangkat pendukung untuk mengantisipasi gangguan listrik.';
+        }
+
+        if($participantStatus==='Kurang Memadai'){
+            $findings[]='Data peserta yang dicatat belum konsisten atau belum seluruhnya menunjukkan kesiapan mengikuti TKA.';
+            $recommendations[]='Melakukan verifikasi dan pembaruan data peserta sebelum pelaksanaan.';
+        }elseif($participantStatus==='Cukup'){
+            $findings[]='Masih terdapat peserta yang belum seluruhnya tercatat mengikuti TKA.';
+            $recommendations[]='Melakukan verifikasi peserta dan memastikan kesiapan seluruh peserta.';
+        }
+
         $catatanUpper=strtoupper($catatan);
-        if((str_contains($catatanUpper,'GANGGUAN')||str_contains($catatanUpper,'PADAM')||str_contains($catatanUpper,'KURANG'))&&str_contains($catatanUpper,'LISTRIK')){
-            $findings[]='Catatan visitasi menunjukkan adanya kondisi listrik yang perlu ditindaklanjuti.';
+        if(
+            (str_contains($catatanUpper,'GANGGUAN')
+            ||str_contains($catatanUpper,'PADAM')
+            ||str_contains($catatanUpper,'KURANG'))
+            &&str_contains($catatanUpper,'LISTRIK')
+        ){
+            $findings[]='Catatan visitasi menunjukkan adanya kondisi kelistrikan yang perlu ditindaklanjuti.';
             $recommendations[]='Melakukan pengecekan instalasi dan kesiapan sumber listrik sebelum pelaksanaan.';
         }
-        if(in_array('Tidak Memadai',[$deviceStatus,$participantStatus,$networkStatus,$kesiapanStatus],true)){
-            $overallStatus='TIDAK MEMADAI';
-        }elseif(in_array('Perlu Perhatian',[$participantStatus,$networkStatus,$electricityStatus,$kesiapanStatus],true)||$participantStatus==='Perlu Verifikasi'){
-            $overallStatus='PERLU PERHATIAN';
-        }else{
-            $overallStatus='SANGAT BAIK';
+
+        $statusScores=[
+            'Sangat Baik'=>4,
+            'Baik'=>3,
+            'Cukup'=>2,
+            'Kurang Memadai'=>1
+        ];
+
+        $componentStatuses=[
+            $deviceStatus,
+            $participantStatus,
+            $networkStatus,
+            $roomStatus,
+            $electricityStatus,
+            $kesiapanStatus
+        ];
+
+        $lowestScore=4;
+        foreach($componentStatuses as $componentStatus){
+            $lowestScore=min($lowestScore,$statusScores[$componentStatus]??1);
         }
-        if($overallStatus==='SANGAT BAIK'){
-            $analysis='Berdasarkan hasil monitoring dan evaluasi, ketersediaan perangkat telah memenuhi kebutuhan peserta per sesi. Seluruh peserta telah dinyatakan mengikuti TKA. Jaringan internet berada dalam kondisi memadai. Dukungan listrik dan UPS berada dalam kondisi memadai. Secara keseluruhan satuan pendidikan menunjukkan kesiapan yang baik.';
-            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan dinyatakan siap mendukung pelaksanaan TKA. Ketersediaan sarana dan prasarana, perangkat, peserta, jaringan internet, serta dukungan listrik secara umum berada dalam kondisi yang mendukung pelaksanaan TKA.';
-            $suggestions='Satuan pendidikan disarankan mempertahankan kondisi kesiapan yang telah tersedia dan melakukan pengecekan akhir terhadap perangkat, jaringan internet, kelistrikan, ruang pelaksanaan, serta data peserta sebelum pelaksanaan TKA.';
-        }elseif($overallStatus==='PERLU PERHATIAN'){
-            $analysis='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan secara umum telah memiliki komponen pendukung pelaksanaan TKA, namun masih terdapat beberapa aspek yang memerlukan perhatian dan pengecekan lebih lanjut.';
-            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan pada dasarnya telah memiliki kesiapan untuk mendukung pelaksanaan TKA, namun masih terdapat beberapa kondisi yang perlu ditindaklanjuti agar pelaksanaan TKA dapat berjalan secara optimal.';
-            $suggestions='Satuan pendidikan disarankan segera menindaklanjuti aspek yang masih memerlukan perhatian, melakukan pengecekan ulang, serta memastikan seluruh komponen pendukung pelaksanaan TKA berada dalam kondisi siap sebelum hari pelaksanaan.';
+
+        $averageScore=count($componentStatuses)>0
+            ? array_sum(array_map(
+                static function($status) use ($statusScores){
+                    return $statusScores[$status]??1;
+                },
+                $componentStatuses
+            ))/count($componentStatuses)
+            : 1;
+
+        if($lowestScore===1){
+            $overallStatus='Kurang Memadai';
+        }elseif($averageScore>=3.50){
+            $overallStatus='Sangat Baik';
+        }elseif($averageScore>=2.50){
+            $overallStatus='Baik';
         }else{
-            $analysis='Berdasarkan hasil monitoring dan evaluasi, masih terdapat beberapa komponen pendukung pelaksanaan TKA yang belum memenuhi kondisi yang diperlukan sehingga memerlukan tindak lanjut sebelum pelaksanaan.';
-            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan belum sepenuhnya siap mendukung pelaksanaan TKA karena masih terdapat komponen yang perlu diperbaiki atau dipenuhi terlebih dahulu.';
-            $suggestions='Satuan pendidikan perlu memprioritaskan penyelesaian seluruh temuan hasil monitoring, memastikan ketersediaan perangkat dan jaringan, kesiapan peserta, dukungan listrik, serta melakukan verifikasi ulang sebelum pelaksanaan TKA.';
+            $overallStatus='Cukup';
         }
+
+        $analysis='Hasil monitoring dinilai berdasarkan kesesuaian sarana dan prasarana dengan spesifikasi infrastruktur TKA, meliputi kebutuhan komputer, ruang, jaringan internet, perangkat jaringan, kelistrikan, dan kesiapan peserta. Perhitungan komputer menggunakan jumlah peserta, sesi, gelombang, rasio maksimal penggunaan komputer, serta cadangan 10% sesuai ketentuan. Kebutuhan bandwidth dihitung berdasarkan minimal 16 Mbps untuk 40 klien atau ekuivalen 0,4 Mbps per klien.';
+
+        if($overallStatus==='Sangat Baik'){
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan menunjukkan kesiapan infrastruktur yang sangat baik dan secara umum telah memenuhi kebutuhan pelaksanaan TKA sesuai parameter yang dimonitor.';
+            $suggestions='Mempertahankan kondisi kesiapan serta melakukan pengecekan akhir terhadap komputer, ruang, jaringan internet, kelistrikan, dan data peserta sebelum pelaksanaan TKA.';
+        }elseif($overallStatus==='Baik'){
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan menunjukkan kesiapan yang baik dan telah memenuhi sebagian besar kebutuhan infrastruktur pelaksanaan TKA.';
+            $suggestions='Melakukan pengecekan akhir dan menindaklanjuti aspek yang masih perlu diperkuat agar kesiapan pelaksanaan TKA tetap optimal.';
+        }elseif($overallStatus==='Cukup'){
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan telah memiliki sebagian besar komponen pendukung pelaksanaan TKA, namun masih terdapat aspek yang perlu diperhatikan dan ditindaklanjuti.';
+            $suggestions='Segera menindaklanjuti temuan terutama terkait kecukupan perangkat, kapasitas jaringan, ruang, serta dukungan kelistrikan sebelum pelaksanaan TKA.';
+        }else{
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, masih terdapat komponen infrastruktur yang belum memenuhi kebutuhan pelaksanaan TKA sehingga diperlukan tindak lanjut sebelum pelaksanaan.';
+            $suggestions='Memprioritaskan pemenuhan kebutuhan komputer, jaringan, ruang, dan kelistrikan serta melakukan verifikasi ulang sebelum pelaksanaan TKA.';
+        }
+
         return [
             'pc'=>$pc,
             'laptop_milik'=>$laptopMilik,
@@ -327,14 +546,37 @@ class ReportsModel extends Model
             'jaringan'=>$jaringan,
             'upload'=>$upload,
             'download'=>$download,
+
             'total_siswa'=>$totalSiswa,
             'ikut'=>$ikut,
             'tidak_ikut'=>$tidakIkut,
             'sesi'=>$sesi,
             'gelombang'=>$gelombang,
+            'gelombang_text'=>$gelombangText,
             'kesiapan'=>$kesiapan,
             'catatan'=>$catatan,
+
             'kebutuhan_per_sesi'=>$kebutuhanPerSesi,
+            'rasio_peserta_per_komputer'=>$kapasitasPesertaPerKomputer,
+            'rasio_maksimal_juknis'=>$ratioPesertaPerKomputer,
+            'kapasitas_peserta_per_komputer'=>$kapasitasPesertaPerKomputer,
+            'komputer_utama'=>$komputerUtama,
+            'komputer_cadangan'=>$komputerCadangan,
+            'kebutuhan_perangkat_juknis'=>$kebutuhanPerangkatJuknis,
+
+            'kebutuhan_ruang'=>$kebutuhanRuang,
+            'kebutuhan_proktor'=>$kebutuhanProktor,
+            'kebutuhan_pengawas'=>$kebutuhanPengawas,
+            'room_status'=>$roomStatus,
+
+            'network_clients'=>$networkClients,
+            'network_need'=>$networkNeed,
+            'effective_bandwidth'=>$effectiveBandwidth,
+            'network_ratio'=>$networkRatio,
+            'ap_required'=>$apRequired,
+            'ap_coverage'=>$apCoverage,
+            'network_dedicated'=>$networkDedicated,
+
             'participant_percentage'=>$participantPercentage,
             'device_status'=>$deviceStatus,
             'participant_status'=>$participantStatus,
@@ -342,6 +584,7 @@ class ReportsModel extends Model
             'electricity_status'=>$electricityStatus,
             'kesiapan_status'=>$kesiapanStatus,
             'overall_status'=>$overallStatus,
+
             'findings'=>$findings,
             'recommendations'=>array_values($recommendations),
             'analysis'=>$analysis,

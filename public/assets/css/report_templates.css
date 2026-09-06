@@ -20,7 +20,7 @@
 .cover-info-row{display:flex;justify-content:center;gap:26px;max-width:760px;margin:auto}
 .cover-info-field{flex:1;text-align:left}
 .cover-info-field label{display:block;text-align:center;font-size:18px;font-weight:700;color:#475569;margin-bottom:7px}
-.cover-info-field input{width:100%;height:48px;border:1px solid #cbd5e1;border-radius:8px;padding:0 15px;font-size:17px;outline:none;background:#f8fafc}
+.cover-info-field input{width:115px;height:48px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font-size:17px;outline:none;background:#f8fafc;text-align:center;display:block;margin:0 auto}
 .report-section-card{background:#fff;border:1px solid #d5dee8;border-radius:14px;margin-bottom:28px;padding:28px 30px;box-shadow:0 3px 12px rgba(0,0,0,.04)}
 .report-section-title{border-bottom:3px solid #e2e8f0;padding-bottom:12px;margin-bottom:28px;position:relative}
 .report-section-title:before{content:attr(data-number);display:none}

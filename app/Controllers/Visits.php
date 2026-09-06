@@ -564,7 +564,7 @@ class Visits extends BaseController
                                 throw new \RuntimeException(
                                     'Ukuran PDF terlalu besar. Ukuran file: ' .
                                     $sizeMB .
-                                    ' MB. Maksimal 3 MB.'
+                                    ' MB. Maksimal 2 MB.'
                                 );
                             }
                         $typeLabel = 'PDF';
