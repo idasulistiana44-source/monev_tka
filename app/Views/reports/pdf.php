@@ -270,7 +270,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 </tr>
                 <tr>
                     <td>Kebutuhan Access Point</td>
-                    <td>' . $e($metrics['ap_required'] ?? 0) . ' unit (maks. 20 klien/AP)</td>
+                    <td>' . $e($metrics['ap_required'] ?? 0) . ' unit (maks. 20 klien/Access point)</td>
                 </tr>
             </tbody>
         </table>';
@@ -291,7 +291,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <td style="text-align:center;">' . $e($metrics['ruang'] ?? 0) . ' ruang</td>
                 </tr>
                 <tr>
-                    <td>Laboratorium Komputer</td>
+                    <td>Lab.Komputer</td>
                     <td style="text-align:center;">' . $e($metrics['labkom'] ?? 0) . ' ruang</td>
                 </tr>
             </tbody>
@@ -513,57 +513,96 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             ========================================== -->
 
         <div class="status-summary" style="' .
-            ($deviceStatus === 'Kurang Memadai'
+        (
+            $deviceStatus === 'Kurang Memadai'
                 ? 'background:#fef2f2;border:1px solid #fecaca;'
-                : '') .
-        '">
+                : (
+                    $deviceStatus === 'Cukup'
+                        ? 'background:#fffbeb;border:1px solid #fde68a;'
+                        : (
+                            $deviceStatus === 'Baik'
+                                ? 'background:#eff6ff;border:1px solid #bfdbfe;'
+                                : (
+                                    $deviceStatus === 'Sangat Baik'
+                                        ? 'background:#f0fdf4;border:1px solid #bbf7d0;'
+                                        : ''
+                                )
+                        )
+                )
+        ) .
+    '">
 
-            <div class="status-header">
+        <div class="status-header">
 
-                <strong>Status:</strong>
+            <strong>Status:</strong>
 
-                <span class="status ' . $statusClass($deviceStatus) . '" style="' .
-                    ($deviceStatus === 'Kurang Memadai'
-                        ? 'color:#dc2626;background:#fee2e2;border-color:#fecaca;'
-                        : '') .
-                '">
-                    ' . $e($deviceStatus) . '
-                </span>
-
-            </div>
-
-            <div class="status-description" style="' .
-                ($deviceStatus === 'Kurang Memadai'
-                    ? 'color:#991b1b;'
-                    : '') .
-            '">
-
-                ' .
+            <span class="status ' . $statusClass($deviceStatus) . '" style="' .
                 (
                     $deviceStatus === 'Kurang Memadai'
+                        ? 'color:#dc2626;background:#fee2e2;border-color:#fecaca;'
+                        : (
+                            $deviceStatus === 'Cukup'
+                                ? 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
+                                : (
+                                    $deviceStatus === 'Baik'
+                                        ? 'color:#2563eb;background:#dbeafe;border-color:#bfdbfe;'
+                                        : (
+                                            $deviceStatus === 'Sangat Baik'
+                                                ? 'color:#16a34a;background:#dcfce7;border-color:#bbf7d0;'
+                                                : ''
+                                        )
+                                )
+                        )
+                ) .
+            '">
+                ' . $e($deviceStatus) . '
+            </span>
 
-                    ? 'Jumlah perangkat komputer yang tersedia belum memenuhi kebutuhan. ' .
-                    '<strong style="color:#dc2626;">Tersedia ' .
-                    $e($totalPerangkat) .
-                    ' perangkat dari kebutuhan ' .
-                    $e($kebutuhanPerangkat) .
-                    ' perangkat, sehingga masih terdapat kekurangan ' .
-                    $e($kekuranganPerangkat) .
-                    ' perangkat komputer.</strong>'
+        </div>
+
+        <div class="status-description" style="
+            color:#1e293b;
+            font-weight:normal;
+        ">
+
+            ' .
+            (
+                $deviceStatus === 'Kurang Memadai'
+
+                ? 'Jumlah perangkat komputer yang tersedia belum memenuhi kebutuhan. ' .
+                'Tersedia ' .
+                $e($totalPerangkat) .
+                ' perangkat dari kebutuhan ' .
+                $e($kebutuhanPerangkat) .
+                ' perangkat, sehingga masih terdapat kekurangan ' .
+                $e($kekuranganPerangkat) .
+                ' perangkat komputer.'
+
+                : (
+                    $deviceStatus === 'Cukup'
+
+                    ? 'Jumlah komputer utama telah mencukupi, namun ketersediaan komputer cadangan 10% belum sepenuhnya terpenuhi.'
 
                     : (
-                        $deviceStatus === 'Cukup'
+                        $deviceStatus === 'Baik'
 
-                        ? 'Jumlah komputer utama telah mencukupi, namun ketersediaan komputer cadangan 10% belum sepenuhnya terpenuhi.'
+                        ? 'Ketersediaan perangkat telah memenuhi kebutuhan pelaksanaan TKA-P.'
 
-                        : $e($statusDescription($deviceStatus, 'device'))
+                        : (
+                            $deviceStatus === 'Sangat Baik'
+
+                            ? 'Ketersediaan perangkat sangat baik dan telah memenuhi kebutuhan pelaksanaan TKA-P.'
+
+                            : $e($statusDescription($deviceStatus, 'device'))
+                        )
                     )
                 )
-                . '
+            )
+            . '
 
-            </div>
+        </div>
 
-        </div>';
+    </div>';
     }
     if (str_contains($title, 'KEIKUTSERTAAN') || str_contains($title, 'KESIAPAN PESERTA') || str_contains($title, 'JUMLAH SISWA') || str_contains($title, 'MENGIKUTI TKA-P')) {
         return '
@@ -613,7 +652,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         </table>
         <div class="status-summary">
             <div class="status-header">
-                <strong>Persentase Keikutsertaan:</strong>
+                <strong style="font-size:9pt;">Persentase Keikutsertaan:</strong>
                 <span class="status baik">' . (
                     ($metrics['total_siswa'] ?? 0) > 0
                         ? number_format((($metrics['ikut'] ?? 0) / $metrics['total_siswa']) * 100, 2, ',', '.') . '%'
@@ -656,14 +695,72 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             ($apRequired > 0 && $accessPoint < $apRequired)
         ) {
             $networkStatus = 'Kurang Memadai';
+
         } elseif (
             $networkNeed > 0 &&
             $effectiveBandwidth >= $networkNeed &&
             $accessPoint >= $apRequired
         ) {
             $networkStatus = 'Baik';
+
         } else {
             $networkStatus = 'Cukup';
+        }
+
+        // ==============================
+        // WARNA STATUS
+        // ==============================
+        if ($networkStatus === 'Kurang Memadai') {
+
+            $statusBoxStyle =
+                'background:#fef2f2;' .
+                'border:1px solid #fecaca;';
+
+            $statusBadgeStyle =
+                'color:#dc2626;' .
+                'background:#fee2e2;' .
+                'border:1px solid #fecaca;';
+
+            $statusDescriptionColor = '#1e293b';
+
+        } elseif ($networkStatus === 'Baik') {
+
+            $statusBoxStyle =
+                'background:#eff6ff;' .
+                'border:1px solid #bfdbfe;';
+
+            $statusBadgeStyle =
+                'color:#2563eb;' .
+                'background:#dbeafe;' .
+                'border:1px solid #bfdbfe;';
+
+            $statusDescriptionColor = '#1e293b';
+
+        } elseif ($networkStatus === 'Sangat Baik') {
+
+            $statusBoxStyle =
+                'background:#f0fdf4;' .
+                'border:1px solid #bbf7d0;';
+
+            $statusBadgeStyle =
+                'color:#16a34a;' .
+                'background:#dcfce7;' .
+                'border:1px solid #bbf7d0;';
+
+            $statusDescriptionColor = '#1e293b';
+
+        } else {
+
+            $statusBoxStyle =
+                'background:#fffbeb;' .
+                'border:1px solid #fde68a;';
+
+            $statusBadgeStyle =
+                'color:#92400e;' .
+                'background:#fef3c7;' .
+                'border:1px solid #fde68a;';
+
+            $statusDescriptionColor = '#1e293b';
         }
 
         // ==============================
@@ -673,7 +770,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
             $networkDescription =
                 'Kapasitas jaringan belum memenuhi kebutuhan pelaksanaan TKA-P. ' .
-                '<strong style="color:#dc2626;">Bandwidth tersedia ' .
+                'Bandwidth tersedia ' .
                 $e($effectiveBandwidth) .
                 ' Mbps dari kebutuhan ' .
                 $e($networkNeed) .
@@ -685,7 +782,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 $e($apRequired) .
                 ' unit, sehingga masih terdapat kekurangan ' .
                 $e($kekuranganAP) .
-                ' unit.</strong>';
+                ' unit.';
 
         } elseif ($networkStatus === 'Baik') {
 
@@ -701,10 +798,15 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 $e($apRequired) .
                 ' unit.';
 
+        } elseif ($networkStatus === 'Sangat Baik') {
+
+            $networkDescription =
+                'Kapasitas jaringan sangat baik dan telah memenuhi kebutuhan pelaksanaan TKA-P.';
+
         } else {
 
             $networkDescription =
-                'Kapasitas jaringan telah tersedia, namun masih terdapat aspek yang perlu diperhatikan untuk memastikan kestabilan jaringan selama pelaksanaan TKA-P.';
+                'Kapasitas jaringan cukup tersedia, namun masih terdapat aspek yang perlu diperhatikan untuk memastikan kestabilan selama pelaksanaan TKA-P.';
         }
 
         return '
@@ -868,24 +970,28 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
             </tbody>
         </table>
+
+
         <div class="status-summary" style="
-            background:#fef2f2;
-            border:1px solid #fecaca;
+            ' . $statusBoxStyle . '
         ">
 
             <div class="status-header">
                 <strong>Status:</strong>
 
-                <span class="status ' . $statusClass($networkStatus) . '" style="' .
-                    ($networkStatus === 'Kurang Memadai'
-                        ? 'color:#dc2626;background:#fee2e2;border-color:#fecaca;'
-                        : '') .
-                '">
+                <span class="status ' . $statusClass($networkStatus) . '" style="
+                    font-size:8.5pt;
+                    padding:3px 7px;
+                    border-radius:4px;
+                    ' . $statusBadgeStyle . '
+                ">
                     ' . $e($networkStatus) . '
                 </span>
             </div>
 
-            <div class="status-description" style="color:#991b1b;">
+            <div class="status-description" style="
+                color:' . $statusDescriptionColor . ';
+            ">
                 ' . $networkDescription . '
             </div>
 
@@ -907,7 +1013,16 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             <tbody>
                 <tr>
                     <td>Daya Listrik</td>
-                    <td style="text-align:center;">' . $e($metrics['daya'] ?? '-') . ' Watt</td>
+                    <td style="text-align:center;">
+                        ' . $e($metrics['daya'] ?? '-') . ' Watt
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>UPS</td>
+                    <td style="text-align:center;">
+                        ' . $e($metrics['ups'] ?? 0) . ' unit
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -923,565 +1038,1352 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             <tbody>
                 <tr>
                     <td>Ketersediaan Daya</td>
-                    <td style="text-align:center;">Stabil dan cukup untuk seluruh perangkat</td>
+                    <td style="text-align:center;">
+                        Stabil dan cukup untuk seluruh perangkat
+                    </td>
                 </tr>
             </tbody>
         </table>';
     }
+    
     if (str_contains($title, 'STATUS KESIAPAN SEKOLAH')) {
-        $overallStatus = $metrics['overall_status'] ?? '-';
-        $overallStatus = $normalizeStatus($overallStatus);
+
+    $totalSiswa = (int) ($metrics['total_siswa'] ?? 0);
+    $ikut = (int) ($metrics['ikut'] ?? 0);
+    $tidakIkut = max(0, $totalSiswa - $ikut);
+
+    // =====================================================
+    // PERANGKAT
+    // =====================================================
+    $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
+    $komputerUtama = (int) ($metrics['komputer_utama'] ?? 0);
+    $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
+
+    if ($totalPerangkat < $komputerUtama) {
+        $deviceStatus = 'Kurang Memadai';
+    } elseif ($totalPerangkat < $kebutuhanPerangkat) {
+        $deviceStatus = 'Cukup';
+    } elseif ($totalPerangkat >= ceil($kebutuhanPerangkat * 1.10)) {
+        $deviceStatus = 'Sangat Baik';
+    } else {
+        $deviceStatus = 'Baik';
+    }
+
+    $kekuranganPerangkat = max(
+        0,
+        $kebutuhanPerangkat - $totalPerangkat
+    );
+
+    // =====================================================
+    // JARINGAN
+    // =====================================================
+    $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+    $networkNeed = (float) ($metrics['network_need'] ?? 0);
+
+    $accessPoint = (int) ($metrics['access_point'] ?? 0);
+    $apRequired = (int) ($metrics['ap_required'] ?? 0);
+
+    if (
+        ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
+        ($apRequired > 0 && $accessPoint < $apRequired)
+    ) {
+        $networkStatus = 'Kurang Memadai';
+    } elseif (
+        $networkNeed > 0 &&
+        $effectiveBandwidth >= $networkNeed &&
+        $accessPoint >= $apRequired
+    ) {
+        $networkStatus = 'Baik';
+    } else {
+        $networkStatus = 'Cukup';
+    }
+
+    $kekuranganBandwidth = max(
+        0,
+        round($networkNeed - $effectiveBandwidth, 2)
+    );
+
+    $kekuranganAP = max(
+        0,
+        $apRequired - $accessPoint
+    );
+
+    // =====================================================
+    // STATUS FINAL KESIAPAN SEKOLAH
+    // PRIORITAS:
+    // KURANG MEMADAI > CUKUP > BAIK > SANGAT BAIK
+    // =====================================================
+    if (
+        $deviceStatus === 'Kurang Memadai' ||
+        $networkStatus === 'Kurang Memadai'
+    ) {
+        $overallStatus = 'Kurang Memadai';
+
+    } elseif (
+        $deviceStatus === 'Cukup' ||
+        $networkStatus === 'Cukup'
+    ) {
+        $overallStatus = 'Cukup';
+
+    } else {
+        $overallStatus = $normalizeStatus(
+            $metrics['overall_status'] ?? 'Baik'
+        );
+    }
+
+    // =====================================================
+    // PERSENTASE KEIKUTSERTAAN
+    // =====================================================
+    $persenPeserta = $totalSiswa > 0
+        ? round(($ikut / $totalSiswa) * 100)
+        : 0;
+
+    return '
+
+    <div class="readiness-title" style="
+        margin:8px 0 10px;
+        color:#1e3a5f;
+        border-bottom:2px solid #1e3a5f;
+        padding-bottom:6px;
+    ">
+    </div>
+
+    <table style="
+        width:100%;
+        border-collapse:separate;
+        border-spacing:8px;
+        margin:0 -8px 8px;
+    ">
+        <tr>
+
+            <!-- =====================================================
+                 1. JUMLAH RUANGAN DAN LABORATORIUM KOMPUTER
+                 ===================================================== -->
+            <td style="
+                width:33.33%;
+                border:1px solid #cbd5e1;
+                background:#f8fbff;
+                padding:12px;
+                vertical-align:top;
+                text-align:center;
+            ">
+
+                <div style="
+                    font-size:11pt;
+                    font-weight:bold;
+                    color:#1e3a5f;
+                    margin-bottom:8px;
+                ">
+                    JUMLAH RUANGAN DAN<br>LABORATORIUM KOMPUTER
+                </div>
+
+                <table style="width:100%; border-collapse:collapse;">
+                    <tr>
+
+                        <td style="
+                            width:50%;
+                            text-align:center;
+                            border-right:1px solid #cbd5e1;
+                        ">
+
+                            <div style="
+                                font-size:20pt;
+                                font-weight:bold;
+                                color:#1e293b;
+                            ">
+                                ' . $e($metrics['ruang'] ?? 0) . '
+                            </div>
+
+                            <div style="font-size:9.5pt;">
+                                Ruang
+                            </div>
+
+                            <div style="
+                                font-size:8.5pt;
+                                color:#64748b;
+                                margin-top:2px;
+                            ">
+                                Jumlah Ruangan
+                            </div>
+
+                        </td>
+
+                        <td style="
+                            width:50%;
+                            text-align:center;
+                        ">
+
+                            <div style="
+                                font-size:20pt;
+                                font-weight:bold;
+                                color:#1e293b;
+                            ">
+                                ' . $e($metrics['labkom'] ?? 0) . '
+                            </div>
+
+                            <div style="font-size:9.5pt;">
+                                Lab
+                            </div>
+
+                            <div style="
+                                font-size:8.5pt;
+                                color:#64748b;
+                                margin-top:2px;
+                            ">
+                                Laboratorium Komputer
+                            </div>
+
+                        </td>
+
+                    </tr>
+                </table>
+
+                <div style="
+                    margin-top:8px;
+                    font-size:8.5pt;
+                    color:#64748b;
+                    line-height:1.35;
+                ">
+                    <strong>Keterangan:</strong>
+                    Tersedia ' . $e($metrics['ruang'] ?? 0) .
+                    ' ruang dan ' . $e($metrics['labkom'] ?? 0) . ' lab.
+                </div>
+
+            </td>
+
+
+            <!-- =====================================================
+                 2. KETERSEDIAAN PERANGKAT
+                 ===================================================== -->
+            <td style="
+                width:33.33%;
+                border:1px solid #cbd5e1;
+                background:#f8fafc;
+                padding:12px;
+                vertical-align:top;
+                text-align:center;
+            ">
+
+                <div style="
+                    font-size:11pt;
+                    font-weight:bold;
+                    color:#1e3a5f;
+                    margin-bottom:8px;
+                ">
+                    KETERSEDIAAN PERANGKAT
+                </div>
+
+                <div style="
+                    font-size:20pt;
+                    font-weight:bold;
+                    color:#1e293b;
+                ">
+                    ' . $e($kebutuhanPerangkat) . ' / ' .
+                    $e($totalPerangkat) . '
+                </div>
+
+                <div style="
+                    font-size:9.5pt;
+                    margin-bottom:8px;
+                ">
+                    Kebutuhan / Tersedia
+                </div>
+
+                <div class="status-summary" style="
+                    margin:0;
+                    padding:6px 8px;
+                    ' . (
+                        $deviceStatus === 'Kurang Memadai'
+                            ? 'background:#fef2f2;border:1px solid #fecaca;'
+                            : (
+                                $deviceStatus === 'Cukup'
+                                    ? 'background:#fffbeb;border:1px solid #fde68a;'
+                                    : ''
+                            )
+                    ) . '
+                ">
+
+                    <div class="status-header" style="
+                        justify-content:center;
+                    ">
+
+                        <strong style="font-size:10pt;">
+                            Status:
+                        </strong>
+
+                        <span class="status ' . $statusClass($deviceStatus) . '" style="
+                            font-size:8.5pt;
+                            padding:3px 7px;
+                            border-radius:4px;
+                            ' .
+                            ($deviceStatus === 'Kurang Memadai'
+                                ? 'color:#dc2626;background:#fee2e2;border-color:#fecaca;'
+                                : (
+                                    $deviceStatus === 'Baik'
+                                        ? 'color:#2563eb;background:#dbeafe;border-color:#bfdbfe;'
+                                        : (
+                                            $deviceStatus === 'Sangat Baik'
+                                                ? 'color:#16a34a;background:#dcfce7;border-color:#bbf7d0;'
+                                                : 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
+                                        )
+                                )
+                            ) .
+                        '">
+                            ' . $e($deviceStatus) . '
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div style="
+                    margin-top:8px;
+                    font-size:8.5pt;
+                    color:#64748b;
+                    line-height:1.35;
+                ">
+                    <strong>Keterangan:</strong>
+                    ' . (
+                        $kekuranganPerangkat > 0
+                            ? 'Kekurangan ' . $e($kekuranganPerangkat) . ' perangkat.'
+                            : 'Kebutuhan perangkat telah terpenuhi.'
+                    ) . '
+                </div>
+
+            </td>
+
+
+            <!-- =====================================================
+                 3. KEIKUTSERTAAN SISWA
+                 ===================================================== -->
+            <td style="
+                width:33.33%;
+                border:1px solid #cbd5e1;
+                background:#fffaf5;
+                padding:12px;
+                vertical-align:top;
+                text-align:center;
+            ">
+
+                <div style="
+                    font-size:11pt;
+                    font-weight:bold;
+                    color:#1e3a5f;
+                    margin-bottom:8px;
+                ">
+                    KEIKUTSERTAAN SISWA<br>DALAM TKA
+                </div>
+
+                <table style="width:100%; border-collapse:collapse;">
+                    <tr>
+
+                        <td style="
+                            width:50%;
+                            text-align:center;
+                            border-right:1px solid #cbd5e1;
+                        ">
+
+                            <div style="
+                                font-size:20pt;
+                                font-weight:bold;
+                                color:#1e293b;
+                            ">
+                                ' . $e($totalSiswa) . '
+                            </div>
+
+                            <div style="font-size:9.5pt;">
+                                Jumlah Siswa
+                            </div>
+
+                        </td>
+
+                        <td style="
+                            width:50%;
+                            text-align:center;
+                        ">
+
+                            <div style="
+                                font-size:20pt;
+                                font-weight:bold;
+                                color:#1e293b;
+                            ">
+                                ' . $e($ikut) . '
+                            </div>
+
+                            <div style="font-size:9.5pt;">
+                                Mengikuti TKA-P
+                            </div>
+
+                        </td>
+
+                    </tr>
+                </table>
+
+                <div class="status-summary" style="
+                    margin:8px 0 0;
+                    padding:6px 8px;
+                ">
+
+                    <div class="status-header" style="
+                        justify-content:center;
+                    ">
+
+                        <strong style="font-size:10pt;">
+                            Persentase Keikutsertaan:
+                        </strong>
+
+                        <span class="status sangat-baik" style="
+                            font-size:8.5pt;
+                            padding:3px 7px;
+                            border-radius:4px;
+                        ">
+                            ' . $e($persenPeserta) . '%
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div style="
+                    margin-top:8px;
+                    font-size:8.5pt;
+                    color:#64748b;
+                    line-height:1.35;
+                ">
+                    <strong>Keterangan:</strong>
+                    ' . (
+                        $tidakIkut <= 0
+                            ? 'Seluruh siswa mengikuti TKA-P.'
+                            : 'Terdapat ' . $e($tidakIkut) . ' siswa belum mengikuti TKA-P.'
+                    ) . '
+                </div>
+
+            </td>
+
+        </tr>
+
+
+        <tr>
+
+            <!-- =====================================================
+                 4. KESIAPAN JARINGAN
+                 ===================================================== -->
+            <td colspan="2" style="
+                width:66.66%;
+                border:1px solid #cbd5e1;
+                background:#f8fafc;
+                padding:12px;
+                vertical-align:top;
+                text-align:center;
+            ">
+
+                <div style="
+                    font-size:11pt;
+                    font-weight:bold;
+                    color:#1e3a5f;
+                    margin-bottom:10px;
+                    text-align:left;
+                ">
+                    KESIAPAN JARINGAN
+                </div>
+
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                ">
+                    <tr>
+
+                        <td style="
+                            width:50%;
+                            text-align:center;
+                            border-right:1px solid #cbd5e1;
+                        ">
+
+                            <div style="
+                                font-size:20pt;
+                                font-weight:bold;
+                                color:#1e293b;
+                            ">
+                                ' . $e($networkNeed) . ' Mbps
+                            </div>
+
+                            <div style="font-size:9.5pt;">
+                                Kebutuhan Bandwidth
+                            </div>
+
+                        </td>
+
+                        <td style="
+                            width:50%;
+                            text-align:center;
+                        ">
+
+                            <div style="
+                                font-size:20pt;
+                                font-weight:bold;
+                                color:#1e293b;
+                            ">
+                                ' . $e($effectiveBandwidth) . ' Mbps
+                            </div>
+
+                            <div style="font-size:9.5pt;">
+                                Bandwidth Efektif
+                            </div>
+
+                        </td>
+
+                    </tr>
+                </table>
+
+                <div class="status-summary" style="
+                    margin:8px 0 0;
+                    padding:6px 8px;
+                    ' . (
+                        $networkStatus === 'Kurang Memadai'
+                            ? 'background:#fef2f2;border:1px solid #fecaca;'
+                            : (
+                                $networkStatus === 'Cukup'
+                                    ? 'background:#fffbeb;border:1px solid #fde68a;'
+                                    : ''
+                            )
+                    ) . '
+                ">
+
+                    <div class="status-header" style="
+                        justify-content:center;
+                    ">
+
+                        <strong style="font-size:10pt;">
+                            Status:
+                        </strong>
+
+                        <span class="status ' . $statusClass($networkStatus) . '" style="
+                            font-size:8.5pt;
+                            padding:3px 7px;
+                            border-radius:4px;
+                            ' .
+                            ($networkStatus === 'Kurang Memadai'
+                                ? 'color:#dc2626;background:#fee2e2;border-color:#fecaca;'
+                                : (
+                                    $networkStatus === 'Baik'
+                                        ? 'color:#2563eb;background:#dbeafe;border-color:#bfdbfe;'
+                                        : (
+                                            $networkStatus === 'Sangat Baik'
+                                                ? 'color:#16a34a;background:#dcfce7;border-color:#bbf7d0;'
+                                                : 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
+                                        )
+                                )
+                            ) .
+                        '">
+                            ' . $e($networkStatus) . '
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div style="
+                    margin-top:8px;
+                    font-size:8.5pt;
+                    color:#64748b;
+                    line-height:1.35;
+                ">
+                    <strong>Keterangan:</strong>
+                    ' . (
+                        ($kekuranganBandwidth > 0 && $kekuranganAP > 0)
+                            ? 'Kekurangan ' . $e($kekuranganBandwidth) . ' Mbps dan ' .
+                              $e($kekuranganAP) . ' AP.'
+
+                            : (
+                                $kekuranganBandwidth > 0
+                                    ? 'Kekurangan ' . $e($kekuranganBandwidth) . ' Mbps.'
+
+                                    : (
+                                        $kekuranganAP > 0
+                                            ? 'Kekurangan ' . $e($kekuranganAP) . ' AP.'
+                                            : 'Kebutuhan jaringan telah terpenuhi.'
+                                    )
+                            )
+                    ) . '
+                </div>
+
+            </td>
+
+
+            <!-- =====================================================
+                 5. KESIAPAN LISTRIK
+                 ===================================================== -->
+            <td style="
+                width:33.33%;
+                border:1px solid #cbd5e1;
+                background:#f8fafc;
+                padding:12px;
+                vertical-align:top;
+                text-align:center;
+            ">
+
+                <div style="
+                    font-size:11pt;
+                    font-weight:bold;
+                    color:#1e3a5f;
+                    margin-bottom:8px;
+                ">
+                    KESIAPAN LISTRIK
+                </div>
+
+                <div style="
+                    font-size:13pt;
+                    color:#1e293b;
+                    margin-top:10px;
+                ">
+                    ' . $e($metrics['daya'] ?? '-') . '
+                </div>
+
+                <div style="
+                    font-size:11pt;
+                    font-weight:bold;
+                ">
+                    Watt
+                </div>
+
+                <div style="
+                    margin-top:10px;
+                    padding-top:8px;
+                    border-top:1px solid #cbd5e1;
+                    font-size:11pt;
+                ">
+                    <strong>UPS</strong><br>
+                    ' . $e($metrics['ups'] ?? 0) . ' unit
+                </div>
+
+                <div style="
+                    margin-top:8px;
+                    font-size:8.5pt;
+                    color:#64748b;
+                    line-height:1.35;
+                ">
+                    <strong>Keterangan:</strong>
+                    ' . (
+                        ((int) ($metrics['ups'] ?? 0) > 0)
+                            ? 'Daya listrik dan UPS tersedia.'
+                            : 'Daya listrik tersedia, UPS belum tersedia.'
+                    ) . '
+                </div>
+
+            </td>
+
+        </tr>
+    </table>
+
+
+    <!-- =====================================================
+         STATUS KESIAPAN SEKOLAH
+         ===================================================== -->
+
+    <div style="
+        border:1px solid #cbd5e1;
+        background:#f8fafc;
+        margin-top:8px;
+        padding:14px;
+    ">
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+        ">
+            <tr>
+
+                <td style="
+                    width:42%;
+                    text-align:center;
+                    vertical-align:middle;
+                    border-right:1px solid #cbd5e1;
+                    padding:8px 15px;
+                ">
+
+                    <div style="
+                        font-size:9pt;
+                        font-weight:bold;
+                        color:#1e3a5f;
+                        margin-bottom:8px;
+                    ">
+                        STATUS KESIAPAN SEKOLAH
+                    </div>
+
+                    <div style="
+                        text-align:center;
+                    ">
+                        <span class="' . $statusClass($overallStatus) . '" style="
+                            display:inline-block;
+                            font-size:10pt;
+                            font-weight:700;
+                            padding:5px 10px;
+                            border-radius:5px;
+                            ' .
+                            ($overallStatus === 'Kurang Memadai'
+                                ? 'color:#dc2626;background:#fee2e2;border:1px solid #fecaca;'
+                                : ($overallStatus === 'Baik'
+                                    ? 'color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;'
+                                    : ($overallStatus === 'Sangat Baik'
+                                        ? 'color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;'
+                                        : 'color:#92400e;background:#fef3c7;border:1px solid #fde68a;'
+                                    )
+                                )
+                            ) .
+                        '">
+                            ' . $e($overallStatus) . '
+                        </span>
+                    </div>
+
+                </td>
+
+
+                <td style="
+                    width:58%;
+                    vertical-align:middle;
+                    padding:8px 15px;
+                ">
+
+                    <div style="
+                        font-size:9pt;
+                        font-weight:bold;
+                        color:#1e3a5f;
+                        margin-bottom:2px;
+                    ">
+                        Analisis Hasil Monitoring
+                    </div>
+
+                    <div style="
+                        font-size:9pt;
+                        line-height:1.4;
+                        text-align:justify;
+                    ">
+                        ' . (
+                            $overallStatus === 'Kurang Memadai'
+
+                            ? 'Masih terdapat komponen yang belum memenuhi kebutuhan pelaksanaan TKA-P.'
+
+                            : (
+                                $overallStatus === 'Cukup'
+
+                                    ? 'Kesiapan pelaksanaan cukup, namun masih diperlukan penguatan pada beberapa komponen.'
+
+                                    : (
+                                        $overallStatus === 'Baik'
+
+                                            ? 'Kesiapan pelaksanaan TKA-P dalam kondisi baik.'
+
+                                            : (
+                                                $overallStatus === 'Sangat Baik'
+                                                    ? 'Kesiapan pelaksanaan TKA-P dalam kondisi sangat baik.'
+                                                    : $e($statusDescription($overallStatus))
+                                            )
+                                    )
+                            )
+                        ) . '
+                    </div>
+
+                </td>
+
+            </tr>
+        </table>
+
+    </div>';
+
+}
+   
+    // =====================================================
+    // TEMUAN UTAMA
+    // =====================================================
+    if (
+        str_contains($title, 'TEMUAN UTAMA') ||
+        (
+            str_contains($title, 'TEMUAN') &&
+            !str_contains($title, 'TINDAK LANJUT') &&
+            !str_contains($title, 'CATATAN')
+        )
+    ) {
+        $findings = [];
+
+        // PERANGKAT
+        $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
+        $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
+
+        if ($kebutuhanPerangkat > 0 && $totalPerangkat < $kebutuhanPerangkat) {
+            $kekurangan = $kebutuhanPerangkat - $totalPerangkat;
+
+            $findings[] =
+                'Ketersediaan perangkat belum memenuhi kebutuhan. Tersedia ' .
+                $totalPerangkat . ' unit dari kebutuhan ' .
+                $kebutuhanPerangkat . ' unit, sehingga masih terdapat kekurangan ' .
+                $kekurangan . ' unit.';
+        }
+
+        // JARINGAN
+        $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+        $networkNeed = (float) ($metrics['network_need'] ?? 0);
+
+        if ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) {
+            $kekuranganBandwidth = round(
+                $networkNeed - $effectiveBandwidth,
+                2
+            );
+
+            $findings[] =
+                'Kapasitas bandwidth efektif belum memenuhi kebutuhan. Bandwidth efektif sebesar ' .
+                $effectiveBandwidth . ' Mbps, sedangkan kebutuhan sebesar ' .
+                $networkNeed . ' Mbps, sehingga terdapat kekurangan sebesar ' .
+                $kekuranganBandwidth . ' Mbps.';
+        }
+
+        if (empty($findings)) {
+            return '
+            <div class="status-summary">
+                <div class="status-header">
+                    <strong>Temuan Utama:</strong>
+                    <span class="status sangat-baik">Tidak Ada</span>
+                </div>
+                <div class="status-description">
+                    Berdasarkan hasil monitoring dan evaluasi, tidak terdapat temuan
+                    yang memerlukan perhatian khusus pada aspek yang memiliki
+                    parameter pembanding.
+                </div>
+            </div>';
+        }
+
+        $html = '
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:8%; text-align:center;">No</th>
+                    <th style="width:92%;">Temuan Utama</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+        foreach ($findings as $index => $finding) {
+            $html .= '
+            <tr>
+                <td style="text-align:center !important; vertical-align:middle;">
+                ' . ($index + 1) . '
+            </td>
+                <td>' . $e($finding) . '</td>
+            </tr>';
+        }
+
+        return $html . '
+            </tbody>
+        </table>';
+    }
+
+
+    // =====================================================
+    // TINDAK LANJUT
+    // =====================================================
+    if (
+        str_contains($title, 'TINDAK LANJUT') ||
+        str_contains($title, 'TINDAKLANJUT')
+    ) {
+        $recommendations = [];
+
+        // PERANGKAT
+        $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
+        $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
+
+        if ($kebutuhanPerangkat > 0 && $totalPerangkat < $kebutuhanPerangkat) {
+            $kekurangan = $kebutuhanPerangkat - $totalPerangkat;
+
+            $recommendations[] =
+                'Menambah atau menyiapkan ' .
+                $kekurangan .
+                ' unit perangkat serta memastikan seluruh perangkat siap digunakan.';
+        }
+
+        // JARINGAN
+        $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+        $networkNeed = (float) ($metrics['network_need'] ?? 0);
+
+        if ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) {
+            $recommendations[] =
+                'Meningkatkan kapasitas bandwidth agar memenuhi kebutuhan ' .
+                'pelaksanaan TKA-P dan memastikan kestabilan jaringan selama pelaksanaan.';
+        }
+
+        if (empty($recommendations)) {
+            return '
+            <div class="status-summary">
+                <div class="status-header">
+                    <strong>Tindak Lanjut:</strong>
+                    <span class="status sangat-baik">Tidak Ada</span>
+                </div>
+                <div class="status-description">
+                    Berdasarkan hasil monitoring dan evaluasi, tidak terdapat
+                    tindak lanjut khusus yang diperlukan.
+                </div>
+            </div>';
+        }
+
+        $html = '
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:8%; text-align:center;">No</th>
+                    <th style="width:92%;">Tindak Lanjut</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+        foreach ($recommendations as $index => $recommendation) {
+            $html .= '
+            <tr>
+                <td style="text-align:center !important; vertical-align:middle;">
+                    ' . ($index + 1) . '
+                </td>
+                <td>' . $e($recommendation) . '</td>
+            </tr>';
+        }
+
+        return $html . '
+            </tbody>
+        </table>';
+    }
+
+    if (str_contains($title, 'KESIMPULAN')) {
 
         $totalSiswa = (int) ($metrics['total_siswa'] ?? 0);
         $ikut = (int) ($metrics['ikut'] ?? 0);
 
+        $ruang = (int) ($metrics['ruang'] ?? 0);
+        $labkom = (int) ($metrics['labkom'] ?? 0);
+
         $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
+        $komputerUtama = (int) ($metrics['komputer_utama'] ?? 0);
         $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
 
+        $upload = (float) ($metrics['upload'] ?? 0);
+        $download = (float) ($metrics['download'] ?? 0);
         $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
         $networkNeed = (float) ($metrics['network_need'] ?? 0);
+
+        $accessPoint = (int) ($metrics['access_point'] ?? 0);
+        $apRequired = (int) ($metrics['ap_required'] ?? 0);
+
+        $daya = $metrics['daya'] ?? '-';
+        $ups = (int) ($metrics['ups'] ?? 0);
 
         $persenPeserta = $totalSiswa > 0
             ? round(($ikut / $totalSiswa) * 100)
             : 0;
 
-        $deviceStatus = $normalizeStatus($metrics['device_status'] ?? '-');
-        $networkStatus = $normalizeStatus($metrics['network_status'] ?? '-');
+        // =====================================================
+        // STATUS PERANGKAT
+        // =====================================================
+        if ($totalPerangkat < $komputerUtama) {
 
+            $deviceStatus = 'Kurang Memadai';
+
+        } elseif ($totalPerangkat < $kebutuhanPerangkat) {
+
+            $deviceStatus = 'Cukup';
+
+        } elseif ($totalPerangkat >= ceil($kebutuhanPerangkat * 1.10)) {
+
+            $deviceStatus = 'Sangat Baik';
+
+        } else {
+
+            $deviceStatus = 'Baik';
+        }
+
+        // =====================================================
+        // STATUS JARINGAN
+        // =====================================================
+        if (
+            ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
+            ($apRequired > 0 && $accessPoint < $apRequired)
+        ) {
+
+            $networkStatus = 'Kurang Memadai';
+
+        } elseif (
+            $networkNeed > 0 &&
+            $effectiveBandwidth >= $networkNeed &&
+            $accessPoint >= $apRequired
+        ) {
+
+            $networkStatus = 'Baik';
+
+        } else {
+
+            $networkStatus = 'Cukup';
+        }
+
+        // =====================================================
+        // STATUS FINAL KESIAPAN SEKOLAH
+        // PRIORITAS:
+        // KURANG MEMADAI > CUKUP > BAIK > SANGAT BAIK
+        // =====================================================
+        if (
+            $deviceStatus === 'Kurang Memadai' ||
+            $networkStatus === 'Kurang Memadai'
+        ) {
+
+            $overallStatus = 'Kurang Memadai';
+
+        } elseif (
+            $deviceStatus === 'Cukup' ||
+            $networkStatus === 'Cukup'
+        ) {
+
+            $overallStatus = 'Cukup';
+
+        } else {
+
+            $overallStatus = $normalizeStatus(
+                $metrics['overall_status'] ?? 'Baik'
+            );
+        }
+
+        // =====================================================
+        // KESIMPULAN DINAMIS
+        // =====================================================
+        if ($overallStatus === 'Kurang Memadai') {
+
+            $kesimpulan =
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan masih memerlukan penguatan pada beberapa komponen pendukung pelaksanaan TKA. ' .
+                'Ketersediaan perangkat dan kapasitas jaringan belum sepenuhnya memenuhi kebutuhan, sehingga diperlukan tindak lanjut untuk memenuhi kekurangan yang masih terdapat sebelum pelaksanaan TKA.';
+
+        } elseif ($overallStatus === 'Cukup') {
+
+            $kesimpulan =
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah tersedia untuk mendukung pelaksanaan TKA, namun masih terdapat beberapa komponen yang perlu diperkuat agar seluruh kebutuhan pelaksanaan dapat terpenuhi secara optimal.';
+
+        } elseif ($overallStatus === 'Baik') {
+
+            $kesimpulan =
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah memenuhi kebutuhan pelaksanaan TKA. ' .
+                'Sarana, perangkat, keikutsertaan siswa, jaringan, dan kelistrikan telah tersedia dan mendukung pelaksanaan TKA dengan baik.';
+
+        } elseif ($overallStatus === 'Sangat Baik') {
+
+            $kesimpulan =
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah sangat memenuhi kebutuhan pelaksanaan TKA. ' .
+                'Seluruh komponen pendukung tersedia dalam kondisi sangat baik dan siap mendukung pelaksanaan TKA secara optimal.';
+
+        } else {
+
+            $kesimpulan =
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan telah dinilai berdasarkan kondisi aktual dan kebutuhan pelaksanaan TKA.';
+        }
+
+        // =====================================================
+        // TABEL KESIMPULAN
+        // =====================================================
         return '
-        <div class="readiness-title" style="
-            margin:8px 0 10px;
-            color:#1e3a5f;
-            border-bottom:2px solid #1e3a5f;
-            padding-bottom:6px;
-        ">
-        </div>
 
-        <table style="width:100%; border-collapse:separate; border-spacing:8px; margin:0 -8px 8px;">
-            <tr>
+        <table class="data-table">
 
-                <!-- 1. JUMLAH RUANGAN DAN LABORATORIUM KOMPUTER -->
-                <td style="
-                    width:33.33%;
-                    border:1px solid #cbd5e1;
-                    background:#f8fbff;
-                    padding:12px;
-                    vertical-align:top;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:11pt;
-                        font-weight:bold;
-                        color:#1e3a5f;
-                        margin-bottom:8px;
-                    ">
-                        JUMLAH RUANGAN DAN<br>LABORATORIUM KOMPUTER
-                    </div>
-
-                    <table style="width:100%; border-collapse:collapse;">
-                        <tr>
-                            <td style="
-                                width:50%;
-                                text-align:center;
-                                border-right:1px solid #cbd5e1;
-                            ">
-                                <div style="
-                                    font-size:20pt;
-                                    font-weight:bold;
-                                    color:#1e293b;
-                                ">
-                                    ' . $e($metrics['ruang'] ?? 0) . '
-                                </div>
-                                <div style="font-size:9.5pt;">Ruang</div>
-                                <div style="
-                                    font-size:8.5pt;
-                                    color:#64748b;
-                                    margin-top:2px;
-                                ">
-                                    Jumlah Ruangan
-                                </div>
-                            </td>
-
-                            <td style="width:50%; text-align:center;">
-                                <div style="
-                                    font-size:20pt;
-                                    font-weight:bold;
-                                    color:#1e293b;
-                                ">
-                                    ' . $e($metrics['labkom'] ?? 0) . '
-                                </div>
-                                <div style="font-size:9.5pt;">Lab</div>
-                                <div style="
-                                    font-size:8.5pt;
-                                    color:#64748b;
-                                    margin-top:2px;
-                                ">
-                                    Laboratorium Komputer
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-
-                <!-- 2. KETERSEDIAAN PERANGKAT -->
-                <td style="
-                    width:33.33%;
-                    border:1px solid #cbd5e1;
-                    background:#f8fafc;
-                    padding:12px;
-                    vertical-align:top;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:11pt;
-                        font-weight:bold;
-                        color:#1e3a5f;
-                        margin-bottom:8px;
-                    ">
-                        KETERSEDIAAN PERANGKAT
-                    </div>
-
-                    <div style="
-                        font-size:20pt;
-                        font-weight:bold;
-                        color:#1e293b;
-                    ">
-                        ' . $e($kebutuhanPerangkat) . ' / ' . $e($totalPerangkat) . '
-                    </div>
-
-                    <div style="font-size:9.5pt; margin-bottom:8px;">
-                        Kebutuhan / Tersedia
-                    </div>
-
-                    <div class="status-summary" style="
-                        margin:0;
-                        padding:6px 8px;
-                    ">
-                        <div class="status-header" style="
-                            justify-content:center;
-                        ">
-                            <strong style="font-size:10pt;">Status:<br/></strong>
-                            <span class="status ' . $statusClass($deviceStatus) . '">
-                                ' . $e($deviceStatus) . '
-                            </span>
-                        </div>
-                    </div>
-                </td>
-
-                <!-- 3. KEIKUTSERTAAN SISWA -->
-                <td style="
-                    width:33.33%;
-                    border:1px solid #cbd5e1;
-                    background:#fffaf5;
-                    padding:12px;
-                    vertical-align:top;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:11pt;
-                        font-weight:bold;
-                        color:#1e3a5f;
-                        margin-bottom:8px;
-                    ">
-                        KEIKUTSERTAAN SISWA<br>DALAM TKA
-                    </div>
-
-                    <table style="width:100%; border-collapse:collapse;">
-                        <tr>
-                            <td style="
-                                width:50%;
-                                text-align:center;
-                                border-right:1px solid #cbd5e1;
-                            ">
-                                <div style="
-                                    font-size:20pt;
-                                    font-weight:bold;
-                                    color:#1e293b;
-                                ">
-                                    ' . $e($totalSiswa) . '
-                                </div>
-                                <div style="font-size:9.5pt;">
-                                    Jumlah Siswa
-                                </div>
-                            </td>
-
-                            <td style="width:50%; text-align:center;">
-                                <div style="
-                                    font-size:20pt;
-                                    font-weight:bold;
-                                    color:#1e293b;
-                                ">
-                                    ' . $e($ikut) . '
-                                </div>
-                                <div style="font-size:9.5pt;">
-                                    Mengikuti TKA-P
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <div class="status-summary" style="
-                        margin:8px 0 0;
-                        padding:6px 8px;
-                    ">
-                        <div class="status-header" style="
-                            justify-content:center;
-                        ">
-                            <strong style="font-size:10pt;">
-                                Persentase Keikutsertaan:
-                            </strong>
-
-                            <span class="status sangat-baik">
-                                ' . $e($persenPeserta) . '%
-                            </span>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-
-            <tr>
-
-                <!-- 4. KESIAPAN JARINGAN -->
-                <td colspan="2" style="
-                    width:66.66%;
-                    border:1px solid #cbd5e1;
-                    background:#f8fafc;
-                    padding:12px;
-                    vertical-align:top;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:11pt;
-                        font-weight:bold;
-                        color:#1e3a5f;
-                        margin-bottom:10px;
-                        text-align:left;
-                    ">
-                        KESIAPAN JARINGAN
-                    </div>
-
-                    <table style="width:100%; border-collapse:collapse;">
-                        <tr>
-                            <td style="
-                                width:50%;
-                                text-align:center;
-                                border-right:1px solid #cbd5e1;
-                            ">
-                                <div style="
-                                    font-size:20pt;
-                                    font-weight:bold;
-                                    color:#1e293b;
-                                ">
-                                    ' . $e($networkNeed) . '
-                                </div>
-                                <div style="font-size:9.5pt;">
-                                    Kebutuhan Bandwidth
-                                </div>
-                            </td>
-
-                            <td style="
-                                width:50%;
-                                text-align:center;
-                            ">
-                                <div style="
-                                    font-size:20pt;
-                                    font-weight:bold;
-                                    color:#1e293b;
-                                ">
-                                    ' . $e($effectiveBandwidth) . '
-                                </div>
-                                <div style="font-size:9.5pt;">
-                                    Bandwidth Efektif
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <div class="status-summary" style="
-                        margin:8px 0 0;
-                        padding:6px 8px;
-                    ">
-                        <div class="status-header" style="
-                            justify-content:center;
-                        ">
-                            <strong style="font-size:10pt;">Status:</strong>
-                            <span class="status ' . $statusClass($networkStatus) . '">
-                                ' . $e($networkStatus) . '
-                            </span>
-                        </div>
-                    </div>
-                </td>
-
-                <!-- 5. KESIAPAN LISTRIK -->
-                <td style="
-                    width:33.33%;
-                    border:1px solid #cbd5e1;
-                    background:#f8fafc;
-                    padding:12px;
-                    vertical-align:top;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:11pt;
-                        font-weight:bold;
-                        color:#1e3a5f;
-                        margin-bottom:8px;
-                    ">
-                        KESIAPAN LISTRIK
-                    </div>
-
-                    <div style="
-                        font-size:13pt;
-                        color:#1e293b;
-                        margin-top:10px;
-                    ">
-                        ' . $e($metrics['daya'] ?? '-') . '
-                    </div>
-
-                    <div style="
-                        font-size:11pt;
-                        font-weight:bold;
-                    ">
-                        Watt
-                    </div>
-
-                    <div style="
-                        margin-top:10px;
-                        padding-top:8px;
-                        border-top:1px solid #cbd5e1;
-                        font-size:11pt;
-                    ">
-                        <strong>UPS</strong><br>
-                        ' . $e($metrics['ups'] ?? 0) . ' unit
-                    </div>
-                </td>
-            </tr>
-        </table>
-        <div style="
-            border:1px solid #cbd5e1;
-            background:#f8fafc;
-            margin-top:8px;
-            padding:14px;
-        ">
-            <table style="width:100%; border-collapse:collapse;">
+            <thead>
                 <tr>
-                    <td style="
-                        width:42%;
-                        text-align:center;
-                        vertical-align:middle;
-                        border-right:1px solid #cbd5e1;
-                        padding:8px 15px;
-                    ">
-                        <div style="
-                            font-size:12pt;
-                            font-weight:bold;
-                            color:#1e3a5f;
-                            margin-bottom:8px;
-                        ">
-                            STATUS KESIAPAN SEKOLAH
-                        </div>
+                    <th style="width:40%;">Komponen</th>
+                    <th style="width:60%; text-align:center;">Hasil</th>
+                </tr>
+            </thead>
 
-                        <div class="' . $statusClass($overallStatus) . '" style="
-                            font-size:22pt;
-                            font-weight:bold;
-                            padding:10px 20px;
-                            border-radius:7px;
-                            text-align:center;
-                        ">
-                            ' . $e($overallStatus) . '
-                        </div>
-                    </td>
+            <tbody>
 
-                    <td style="
-                        width:58%;
-                        vertical-align:middle;
-                        padding:8px 15px;
-                    ">
-                        <div style="
-                            font-size:11pt;
-                            font-weight:bold;
-                            color:#1e3a5f;
-                            margin-bottom:5px;
-                        ">
-                            Analisis Hasil Monitoring
-                        </div>
-
-                        <div style="
-                            font-size:10.5pt;
-                            line-height:1.5;
-                            text-align:justify;
-                        ">
-                            ' . $e(
-                                $metrics['status_analysis']
-                                ?? $statusDescription($overallStatus)
-                            ) . '
-                        </div>
+                <tr>
+                    <td>Ruangan</td>
+                    <td style="text-align:center;">
+                        ' . $e($ruang) . ' ruang
                     </td>
                 </tr>
-            </table>
-        </div>';
-    
-    }
-    // =====================================================
-// TEMUAN UTAMA
-// =====================================================
-if (
-    str_contains($title, 'TEMUAN UTAMA') ||
-    (
-        str_contains($title, 'TEMUAN') &&
-        !str_contains($title, 'TINDAK LANJUT') &&
-        !str_contains($title, 'CATATAN')
-    )
-) {
-    $findings = [];
 
-    // PERANGKAT
-    $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
-    $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
+                <tr>
+                    <td>Laboratorium Komputer</td>
+                    <td style="text-align:center;">
+                        ' . $e($labkom) . ' lab
+                    </td>
+                </tr>
 
-    if ($kebutuhanPerangkat > 0 && $totalPerangkat < $kebutuhanPerangkat) {
-        $kekurangan = $kebutuhanPerangkat - $totalPerangkat;
+                <tr>
+                    <td>Perangkat</td>
+                    <td style="text-align:center;">
+                        ' . $e($totalPerangkat) . ' tersedia /
+                        ' . $e($kebutuhanPerangkat) . ' kebutuhan
+                    </td>
+                </tr>
 
-        $findings[] =
-            'Ketersediaan perangkat belum memenuhi kebutuhan. Tersedia ' .
-            $totalPerangkat . ' unit dari kebutuhan ' .
-            $kebutuhanPerangkat . ' unit, sehingga masih terdapat kekurangan ' .
-            $kekurangan . ' unit.';
-    }
+                <tr>
+                    <td>Keikutsertaan</td>
+                    <td style="text-align:center;">
+                        ' . $e($ikut) . ' dari
+                        ' . $e($totalSiswa) . ' siswa
+                        (' . $e($persenPeserta) . '%)
+                    </td>
+                </tr>
 
-    // JARINGAN
-    $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
-    $networkNeed = (float) ($metrics['network_need'] ?? 0);
+                <tr>
+                    <td>Bandwidth</td>
+                    <td style="text-align:center;">
+                        ' . $e($effectiveBandwidth) . ' Mbps tersedia /
+                        ' . $e($networkNeed) . ' Mbps kebutuhan
+                    </td>
+                </tr>
 
-    if ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) {
-        $kekuranganBandwidth = round(
-            $networkNeed - $effectiveBandwidth,
-            2
-        );
+                <tr>
+                    <td>Access Point</td>
+                    <td style="text-align:center;">
+                        ' . $e($accessPoint) . ' tersedia /
+                        ' . $e($apRequired) . ' kebutuhan
+                    </td>
+                </tr>
 
-        $findings[] =
-            'Kapasitas bandwidth efektif belum memenuhi kebutuhan. Bandwidth efektif sebesar ' .
-            $effectiveBandwidth . ' Mbps, sedangkan kebutuhan sebesar ' .
-            $networkNeed . ' Mbps, sehingga terdapat kekurangan sebesar ' .
-            $kekuranganBandwidth . ' Mbps.';
-    }
+                <tr>
+                    <td>Daya Listrik</td>
+                    <td style="text-align:center;">
+                        ' . $e($daya) . ' Watt
+                    </td>
+                </tr>
 
-    if (empty($findings)) {
-        return '
-        <div class="status-summary">
-            <div class="status-header">
-                <strong>Temuan Utama:</strong>
-                <span class="status sangat-baik">Tidak Ada</span>
-            </div>
-            <div class="status-description">
-                Berdasarkan hasil monitoring dan evaluasi, tidak terdapat temuan
-                yang memerlukan perhatian khusus pada aspek yang memiliki
-                parameter pembanding.
-            </div>
-        </div>';
-    }
+                <tr>
+                    <td>UPS</td>
+                    <td style="text-align:center;">
+                        ' . $e($ups) . ' unit
+                    </td>
+                </tr>
 
-    $html = '
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width:8%; text-align:center;">No</th>
-                <th style="width:92%;">Temuan Utama</th>
-            </tr>
-        </thead>
-        <tbody>';
+                <tr>
+                    <td>
+                        <strong>Status Kesiapan Sekolah</strong>
+                    </td>
 
-    foreach ($findings as $index => $finding) {
-        $html .= '
-        <tr>
-            <td class="text-center">' . ($index + 1) . '</td>
-            <td>' . $e($finding) . '</td>
-        </tr>';
-    }
+                    <td style="text-align:center;">
 
-    return $html . '
-        </tbody>
-    </table>';
-}
+                        <span class="status ' . $statusClass($overallStatus) . '" style="
+                            display:inline-block;
+                            font-size:9pt;
+                            padding:4px 8px;
+                            border-radius:4px;
+                            ' .
+                            ($overallStatus === 'Kurang Memadai'
+                                ? 'color:#dc2626;background:#fee2e2;border:1px solid #fecaca;'
+                                : (
+                                    $overallStatus === 'Baik'
+                                        ? 'color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;'
+                                        : (
+                                            $overallStatus === 'Sangat Baik'
+                                                ? 'color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;'
+                                                : 'color:#92400e;background:#fef3c7;border:1px solid #fde68a;'
+                                        )
+                                )
+                            ) . '
+                        ">
+                            ' . $e($overallStatus) . '
+                        </span>
 
+                    </td>
+                </tr>
 
-// =====================================================
-// TINDAK LANJUT
-// =====================================================
-if (
-    str_contains($title, 'TINDAK LANJUT') ||
-    str_contains($title, 'TINDAKLANJUT')
-) {
-    $recommendations = [];
+            </tbody>
+        </table>
 
-    // PERANGKAT
-    $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
-    $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
+        <div class="analysis-box">
+            <p style="
+                font-size:9pt;
+                margin:0;
+                text-align:justify;
+                font-weight:normal;
+                color:#1e293b;
+            ">
+                ' . $kesimpulan . '
+            </p>
+        </div>
 
-    if ($kebutuhanPerangkat > 0 && $totalPerangkat < $kebutuhanPerangkat) {
-        $kekurangan = $kebutuhanPerangkat - $totalPerangkat;
-
-        $recommendations[] =
-            'Menambah atau menyiapkan ' .
-            $kekurangan .
-            ' unit perangkat serta memastikan seluruh perangkat siap digunakan.';
-    }
-
-    // JARINGAN
-    $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
-    $networkNeed = (float) ($metrics['network_need'] ?? 0);
-
-    if ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) {
-        $recommendations[] =
-            'Meningkatkan kapasitas bandwidth agar memenuhi kebutuhan ' .
-            'pelaksanaan TKA-P dan memastikan kestabilan jaringan selama pelaksanaan.';
-    }
-
-    if (empty($recommendations)) {
-        return '
-        <div class="status-summary">
-            <div class="status-header">
-                <strong>Tindak Lanjut:</strong>
-                <span class="status sangat-baik">Tidak Ada</span>
-            </div>
-            <div class="status-description">
-                Berdasarkan hasil monitoring dan evaluasi, tidak terdapat
-                tindak lanjut khusus yang diperlukan.
-            </div>
-        </div>';
-    }
-
-    $html = '
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width:8%; text-align:center;">No</th>
-                <th style="width:92%;">Tindak Lanjut</th>
-            </tr>
-        </thead>
-        <tbody>';
-
-    foreach ($recommendations as $index => $recommendation) {
-        $html .= '
-        <tr>
-            <td class="text-center">' . ($index + 1) . '</td>
-            <td>' . $e($recommendation) . '</td>
-        </tr>';
-    }
-
-    return $html . '
-        </tbody>
-    </table>';
-}
-
-    if (str_contains($title, 'KESIMPULAN')) {
-        $conclusion = $metrics['conclusion'] ?? '';
-        return $conclusion !== '' ? '<p>' . $e($conclusion) . '</p>' : '';
+        ';
     }
     if (str_contains($title, 'SARAN')) {
-        $suggestions = $metrics['suggestions'] ?? '';
-        return $suggestions !== '' ? '<p>' . $e($suggestions) . '</p>' : '';
+
+    // =====================================================
+    // DATA
+    // =====================================================
+    $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
+    $komputerUtama = (int) ($metrics['komputer_utama'] ?? 0);
+    $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
+
+    $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+    $networkNeed = (float) ($metrics['network_need'] ?? 0);
+
+    $accessPoint = (int) ($metrics['access_point'] ?? 0);
+    $apRequired = (int) ($metrics['ap_required'] ?? 0);
+
+    // =====================================================
+    // STATUS PERANGKAT
+    // =====================================================
+    if ($totalPerangkat < $komputerUtama) {
+
+        $deviceStatus = 'Kurang Memadai';
+
+    } elseif ($totalPerangkat < $kebutuhanPerangkat) {
+
+        $deviceStatus = 'Cukup';
+
+    } elseif ($totalPerangkat >= ceil($kebutuhanPerangkat * 1.10)) {
+
+        $deviceStatus = 'Sangat Baik';
+
+    } else {
+
+        $deviceStatus = 'Baik';
     }
+
+    // =====================================================
+    // STATUS JARINGAN
+    // =====================================================
+    if (
+        ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
+        ($apRequired > 0 && $accessPoint < $apRequired)
+    ) {
+
+        $networkStatus = 'Kurang Memadai';
+
+    } elseif (
+        $networkNeed > 0 &&
+        $effectiveBandwidth >= $networkNeed &&
+        $accessPoint >= $apRequired
+    ) {
+
+        $networkStatus = 'Baik';
+
+    } else {
+
+        $networkStatus = 'Cukup';
+    }
+
+    // =====================================================
+    // STATUS FINAL
+    // =====================================================
+    if (
+        $deviceStatus === 'Kurang Memadai' ||
+        $networkStatus === 'Kurang Memadai'
+    ) {
+
+        $overallStatus = 'Kurang Memadai';
+
+    } elseif (
+        $deviceStatus === 'Cukup' ||
+        $networkStatus === 'Cukup'
+    ) {
+
+        $overallStatus = 'Cukup';
+
+    } else {
+
+        $overallStatus = $normalizeStatus(
+            $metrics['overall_status'] ?? 'Baik'
+        );
+    }
+
+    // =====================================================
+    // KEKURANGAN
+    // =====================================================
+    $kekuranganPerangkat = max(
+        0,
+        $kebutuhanPerangkat - $totalPerangkat
+    );
+
+    $kekuranganBandwidth = max(
+        0,
+        round($networkNeed - $effectiveBandwidth, 2)
+    );
+
+    $kekuranganAP = max(
+        0,
+        $apRequired - $accessPoint
+    );
+
+    // =====================================================
+    // SARAN DINAMIS
+    // =====================================================
+
+    if ($overallStatus === 'Kurang Memadai') {
+
+        $saranItems = [];
+
+        if ($kekuranganPerangkat > 0) {
+            $saranItems[] =
+                'Memenuhi kekurangan <strong>' .
+                $e($kekuranganPerangkat) .
+                ' perangkat komputer</strong> sesuai kebutuhan pelaksanaan.';
+        }
+
+        if ($kekuranganBandwidth > 0) {
+            $saranItems[] =
+                'Meningkatkan kapasitas bandwidth dari <strong>' .
+                $e($effectiveBandwidth) .
+                ' Mbps</strong> menjadi minimal <strong>' .
+                $e($networkNeed) .
+                ' Mbps</strong>.';
+        }
+
+        if ($kekuranganAP > 0) {
+            $saranItems[] =
+                'Menambah <strong>' .
+                $e($kekuranganAP) .
+                ' unit Access Point</strong> sesuai kebutuhan.';
+        }
+
+        $saranItems[] =
+            'Memastikan kesiapan jaringan dan perangkat pendukung sebelum pelaksanaan TKA.';
+
+        $saran = '<ol>';
+
+        foreach ($saranItems as $item) {
+            $saran .= '<li>' . $item . '</li>';
+        }
+
+        $saran .= '</ol>';
+
+    } elseif ($overallStatus === 'Cukup') {
+
+        $saran =
+            'Memperkuat komponen yang masih belum sepenuhnya memenuhi kebutuhan serta melakukan pengecekan berkala terhadap perangkat dan jaringan sebelum pelaksanaan TKA.';
+
+    } elseif ($overallStatus === 'Baik') {
+
+        $saran =
+            'Mempertahankan kondisi sarana, perangkat, jaringan, dan kelistrikan serta melakukan pengecekan berkala sebelum pelaksanaan TKA.';
+
+    } elseif ($overallStatus === 'Sangat Baik') {
+
+        $saran =
+            'Mempertahankan kesiapan seluruh komponen dan melakukan pemeriksaan akhir sebelum pelaksanaan TKA.';
+
+    } else {
+
+        $saran =
+            'Melakukan pemeriksaan terhadap seluruh komponen pendukung sebelum pelaksanaan TKA.';
+    }
+
+    // =====================================================
+    // TAMPILAN
+    // =====================================================
+    return '
+
+    <div class="analysis-box">
+        <div style="
+            font-size:10.5pt;
+            line-height:1.5;
+            color:#1e293b;
+            font-weight:normal;
+        ">
+            ' . $saran . '
+        </div>
+    </div>
+
+    ';
+}
+   
     return '';
 };
 if ($pdfSection === 'photos'):
@@ -2082,23 +2984,69 @@ else:
             <p>Demikian laporan monitoring dan evaluasi ini disusun sebagai dokumentasi hasil pelaksanaan monitoring dan bahan tindak lanjut kesiapan sekolah dalam pelaksanaan Tes Kemampuan Akademik.</p>
         </div>
     <?php endif; ?>
-    <table class="signature">
+   <?php
+    $petugasMonev = $data['members'] ?? [];
+
+    $tanggalMonev = '';
+    if (!empty($data['visit_date'])) {
+        $tanggalMonev = $formatDate($data['visit_date']);
+    }
+    ?>
+
+    <table style="
+        width:100%;
+        border-collapse:collapse;
+        margin-top:30px;
+        page-break-inside:avoid;
+    ">
+
+        <!-- TANGGAL DAN JUDUL -->
         <tr>
-            <td></td>
-            <td>
+            <td colspan="<?= max(1, count($petugasMonev)) ?>" style="
+                text-align:center;
+                border:none;
+                font-size:11pt;
+                padding-bottom:4px;
+            ">
+                Jakarta, <?= $e($tanggalMonev) ?>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="<?= max(1, count($petugasMonev)) ?>" style="
+                text-align:center;
+                border:none;
+                font-size:11pt;
+                font-weight:bold;
+                padding-bottom:12px;
+            ">
                 Petugas Monitoring dan Evaluasi
             </td>
         </tr>
+
+        <!-- NAMA PETUGAS -->
         <tr>
-            <td></td>
-            <td class="signature-space"></td>
+            <?php foreach ($petugasMonev as $petugas): ?>
+                <td style="
+                    width:<?= 100 / max(1, count($petugasMonev)) ?>%;
+                    text-align:center;
+                    vertical-align:top;
+                    border:none;
+                    padding:0 8px;
+                ">
+                    <div style="height:65px;"></div>
+
+                    <div style="
+                        font-size:10.5pt;
+                        font-weight:bold;
+                        text-decoration:underline;
+                    ">
+                        <?= $e($petugas['name'] ?? 'Petugas') ?>
+                    </div>
+                </td>
+            <?php endforeach; ?>
         </tr>
-        <tr>
-            <td></td>
-            <td>
-                <strong><?= $e($data['submitted_by_name'] ?? '-') ?></strong>
-            </td>
-        </tr>
+
     </table>
     <?php if ($hasLampiran): ?>
         <div class="lampiran">

@@ -46,18 +46,20 @@
         $isTemplateReport = service('uri')->getSegment(1) === 'template-report';
         $isEditorTemplate = service('uri')->getSegment(2) === 'editor';
         ?>
-        <li class="<?= ($isTemplateReport && !$isEditorTemplate) ? 'active' : '' ?>">
-            <a href="<?= site_url('template-report') ?>">
-                <i class="fas fa-file-alt"></i>
-                <span class="sidebar-menu-text">Template Report</span>
-            </a>
-        </li>
-        <li class="<?= $isEditorTemplate ? 'active' : '' ?>">
-            <a href="<?= site_url('template-report/editor') ?>">
-                <i class="fas fa-edit"></i>
-                <span class="sidebar-menu-text">Editor Template</span>
-            </a>
-        </li>
+        <?php if (strtolower((string) session()->get('role')) === 'admin'): ?>
+            <li class="<?= ($isTemplateReport && !$isEditorTemplate) ? 'active' : '' ?>">
+                <a href="<?= site_url('template-report') ?>">
+                    <i class="fas fa-file-alt"></i>
+                    <span class="sidebar-menu-text">Template Report</span>
+                </a>
+            </li>
+            <li class="<?= $isEditorTemplate ? 'active' : '' ?>">
+                <a href="<?= site_url('template-report/editor') ?>">
+                    <i class="fas fa-edit"></i>
+                    <span class="sidebar-menu-text">Editor Template</span>
+                </a>
+            </li>
+        <?php endif; ?>
         <li class="<?= url_is('reports') || url_is('reports/*') ? 'active' : '' ?>">
             <a href="<?= base_url('reports') ?>">
                 <i class="fas fa-chart-bar"></i>
