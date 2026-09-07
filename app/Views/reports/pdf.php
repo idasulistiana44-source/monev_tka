@@ -474,7 +474,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <th style="width:40%;">Komponen</th>
                     <th style="width:20%; text-align:center;">Tersedia</th>
                     <th style="width:20%; text-align:center;">Kebutuhan</th>
-                    <th style="width:20%; text-align:center;">Kekurangan</th>
+                    <th style="width:20%; text-align:center;">Keterangan</th>
                 </tr>
             </thead>
 
@@ -925,7 +925,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <th style="width:35%;">Komponen</th>
                     <th style="width:20%; text-align:center;">Tersedia</th>
                     <th style="width:20%; text-align:center;">Kebutuhan</th>
-                    <th style="width:25%; text-align:center;">Kekurangan</th>
+                    <th style="width:25%; text-align:center;">Keterangan</th>
                 </tr>
             </thead>
             <tbody>
