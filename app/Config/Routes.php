@@ -111,22 +111,22 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     });
     $routes->get('template-report', 'TemplateReportController::index');
-$routes->get('template-report/data', 'TemplateReportController::getTemplate');
-$routes->post('template-report/save', 'TemplateReportController::save');
-$routes->get(
-    'template-report/editor',
-    'EditorTemplateController::index'
-);
+    $routes->get('template-report/data', 'TemplateReportController::getTemplate');
+    $routes->post('template-report/save', 'TemplateReportController::save');
+    $routes->get(
+        'template-report/editor',
+        'EditorTemplateController::index'
+    );
 
-$routes->get(
-    'template-report/editor/data',
-    'EditorTemplateController::getData'
-);
+    $routes->get(
+        'template-report/editor/data',
+        'EditorTemplateController::getData'
+    );
 
-$routes->post(
-    'template-report/editor/save',
-    'EditorTemplateController::save'
-);
+    $routes->post(
+        'template-report/editor/save',
+        'EditorTemplateController::save'
+    );
 
 
 

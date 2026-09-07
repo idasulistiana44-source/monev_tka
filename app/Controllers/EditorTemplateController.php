@@ -18,6 +18,12 @@ class EditorTemplateController extends BaseController
      */
     public function index()
     {
+        // Hanya admin yang dapat mengakses halaman editor
+        if (strtolower((string) session()->get('role')) !== 'admin') {
+            return redirect()->to('/dashboard')
+                ->with('error', 'Akses hanya untuk admin.');
+        }
+
         return view('layout/template', [
             'title'     => 'Editor Template',
             'pageName'  => 'template_report/editor',
@@ -32,6 +38,16 @@ class EditorTemplateController extends BaseController
      */
     public function getData()
     {
+        // Hanya admin yang dapat mengambil data template
+        if (strtolower((string) session()->get('role')) !== 'admin') {
+            return $this->response
+                ->setStatusCode(403)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Akses hanya untuk admin.'
+                ]);
+        }
+
         try {
 
             $data = $this->templateReportModel
@@ -64,6 +80,16 @@ class EditorTemplateController extends BaseController
      */
     public function save()
     {
+        // Hanya admin yang dapat menyimpan perubahan template
+        if (strtolower((string) session()->get('role')) !== 'admin') {
+            return $this->response
+                ->setStatusCode(403)
+                ->setJSON([
+                    'status'  => false,
+                    'message' => 'Akses hanya untuk admin.'
+                ]);
+        }
+
         try {
 
             $data = $this->request->getJSON(true);
