@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TKA 2026 - Dinas Pendidikan</title>
+<title>TKAP 2026 - Dinas Pendidikan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <div class="portal-wrapper">
     <div class="badge">
         <span class="badge-dot"></span>
-        TKA 2026
+        TKAP 2026
     </div>
     <header class="portal-header">
         <h1>Dinas Pendidikan</h1>
@@ -23,32 +23,32 @@
         <a href="http://31.56.56.245/" target="_blank" rel="noopener noreferrer" class="portal-card card-smk">
             <div class="card-icon"><i class="fa-solid fa-school"></i></div>
             <div class="card-title">SMK</div>
-            <div class="card-description">Dashboard TKA</div>
+            <div class="card-description">Dashboard TKAP</div>
         </a>
         <a href="http://203.175.125.230/" target="_blank" rel="noopener noreferrer" class="portal-card card-sma">
             <div class="card-icon"><i class="fa-solid fa-building-columns"></i></div>
             <div class="card-title">SMA</div>
-            <div class="card-description">Dashboard TKA</div>
+            <div class="card-description">Dashboard TKAP</div>
         </a>
         <a href="http://157.20.32.202/" target="_blank" rel="noopener noreferrer" class="portal-card card-ma">
             <div class="card-icon"><i class="fa-solid fa-mosque"></i></div>
             <div class="card-title">MA</div>
-            <div class="card-description">Dashboard TKA</div>
+            <div class="card-description">Dashboard TKAP</div>
         </a>
         <a href="http://157.20.32.202/" target="_blank" rel="noopener noreferrer" class="portal-card card-slb">
             <div class="card-icon"><i class="fa-solid fa-people-group"></i></div>
             <div class="card-title">SLB</div>
-            <div class="card-description">Dashboard TKA</div>
+            <div class="card-description">Dashboard TKAP</div>
         </a>
         <a href="http://157.20.32.202/" target="_blank" rel="noopener noreferrer" class="portal-card card-pkbm">
             <div class="card-icon"><i class="fa-solid fa-users"></i></div>
             <div class="card-title">PKBM</div>
-            <div class="card-description">Dashboard TKA</div>
+            <div class="card-description">Dashboard TKAP</div>
         </a>
         <a href="/login" class="portal-card card-monev">
             <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
             <div class="card-title">Sistem Monev</div>
-            <div class="card-description">Monitoring & Evaluasi TKA</div>
+            <div class="card-description">Monitoring & Evaluasi TKAP</div>
         </a>
     </main>
     <footer>

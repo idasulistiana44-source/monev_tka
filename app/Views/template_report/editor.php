@@ -7,7 +7,7 @@
             <h1>Editor Template</h1>
             <p>
                 Template Laporan Monitoring dan Evaluasi
-                Pelaksanaan TKA Provinsi
+                Pelaksanaan TKAP Provinsi
             </p>
         </div>
 
@@ -62,7 +62,7 @@
             type="text"
             class="cover-subtitle-input"
             id="coverSubtitle"
-            value="PELAKSANAAN TES KEMAMPUAN AKADEMIK (TKA) PROVINSI">
+            value="PELAKSANAAN TES KEMAMPUAN AKADEMIK (TKAP) PROVINSI">
 
 
         <input

@@ -29,7 +29,7 @@ if(str_starts_with($pageName,'visits/instrument')){
 }
 
 ?>
-<?= view('layout/header',['title'=>$title??'Monev TKA','pageAsset'=>$pageAsset]) ?>
+<?= view('layout/header',['title'=>$title??'Monev TKAP','pageAsset'=>$pageAsset]) ?>
 <?= view('layout/navbar') ?>
 <?= view('layout/sidebar') ?>
 <main class="app-main">

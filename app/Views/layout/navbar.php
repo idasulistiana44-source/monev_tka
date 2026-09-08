@@ -25,7 +25,7 @@ if($userId>0){
             <i class="fas fa-bars"></i>
         </button>
         <div class="navbar-title">
-            <strong>Monev TKA PROVINSI</strong>
+            <strong>Monev TKAP PROVINSI</strong>
             <span>Monitoring & Evaluasi</span>
         </div>
     </div>

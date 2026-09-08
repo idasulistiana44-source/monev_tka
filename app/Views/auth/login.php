@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'Login - Sistem Monev TKA' ?></title>
+    <title><?= $title ?? 'Login - Sistem Monev TKAP' ?></title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
@@ -24,7 +24,7 @@
                 <div class="brand-icon mb-2">
                     <i class="fa-solid fa-graduation-cap fa-3x text-primary"></i>
                 </div>
-                <h4 class="fw-bold text-dark">Sistem Monev TKA</h4>
+                <h4 class="fw-bold text-dark">Sistem Monev TKAP</h4>
                 <p class="text-muted small">Silakan login untuk mengakses aplikasi</p>
             </div>
             <form id="formLogin" action="<?= base_url('login') ?>" method="POST" autocomplete="off">

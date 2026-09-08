@@ -241,7 +241,7 @@ class ReportsModel extends Model
          * Jaringan daring:
          * - minimal 16 Mbps untuk 40 klien
          * - ekuivalen 0,4 Mbps/klien
-         * - koneksi khusus untuk TKA
+         * - koneksi khusus untuk TKAP
          * - LAN CAT5E 100/1000 atau AP stabil maksimal 20 klien/AP
          *
          * Catatan:
@@ -319,7 +319,7 @@ class ReportsModel extends Model
         }
 
         /*
-         * Ruang TKA:
+         * Ruang TKAP:
          * maksimal 20 peserta per pengawas ruang.
          * Setiap ruang ditangani 1 proktor.
          * 1 ID proktor maksimal 40 komputer klien.
@@ -432,16 +432,16 @@ class ReportsModel extends Model
         }
 
         if($networkStatus==='Kurang Memadai'){
-            $findings[]='Bandwidth efektif belum memenuhi kebutuhan minimal jaringan TKA untuk jumlah klien yang dilayani.';
-            $recommendations[]='Meningkatkan kapasitas bandwidth hingga sekurang-kurangnya memenuhi kebutuhan minimal hasil perhitungan dan memastikan koneksi khusus untuk TKA.';
+            $findings[]='Bandwidth efektif belum memenuhi kebutuhan minimal jaringan TKAP untuk jumlah klien yang dilayani.';
+            $recommendations[]='MeningkaTKAPn kapasitas bandwidth hingga sekurang-kurangnya memenuhi kebutuhan minimal hasil perhitungan dan memastikan koneksi khusus untuk TKAP.';
         }elseif($networkStatus==='Cukup'){
             $findings[]='Bandwidth telah mendekati kebutuhan minimal dan masih memiliki cadangan kapasitas yang terbatas.';
-            $recommendations[]='Melakukan uji kestabilan jaringan kembali dan memastikan tidak ada penggunaan jaringan lain selama pelaksanaan TKA.';
+            $recommendations[]='Melakukan uji kestabilan jaringan kembali dan memastikan tidak ada penggunaan jaringan lain selama pelaksanaan TKAP.';
         }
 
         if(!$networkDedicated){
-            $findings[]='Informasi mengenai jaringan khusus pelaksanaan TKA belum tercatat pada hasil monitoring.';
-            $recommendations[]='Memastikan koneksi jaringan yang digunakan untuk TKA dikhususkan selama pelaksanaan.';
+            $findings[]='Informasi mengenai jaringan khusus pelaksanaan TKAP belum tercatat pada hasil monitoring.';
+            $recommendations[]='Memastikan koneksi jaringan yang digunakan untuk TKAP dikhususkan selama pelaksanaan.';
         }
 
         if($accessPoint>0 && $accessPoint<$apRequired){
@@ -458,10 +458,10 @@ class ReportsModel extends Model
         }
 
         if($participantStatus==='Kurang Memadai'){
-            $findings[]='Data peserta yang dicatat belum konsisten atau belum seluruhnya menunjukkan kesiapan mengikuti TKA.';
+            $findings[]='Data peserta yang dicatat belum konsisten atau belum seluruhnya menunjukkan kesiapan mengikuti TKAP.';
             $recommendations[]='Melakukan verifikasi dan pembaruan data peserta sebelum pelaksanaan.';
         }elseif($participantStatus==='Cukup'){
-            $findings[]='Masih terdapat peserta yang belum seluruhnya tercatat mengikuti TKA.';
+            $findings[]='Masih terdapat peserta yang belum seluruhnya tercatat mengikuti TKAP.';
             $recommendations[]='Melakukan verifikasi peserta dan memastikan kesiapan seluruh peserta.';
         }
 
@@ -516,20 +516,20 @@ class ReportsModel extends Model
             $overallStatus='Cukup';
         }
 
-        $analysis='Hasil monitoring dinilai berdasarkan kesesuaian sarana dan prasarana dengan spesifikasi infrastruktur TKA, meliputi kebutuhan komputer, ruang, jaringan internet, perangkat jaringan, kelistrikan, dan kesiapan peserta. Perhitungan komputer menggunakan jumlah peserta, sesi, gelombang, rasio maksimal penggunaan komputer, serta cadangan 10% sesuai ketentuan. Kebutuhan bandwidth dihitung berdasarkan minimal 16 Mbps untuk 40 klien atau ekuivalen 0,4 Mbps per klien.';
+        $analysis='Hasil monitoring dinilai berdasarkan kesesuaian sarana dan prasarana dengan spesifikasi infrastruktur TKAP, meliputi kebutuhan komputer, ruang, jaringan internet, perangkat jaringan, kelistrikan, dan kesiapan peserta. Perhitungan komputer menggunakan jumlah peserta, sesi, gelombang, rasio maksimal penggunaan komputer, serta cadangan 10% sesuai ketentuan. Kebutuhan bandwidth dihitung berdasarkan minimal 16 Mbps untuk 40 klien atau ekuivalen 0,4 Mbps per klien.';
 
         if($overallStatus==='Sangat Baik'){
-            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan menunjukkan kesiapan infrastruktur yang sangat baik dan secara umum telah memenuhi kebutuhan pelaksanaan TKA sesuai parameter yang dimonitor.';
-            $suggestions='Mempertahankan kondisi kesiapan serta melakukan pengecekan akhir terhadap komputer, ruang, jaringan internet, kelistrikan, dan data peserta sebelum pelaksanaan TKA.';
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan menunjukkan kesiapan infrastruktur yang sangat baik dan secara umum telah memenuhi kebutuhan pelaksanaan TKAP sesuai parameter yang dimonitor.';
+            $suggestions='Mempertahankan kondisi kesiapan serta melakukan pengecekan akhir terhadap komputer, ruang, jaringan internet, kelistrikan, dan data peserta sebelum pelaksanaan TKAP.';
         }elseif($overallStatus==='Baik'){
-            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan menunjukkan kesiapan yang baik dan telah memenuhi sebagian besar kebutuhan infrastruktur pelaksanaan TKA.';
-            $suggestions='Melakukan pengecekan akhir dan menindaklanjuti aspek yang masih perlu diperkuat agar kesiapan pelaksanaan TKA tetap optimal.';
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan menunjukkan kesiapan yang baik dan telah memenuhi sebagian besar kebutuhan infrastruktur pelaksanaan TKAP.';
+            $suggestions='Melakukan pengecekan akhir dan menindaklanjuti aspek yang masih perlu diperkuat agar kesiapan pelaksanaan TKAP tetap optimal.';
         }elseif($overallStatus==='Cukup'){
-            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan telah memiliki sebagian besar komponen pendukung pelaksanaan TKA, namun masih terdapat aspek yang perlu diperhatikan dan ditindaklanjuti.';
-            $suggestions='Segera menindaklanjuti temuan terutama terkait kecukupan perangkat, kapasitas jaringan, ruang, serta dukungan kelistrikan sebelum pelaksanaan TKA.';
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, satuan pendidikan telah memiliki sebagian besar komponen pendukung pelaksanaan TKAP, namun masih terdapat aspek yang perlu diperhatikan dan ditindaklanjuti.';
+            $suggestions='Segera menindaklanjuti temuan terutama terkait kecukupan perangkat, kapasitas jaringan, ruang, serta dukungan kelistrikan sebelum pelaksanaan TKAP.';
         }else{
-            $conclusion='Berdasarkan hasil monitoring dan evaluasi, masih terdapat komponen infrastruktur yang belum memenuhi kebutuhan pelaksanaan TKA sehingga diperlukan tindak lanjut sebelum pelaksanaan.';
-            $suggestions='Memprioritaskan pemenuhan kebutuhan komputer, jaringan, ruang, dan kelistrikan serta melakukan verifikasi ulang sebelum pelaksanaan TKA.';
+            $conclusion='Berdasarkan hasil monitoring dan evaluasi, masih terdapat komponen infrastruktur yang belum memenuhi kebutuhan pelaksanaan TKAP sehingga diperlukan tindak lanjut sebelum pelaksanaan.';
+            $suggestions='Memprioritaskan pemenuhan kebutuhan komputer, jaringan, ruang, dan kelistrikan serta melakukan verifikasi ulang sebelum pelaksanaan TKAP.';
         }
 
         return [

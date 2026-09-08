@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded',function(){
             'INF-02':'Laptop Milik',
             'INF-03':'Laptop Bukan Milik',
             'INF-04':'Labkom',
-            'INF-05':'Ruang yang Dipakai TKA-P',
+            'INF-05':'Ruang yang Dipakai TKAP',
             'INF-06':'Switch Hub',
             'INF-07':'UPS',
             'INF-08':'Access Point'
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded',function(){
                 labels:data.map(function(item){return item.school_name;}),
                 datasets:[
                     {
-                        label:'Mengikuti TKA-P',
+                        label:'Mengikuti TKAP-P',
                         data:data.map(function(item){return Number(item.ikut||0);}),
                         borderWidth:1,
                         borderRadius:5

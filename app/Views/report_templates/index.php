@@ -49,7 +49,7 @@
             type="text"
             class="cover-subtitle-input"
             id="coverSubtitle"
-            value="PELAKSANAAN TES KEMAMPUAN AKADEMIK (TKA) PROVINSI">
+            value="PELAKSANAAN TES KEMAMPUAN AKADEMIK (TKAP) PROVINSI">
 
         <input
             type="text"

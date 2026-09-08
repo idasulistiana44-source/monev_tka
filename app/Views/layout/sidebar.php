@@ -3,7 +3,7 @@
         <span class="sidebar-brand-icon">
             <i class="fas fa-chart-line"></i>
         </span>
-        <span class="sidebar-brand-text">Monev TKA</span>
+        <span class="sidebar-brand-text">Monev TKAP</span>
     </a>
     <ul class="sidebar-menu">
         <li class="sidebar-menu-title">Menu Utama</li>

@@ -1,8 +1,8 @@
 <div class="dashboard-content">
     <div class="dashboard-header">
         <div>
-            <h1>Dashboard Monev TKA-P</h1>
-            <p>Monitoring dan Evaluasi Pelaksanaan TKA-P</p>
+            <h1>Dashboard Monev TKA Provinsi</h1>
+            <p>Monitoring dan Evaluasi Pelaksanaan TKAP-P</p>
         </div>
     </div>
     <div class="dashboard-filter">
@@ -79,7 +79,7 @@
                     <option value="INF-02" selected>Laptop Milik</option>
                     <option value="INF-03">Laptop Bukan Milik</option>
                     <option value="INF-04">Labkom</option>
-                    <option value="INF-05">Ruang yang Dipakai TKA-P</option>
+                    <option value="INF-05">Ruang yang Dipakai TKAP</option>
                     <option value="INF-06">Switch Hub</option>
                     <option value="INF-07">UPS</option>
                     <option value="INF-08">Access Point</option>
@@ -325,8 +325,8 @@
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
-                    <h3 class="dashboard-panel-title">Kesiapan Siswa TKA-P</h3>
-                    <p class="dashboard-panel-subtitle">Perbandingan siswa kelas 12 yang mengikuti dan tidak mengikuti TKA-P.</p>
+                    <h3 class="dashboard-panel-title">Kesiapan Siswa TKAP</h3>
+                    <p class="dashboard-panel-subtitle">Perbandingan siswa kelas 12 yang mengikuti dan tidak mengikuti TKAP-P.</p>
                 </div>
             </div>
             <div class="dashboard-panel-body">
@@ -372,8 +372,8 @@
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
-                    <h3 class="dashboard-panel-title">Sesi TKA-P</h3>
-                    <p class="dashboard-panel-subtitle">Distribusi sesi TKA-P yang digunakan sekolah.</p>
+                    <h3 class="dashboard-panel-title">Sesi TKAP-P</h3>
+                    <p class="dashboard-panel-subtitle">Distribusi sesi TKAP yang digunakan sekolah.</p>
                 </div>
             </div>
             <div class="dashboard-panel-body">
@@ -410,7 +410,7 @@
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
-                    <h3 class="dashboard-panel-title">Gelombang TKA-P</h3>
+                    <h3 class="dashboard-panel-title">Gelombang TKAP</h3>
                     <p class="dashboard-panel-subtitle">Distribusi jumlah gelombang yang diikuti sekolah.</p>
                 </div>
             </div>
@@ -450,7 +450,7 @@
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
-                    <h3 class="dashboard-panel-title">Kesiapan Infrastruktur TKA-P</h3>
+                    <h3 class="dashboard-panel-title">Kesiapan Infrastruktur TKAP</h3>
                     <p class="dashboard-panel-subtitle">Distribusi penilaian kesiapan infrastruktur sekolah.</p>
                 </div>
             </div>

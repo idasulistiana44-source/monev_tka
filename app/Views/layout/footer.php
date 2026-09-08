@@ -1,8 +1,8 @@
 <footer class="app-footer">
     <div class="footer-left">
-        <strong>Monev TKA</strong>
+        <strong>Monev TKAP</strong>
         <span class="footer-separator">|</span>
-        <span>Monitoring dan Evaluasi Pelaksanaan TKA SMA</span>
+        <span>Monitoring dan Evaluasi Pelaksanaan TKAP SMA/SMK/MA</span>
     </div>
     <div class="footer-right">
         <?= date('Y') ?>

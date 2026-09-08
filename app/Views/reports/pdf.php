@@ -70,11 +70,11 @@ $statusDescription = function ($status, $type = '') {
     $status = strtoupper(trim((string) $status));
     if ($type === 'device') {
     if (str_contains($status, 'SANGAT')) {
-        return 'Jumlah perangkat komputer yang tersedia telah memenuhi kebutuhan pelaksanaan TKA dengan cadangan yang memadai.';
+        return 'Jumlah perangkat komputer yang tersedia telah memenuhi kebutuhan pelaksanaan TKAP dengan cadangan yang memadai.';
     }
 
     if (str_contains($status, 'BAIK')) {
-        return 'Jumlah perangkat komputer yang tersedia telah memenuhi kebutuhan pelaksanaan TKA.';
+        return 'Jumlah perangkat komputer yang tersedia telah memenuhi kebutuhan pelaksanaan TKAP.';
     }
 
         if (str_contains($status, 'CUKUP')) {
@@ -94,7 +94,7 @@ $statusDescription = function ($status, $type = '') {
     }
     if ($type === 'participant') {
         if (str_contains($status, 'SANGAT') || str_contains($status, 'BAIK') || str_contains($status, 'MEMADAI')) {
-            return 'Data peserta yang mengikuti TKA telah sesuai dengan data peserta yang tercatat dan menunjukkan kesiapan yang baik.';
+            return 'Data peserta yang mengikuti TKAP telah sesuai dengan data peserta yang tercatat dan menunjukkan kesiapan yang baik.';
         }
         if (str_contains($status, 'PERLU') || str_contains($status, 'VERIF')) {
             return 'Data peserta masih memerlukan verifikasi agar jumlah peserta dan pembagian peserta pada setiap sesi sesuai.';
@@ -103,7 +103,7 @@ $statusDescription = function ($status, $type = '') {
     }
     if ($type === 'network') {
         if (str_contains($status, 'SANGAT') || str_contains($status, 'BAIK') || str_contains($status, 'MEMADAI')) {
-            return 'Kapasitas jaringan internet telah memenuhi kebutuhan monitoring dan pelaksanaan TKA berdasarkan hasil pengukuran.';
+            return 'Kapasitas jaringan internet telah memenuhi kebutuhan monitoring dan pelaksanaan TKAP berdasarkan hasil pengukuran.';
         }
         if (str_contains($status, 'PERLU')) {
             return 'Jaringan tersedia namun kapasitas atau kestabilannya masih perlu diperhatikan dan dipastikan kembali sebelum pelaksanaan.';
@@ -112,7 +112,7 @@ $statusDescription = function ($status, $type = '') {
     }
     if ($type === 'electricity') {
         if (str_contains($status, 'SANGAT') || str_contains($status, 'BAIK') || str_contains($status, 'MEMADAI')) {
-            return 'Daya listrik dan perangkat pendukung tersedia serta dapat menunjang kebutuhan pelaksanaan TKA.';
+            return 'Daya listrik dan perangkat pendukung tersedia serta dapat menunjang kebutuhan pelaksanaan TKAP.';
         }
         if (str_contains($status, 'PERLU')) {
             return 'Daya listrik tersedia namun perangkat pendukung atau aspek kestabilan listrik masih perlu diperhatikan.';
@@ -123,12 +123,12 @@ $statusDescription = function ($status, $type = '') {
         return 'Kondisi persiapan sekolah sangat baik dan seluruh komponen utama yang dimonitor telah menunjukkan kesiapan.';
     }
     if (str_contains($status, 'BAIK') || str_contains($status, 'MEMADAI')) {
-        return 'Komponen persiapan utama telah tersedia dan memenuhi kebutuhan pelaksanaan TKA berdasarkan hasil monitoring.';
+        return 'Komponen persiapan utama telah tersedia dan memenuhi kebutuhan pelaksanaan TKAP berdasarkan hasil monitoring.';
     }
     if (str_contains($status, 'PERLU') || str_contains($status, 'CUKUP')) {
         return 'Sekolah telah memiliki komponen persiapan utama, namun masih terdapat beberapa aspek yang perlu diperhatikan atau diverifikasi.';
     }
-    return 'Masih terdapat komponen persiapan yang belum memenuhi kebutuhan sehingga diperlukan tindak lanjut sebelum pelaksanaan TKA.';
+    return 'Masih terdapat komponen persiapan yang belum memenuhi kebutuhan sehingga diperlukan tindak lanjut sebelum pelaksanaan TKAP.';
 };
 $scoreStatus = function ($status) {
     $status = strtoupper(trim((string) $status));
@@ -298,12 +298,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         </table>
         <div class="status-summary">
             <div class="status-header">
-                <strong>Acuan Ruang TKA Berdasarkan Juknis</strong>
+                <strong>Acuan Ruang TKAP Berdasarkan Juknis</strong>
             </div>
             <div class="status-description">
-                Ruang yang digunakan untuk pelaksanaan TKA harus aman dan layak, memiliki pencahayaan dan ventilasi yang cukup, serta terbebas dari alat peraga. 
+                Ruang yang digunakan untuk pelaksanaan TKAP harus aman dan layak, memiliki pencahayaan dan ventilasi yang cukup, serta terbebas dari alat peraga. 
                 Ruang dilengkapi dengan denah tempat duduk peserta dengan mempertimbangkan jarak antar peserta.
-                 Penataan ruang disesuaikan dengan kebutuhan pelaksanaan TKA agar kegiatan dapat berlangsung secara tertib dan lancar.
+                 Penataan ruang disesuaikan dengan kebutuhan pelaksanaan TKAP agar kegiatan dapat berlangsung secara tertib dan lancar.
             </div>
         </div>';
     
@@ -586,12 +586,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     : (
                         $deviceStatus === 'Baik'
 
-                        ? 'Ketersediaan perangkat telah memenuhi kebutuhan pelaksanaan TKA-P.'
+                        ? 'Ketersediaan perangkat telah memenuhi kebutuhan pelaksanaan TKAP-P.'
 
                         : (
                             $deviceStatus === 'Sangat Baik'
 
-                            ? 'Ketersediaan perangkat sangat baik dan telah memenuhi kebutuhan pelaksanaan TKA-P.'
+                            ? 'Ketersediaan perangkat sangat baik dan telah memenuhi kebutuhan pelaksanaan TKAP-P.'
 
                             : $e($statusDescription($deviceStatus, 'device'))
                         )
@@ -604,7 +604,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
     </div>';
     }
-    if (str_contains($title, 'KEIKUTSERTAAN') || str_contains($title, 'KESIAPAN PESERTA') || str_contains($title, 'JUMLAH SISWA') || str_contains($title, 'MENGIKUTI TKA-P')) {
+    if (str_contains($title, 'KEIKUTSERTAAN') || str_contains($title, 'KESIAPAN PESERTA') || str_contains($title, 'JUMLAH SISWA') || str_contains($title, 'MENGIKUTI TKAP')) {
         return '
         <table class="data-table">
             <thead>
@@ -622,14 +622,14 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 </tr>
 
                 <tr>
-                    <td>Mengikuti TKA-P</td>
+                    <td>Mengikuti TKAP</td>
                     <td style="text-align:center;">
                         ' . $e($metrics['ikut'] ?? 0) . ' Siswa
                     </td>
                 </tr>
 
                 <tr>
-                    <td>Tidak Mengikuti TKA-P</td>
+                    <td>Tidak Mengikuti TKAP</td>
                     <td style="text-align:center;">
                         ' . $e($metrics['tidak_ikut'] ?? 0) . ' Siswa
                     </td>
@@ -769,7 +769,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         if ($networkStatus === 'Kurang Memadai') {
 
             $networkDescription =
-                'Kapasitas jaringan belum memenuhi kebutuhan pelaksanaan TKA-P. ' .
+                'Kapasitas jaringan belum memenuhi kebutuhan pelaksanaan TKAP-P. ' .
                 'Bandwidth tersedia ' .
                 $e($effectiveBandwidth) .
                 ' Mbps dari kebutuhan ' .
@@ -787,7 +787,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         } elseif ($networkStatus === 'Baik') {
 
             $networkDescription =
-                'Kapasitas jaringan telah memenuhi kebutuhan pelaksanaan TKA-P. ' .
+                'Kapasitas jaringan telah memenuhi kebutuhan pelaksanaan TKAP-P. ' .
                 'Tersedia ' .
                 $e($effectiveBandwidth) .
                 ' Mbps dari kebutuhan ' .
@@ -801,12 +801,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         } elseif ($networkStatus === 'Sangat Baik') {
 
             $networkDescription =
-                'Kapasitas jaringan sangat baik dan telah memenuhi kebutuhan pelaksanaan TKA-P.';
+                'Kapasitas jaringan sangat baik dan telah memenuhi kebutuhan pelaksanaan TKAP-P.';
 
         } else {
 
             $networkDescription =
-                'Kapasitas jaringan cukup tersedia, namun masih terdapat aspek yang perlu diperhatikan untuk memastikan kestabilan selama pelaksanaan TKA-P.';
+                'Kapasitas jaringan cukup tersedia, namun masih terdapat aspek yang perlu diperhatikan untuk memastikan kestabilan selama pelaksanaan TKAP-P.';
         }
 
         return '
@@ -1371,7 +1371,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     color:#1e3a5f;
                     margin-bottom:8px;
                 ">
-                    KEIKUTSERTAAN SISWA<br>DALAM TKA
+                    KEIKUTSERTAAN SISWA<br>DALAM TKAP
                 </div>
 
                 <table style="width:100%; border-collapse:collapse;">
@@ -1411,7 +1411,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                             </div>
 
                             <div style="font-size:9.5pt;">
-                                Mengikuti TKA-P
+                                Mengikuti TKAP
                             </div>
 
                         </td>
@@ -1453,8 +1453,8 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <strong>Keterangan:</strong>
                     ' . (
                         $tidakIkut <= 0
-                            ? 'Seluruh siswa mengikuti TKA-P.'
-                            : 'Terdapat ' . $e($tidakIkut) . ' siswa belum mengikuti TKA-P.'
+                            ? 'Seluruh siswa mengikuti TKAP.'
+                            : 'Terdapat ' . $e($tidakIkut) . ' siswa belum mengikuti TKAP-P.'
                     ) . '
                 </div>
 
@@ -1761,7 +1761,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                         ' . (
                             $overallStatus === 'Kurang Memadai'
 
-                            ? 'Masih terdapat komponen yang belum memenuhi kebutuhan pelaksanaan TKA-P.'
+                            ? 'Masih terdapat komponen yang belum memenuhi kebutuhan pelaksanaan TKAP-P.'
 
                             : (
                                 $overallStatus === 'Cukup'
@@ -1771,11 +1771,11 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                                     : (
                                         $overallStatus === 'Baik'
 
-                                            ? 'Kesiapan pelaksanaan TKA-P dalam kondisi baik.'
+                                            ? 'Kesiapan pelaksanaan TKAP dalam kondisi baik.'
 
                                             : (
                                                 $overallStatus === 'Sangat Baik'
-                                                    ? 'Kesiapan pelaksanaan TKA-P dalam kondisi sangat baik.'
+                                                    ? 'Kesiapan pelaksanaan TKAP dalam kondisi sangat baik.'
                                                     : $e($statusDescription($overallStatus))
                                             )
                                     )
@@ -1906,7 +1906,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         if ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) {
             $recommendations[] =
                 'Meningkatkan kapasitas bandwidth agar memenuhi kebutuhan ' .
-                'pelaksanaan TKA-P dan memastikan kestabilan jaringan selama pelaksanaan.';
+                'pelaksanaan TKAP dan memastikan kestabilan jaringan selama pelaksanaan.';
         }
 
         if (empty($recommendations)) {
@@ -2050,30 +2050,30 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         if ($overallStatus === 'Kurang Memadai') {
 
             $kesimpulan =
-                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan masih memerlukan penguatan pada beberapa komponen pendukung pelaksanaan TKA. ' .
-                'Ketersediaan perangkat dan kapasitas jaringan belum sepenuhnya memenuhi kebutuhan, sehingga diperlukan tindak lanjut untuk memenuhi kekurangan yang masih terdapat sebelum pelaksanaan TKA.';
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan masih memerlukan penguatan pada beberapa komponen pendukung pelaksanaan TKAP. ' .
+                'Ketersediaan perangkat dan kapasitas jaringan belum sepenuhnya memenuhi kebutuhan, sehingga diperlukan tindak lanjut untuk memenuhi kekurangan yang masih terdapat sebelum pelaksanaan TKAP.';
 
         } elseif ($overallStatus === 'Cukup') {
 
             $kesimpulan =
-                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah tersedia untuk mendukung pelaksanaan TKA, namun masih terdapat beberapa komponen yang perlu diperkuat agar seluruh kebutuhan pelaksanaan dapat terpenuhi secara optimal.';
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah tersedia untuk mendukung pelaksanaan TKAP, namun masih terdapat beberapa komponen yang perlu diperkuat agar seluruh kebutuhan pelaksanaan dapat terpenuhi secara optimal.';
 
         } elseif ($overallStatus === 'Baik') {
 
             $kesimpulan =
-                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah memenuhi kebutuhan pelaksanaan TKA. ' .
-                'Sarana, perangkat, keikutsertaan siswa, jaringan, dan kelistrikan telah tersedia dan mendukung pelaksanaan TKA dengan baik.';
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah memenuhi kebutuhan pelaksanaan TKAP. ' .
+                'Sarana, perangkat, keikutsertaan siswa, jaringan, dan kelistrikan telah tersedia dan mendukung pelaksanaan TKAP dengan baik.';
 
         } elseif ($overallStatus === 'Sangat Baik') {
 
             $kesimpulan =
-                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah sangat memenuhi kebutuhan pelaksanaan TKA. ' .
-                'Seluruh komponen pendukung tersedia dalam kondisi sangat baik dan siap mendukung pelaksanaan TKA secara optimal.';
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan secara umum telah sangat memenuhi kebutuhan pelaksanaan TKAP. ' .
+                'Seluruh komponen pendukung tersedia dalam kondisi sangat baik dan siap mendukung pelaksanaan TKAP secara optimal.';
 
         } else {
 
             $kesimpulan =
-                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan telah dinilai berdasarkan kondisi aktual dan kebutuhan pelaksanaan TKA.';
+                'Berdasarkan hasil Monitoring dan Evaluasi, kesiapan satuan pendidikan telah dinilai berdasarkan kondisi aktual dan kebutuhan pelaksanaan TKAP.';
         }
 
         // =====================================================
@@ -2334,7 +2334,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         }
 
         $saranItems[] =
-            'Memastikan kesiapan jaringan dan perangkat pendukung sebelum pelaksanaan TKA.';
+            'Memastikan kesiapan jaringan dan perangkat pendukung sebelum pelaksanaan TKAP.';
 
         $saran = '<ol>';
 
@@ -2347,22 +2347,22 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
     } elseif ($overallStatus === 'Cukup') {
 
         $saran =
-            'Memperkuat komponen yang masih belum sepenuhnya memenuhi kebutuhan serta melakukan pengecekan berkala terhadap perangkat dan jaringan sebelum pelaksanaan TKA.';
+            'Memperkuat komponen yang masih belum sepenuhnya memenuhi kebutuhan serta melakukan pengecekan berkala terhadap perangkat dan jaringan sebelum pelaksanaan TKAP.';
 
     } elseif ($overallStatus === 'Baik') {
 
         $saran =
-            'Mempertahankan kondisi sarana, perangkat, jaringan, dan kelistrikan serta melakukan pengecekan berkala sebelum pelaksanaan TKA.';
+            'Mempertahankan kondisi sarana, perangkat, jaringan, dan kelistrikan serta melakukan pengecekan berkala sebelum pelaksanaan TKAP.';
 
     } elseif ($overallStatus === 'Sangat Baik') {
 
         $saran =
-            'Mempertahankan kesiapan seluruh komponen dan melakukan pemeriksaan akhir sebelum pelaksanaan TKA.';
+            'Mempertahankan kesiapan seluruh komponen dan melakukan pemeriksaan akhir sebelum pelaksanaan TKAP.';
 
     } else {
 
         $saran =
-            'Melakukan pemeriksaan terhadap seluruh komponen pendukung sebelum pelaksanaan TKA.';
+            'Melakukan pemeriksaan terhadap seluruh komponen pendukung sebelum pelaksanaan TKAP.';
     }
 
     // =====================================================
@@ -2930,10 +2930,10 @@ else:
             <?= $dynamic('KETERSEDIAAN PERANGKAT') ?>
         </div>
         <div class="item-title">
-            3. Keikutsertaan Siswa dalam TKA-P
+            3. Keikutsertaan Siswa dalam TKAP
         </div>
         <div class="content">
-            <?= $dynamic('KEIKUTSERTAAN SISWA DALAM TKA-P') ?>
+            <?= $dynamic('KEIKUTSERTAAN SISWA DALAM TKAP') ?>
         </div>
         <div class="item-title">
             4. Kesiapan Jaringan
