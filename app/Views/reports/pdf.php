@@ -586,12 +586,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     : (
                         $deviceStatus === 'Baik'
 
-                        ? 'Ketersediaan perangkat telah memenuhi kebutuhan pelaksanaan TKAP-P.'
+                        ? 'Ketersediaan perangkat telah memenuhi kebutuhan pelaksanaan TKAP.'
 
                         : (
                             $deviceStatus === 'Sangat Baik'
 
-                            ? 'Ketersediaan perangkat sangat baik dan telah memenuhi kebutuhan pelaksanaan TKAP-P.'
+                            ? 'Ketersediaan perangkat sangat baik dan telah memenuhi kebutuhan pelaksanaan TKAP.'
 
                             : $e($statusDescription($deviceStatus, 'device'))
                         )
@@ -769,7 +769,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         if ($networkStatus === 'Kurang Memadai') {
 
             $networkDescription =
-                'Kapasitas jaringan belum memenuhi kebutuhan pelaksanaan TKAP-P. ' .
+                'Kapasitas jaringan belum memenuhi kebutuhan pelaksanaan TKAP. ' .
                 'Bandwidth tersedia ' .
                 $e($effectiveBandwidth) .
                 ' Mbps dari kebutuhan ' .
@@ -787,7 +787,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         } elseif ($networkStatus === 'Baik') {
 
             $networkDescription =
-                'Kapasitas jaringan telah memenuhi kebutuhan pelaksanaan TKAP-P. ' .
+                'Kapasitas jaringan telah memenuhi kebutuhan pelaksanaan TKAP. ' .
                 'Tersedia ' .
                 $e($effectiveBandwidth) .
                 ' Mbps dari kebutuhan ' .
@@ -801,12 +801,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         } elseif ($networkStatus === 'Sangat Baik') {
 
             $networkDescription =
-                'Kapasitas jaringan sangat baik dan telah memenuhi kebutuhan pelaksanaan TKAP-P.';
+                'Kapasitas jaringan sangat baik dan telah memenuhi kebutuhan pelaksanaan TKAP.';
 
         } else {
 
             $networkDescription =
-                'Kapasitas jaringan cukup tersedia, namun masih terdapat aspek yang perlu diperhatikan untuk memastikan kestabilan selama pelaksanaan TKAP-P.';
+                'Kapasitas jaringan cukup tersedia, namun masih terdapat aspek yang perlu diperhatikan untuk memastikan kestabilan selama pelaksanaan TKAP.';
         }
 
         return '
@@ -1454,7 +1454,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     ' . (
                         $tidakIkut <= 0
                             ? 'Seluruh siswa mengikuti TKAP.'
-                            : 'Terdapat ' . $e($tidakIkut) . ' siswa belum mengikuti TKAP-P.'
+                            : 'Terdapat ' . $e($tidakIkut) . ' siswa belum mengikuti TKAP.'
                     ) . '
                 </div>
 
@@ -1761,7 +1761,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                         ' . (
                             $overallStatus === 'Kurang Memadai'
 
-                            ? 'Masih terdapat komponen yang belum memenuhi kebutuhan pelaksanaan TKAP-P.'
+                            ? 'Masih terdapat komponen yang belum memenuhi kebutuhan pelaksanaan TKAP.'
 
                             : (
                                 $overallStatus === 'Cukup'
@@ -2984,70 +2984,93 @@ else:
             <p>Demikian laporan monitoring dan evaluasi ini disusun sebagai dokumentasi hasil pelaksanaan monitoring dan bahan tindak lanjut kesiapan sekolah dalam pelaksanaan Tes Kemampuan Akademik.</p>
         </div>
     <?php endif; ?>
-   <?php
-    $petugasMonev = $data['members'] ?? [];
+    <?php
+$petugasSubmit = $data['submitted_by_name'] ?? '';
+$namaSekolah = $data['school_name'] ?? '';
+$tanggalMonev = '';
+if (!empty($data['visit_date'])) {
+    $tanggalMonev = $formatDate($data['visit_date']);
+}
+?>
+<table style="
+    width:100%;
+    border-collapse:collapse;
+    margin-top:30px;
+    page-break-inside:avoid;
+">
+    <tr>
+        <td style="
+            width:50%;
+            text-align:left;
+            vertical-align:top;
+            border:none;
+            padding:0;
+        ">
+            <div style="font-size:10.5pt;">
+                Petugas Monitoring dan Evaluasi
+            </div>
 
-    $tanggalMonev = '';
-    if (!empty($data['visit_date'])) {
-        $tanggalMonev = $formatDate($data['visit_date']);
-    }
-    ?>
+            <div style="height:110px;"></div>
 
-    <table style="
-        width:100%;
-        border-collapse:collapse;
-        margin-top:30px;
-        page-break-inside:avoid;
-    ">
+            <div style="
+                font-size:10.5pt;
+                font-weight:bold;
+                text-decoration:underline;
+            ">
+                <?= $e($petugasSubmit ?: '......................................................') ?>
+            </div>
+        </td>
 
-        <!-- TANGGAL DAN JUDUL -->
-        <tr>
-            <td colspan="<?= max(1, count($petugasMonev)) ?>" style="
-                text-align:center;
-                border:none;
-                font-size:11pt;
-                padding-bottom:4px;
+        <td style="
+            width:50%;
+            text-align:right;
+            vertical-align:top;
+            border:none;
+            padding:0;
+        ">
+            <div style="
+                font-size:10.5pt;
+                margin-bottom:4px;
             ">
                 Jakarta, <?= $e($tanggalMonev) ?>
-            </td>
-        </tr>
+            </div>
 
-        <tr>
-            <td colspan="<?= max(1, count($petugasMonev)) ?>" style="
-                text-align:center;
-                border:none;
-                font-size:11pt;
+            <div style="
+                font-size:10.5pt;
                 font-weight:bold;
-                padding-bottom:12px;
+                margin-bottom:110px;
             ">
-                Petugas Monitoring dan Evaluasi
-            </td>
-        </tr>
+                Kepala Sekolah <?= $e($namaSekolah) ?>
+            </div>
 
-        <!-- NAMA PETUGAS -->
-        <tr>
-            <?php foreach ($petugasMonev as $petugas): ?>
-                <td style="
-                    width:<?= 100 / max(1, count($petugasMonev)) ?>%;
-                    text-align:center;
-                    vertical-align:top;
-                    border:none;
-                    padding:0 8px;
+            <div style="
+                width:220px;
+                margin-left:auto;
+                margin-right:0;
+                text-align:left;
+            ">
+                <div style="
+                    width:100%;
+                    font-size:10.5pt;
+                    font-weight:bold;
+                    text-decoration:underline;
+                    white-space:nowrap;
+                    text-align:left;
                 ">
-                    <div style="height:65px;"></div>
+                    ........................................................
+                </div>
 
-                    <div style="
-                        font-size:10.5pt;
-                        font-weight:bold;
-                        text-decoration:underline;
-                    ">
-                        <?= $e($petugas['name'] ?? 'Petugas') ?>
-                    </div>
-                </td>
-            <?php endforeach; ?>
-        </tr>
-
-    </table>
+                <div style="
+                    font-size:10.5pt;
+                    margin-top:3px;
+                    text-align:left;
+                ">
+                    NIP:
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
     <?php if ($hasLampiran): ?>
         <div class="lampiran">
             LAMPIRAN

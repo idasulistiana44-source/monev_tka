@@ -44,8 +44,6 @@ class ReportsModel extends Model
         }
         if($status!==''){
             $builder->where('v.status',$status);
-        }else{
-            $builder->where('v.status','COMPLETED');
         }
         if($dateFrom!==''){
             $builder->where('v.visit_date >=',$dateFrom);
@@ -92,7 +90,6 @@ class ReportsModel extends Model
         $builder->join('users creator','creator.id=v.created_by','left');
         $builder->join('users submitter','submitter.id=v.submitted_by','left');
         $builder->where('v.id',(int)$id);
-        $builder->where('v.status','COMPLETED');
         if($userRole!=='admin'&&$userId>0){
             $builder->join('visit_team vt_access','vt_access.visit_id=v.id','inner');
             $builder->where('vt_access.user_id',$userId);
