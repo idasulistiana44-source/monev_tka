@@ -85,7 +85,8 @@
             <button
                 type="button"
                 class="btn btn-danger"
-                id="btnExportAllPdf">
+                id="btnExportAllPdf"
+                style="display:none;">
                 <i class="fas fa-file-pdf me-1"></i>
                 Export All PDF
             </button>
@@ -118,4 +119,3 @@
         </div>
     </div>
 </div>
-<script src="<?= base_url('assets/js/reports.js') ?>"></script>

@@ -494,9 +494,9 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <td style="text-align:center;">
                         ' .
                         (
-                            $kekuranganPerangkat > 0
-                            ? '<strong style="color:#dc2626;">' .
-                            $e($kekuranganPerangkat) .
+                            $totalPerangkat < $kebutuhanPerangkat
+                            ? '<strong style="color:#dc2626;">Kekurangan<br/>' .
+                            $e($kebutuhanPerangkat - $totalPerangkat) .
                             ' unit</strong>'
                             : '<span style="color:#16a34a;">Memenuhi</span>'
                         )
@@ -631,7 +631,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 <tr>
                     <td>Tidak Mengikuti TKAP</td>
                     <td style="text-align:center;">
-                        ' . $e($metrics['tidak_ikut'] ?? 0) . ' Siswa
+                       ' . $e(max(0, (int)($metrics['total_siswa'] ?? 0) - (int)($metrics['ikut'] ?? 0))) . ' Siswa
                     </td>
                 </tr>
 
@@ -663,340 +663,454 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         
     }
     if (str_contains($title, 'JARINGAN')) {
-
-        $upload = (float) ($metrics['upload'] ?? 0);
-        $download = (float) ($metrics['download'] ?? 0);
-        $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
-
-        $networkClients = (int) ($metrics['network_clients'] ?? 0);
-        $networkNeed = (float) ($metrics['network_need'] ?? 0);
-
-        $accessPoint = (int) ($metrics['access_point'] ?? 0);
-        $apRequired = (int) ($metrics['ap_required'] ?? 0);
-
-        // ==============================
-        // PERBANDINGAN
-        // ==============================
-        $kekuranganBandwidth = max(
-            0,
-            round($networkNeed - $effectiveBandwidth, 2)
-        );
-
-        $kekuranganAP = max(
-            0,
-            $apRequired - $accessPoint
-        );
-
-        // ==============================
-        // STATUS
-        // ==============================
-        if (
-            ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
-            ($apRequired > 0 && $accessPoint < $apRequired)
-        ) {
-            $networkStatus = 'Kurang Memadai';
-
-        } elseif (
-            $networkNeed > 0 &&
-            $effectiveBandwidth >= $networkNeed &&
-            $accessPoint >= $apRequired
-        ) {
-            $networkStatus = 'Baik';
-
-        } else {
-            $networkStatus = 'Cukup';
+    $namaIspCadangan = '';
+        foreach ($data['answers'] ?? [] as $row) {
+            if (($row['question_id'] ?? 0) == 24) {
+                $namaIspCadangan = trim((string)($row['answer'] ?? ''));
+                break;
+            }
         }
 
-        // ==============================
-        // WARNA STATUS
-        // ==============================
-        if ($networkStatus === 'Kurang Memadai') {
-
-            $statusBoxStyle =
-                'background:#fef2f2;' .
-                'border:1px solid #fecaca;';
-
-            $statusBadgeStyle =
-                'color:#dc2626;' .
-                'background:#fee2e2;' .
-                'border:1px solid #fecaca;';
-
-            $statusDescriptionColor = '#1e293b';
-
-        } elseif ($networkStatus === 'Baik') {
-
-            $statusBoxStyle =
-                'background:#eff6ff;' .
-                'border:1px solid #bfdbfe;';
-
-            $statusBadgeStyle =
-                'color:#2563eb;' .
-                'background:#dbeafe;' .
-                'border:1px solid #bfdbfe;';
-
-            $statusDescriptionColor = '#1e293b';
-
-        } elseif ($networkStatus === 'Sangat Baik') {
-
-            $statusBoxStyle =
-                'background:#f0fdf4;' .
-                'border:1px solid #bbf7d0;';
-
-            $statusBadgeStyle =
-                'color:#16a34a;' .
-                'background:#dcfce7;' .
-                'border:1px solid #bbf7d0;';
-
-            $statusDescriptionColor = '#1e293b';
-
-        } else {
-
-            $statusBoxStyle =
-                'background:#fffbeb;' .
-                'border:1px solid #fde68a;';
-
-            $statusBadgeStyle =
-                'color:#92400e;' .
-                'background:#fef3c7;' .
-                'border:1px solid #fde68a;';
-
-            $statusDescriptionColor = '#1e293b';
+        // 2. JIKA KOSONG, BERI DEFAULT 'Tidak Ada'
+        if ($namaIspCadangan === '') {
+            $namaIspCadangan = 'Tidak Ada';
         }
+    // ==============================
+    // DATA ISP
+    // ==============================
+    $ispUtama = trim((string) ($metrics['isp_utama'] ?? ''));
+    $ispUtamaLainnya = trim((string) ($metrics['isp_utama_lainnya'] ?? ''));
+    $bandwidthIspUtama = (float) ($metrics['bandwidth_isp_utama'] ?? 0);
 
-        // ==============================
-        // DESKRIPSI STATUS
-        // ==============================
-        if ($networkStatus === 'Kurang Memadai') {
+    $ispCadangan = trim((string) ($metrics['isp_cadangan'] ?? ''));
+    $ispCadanganLainnya = trim((string) ($metrics['isp_cadangan_lainnya'] ?? ''));
+    $bandwidthIspCadangan = (float) ($metrics['bandwidth_isp_cadangan'] ?? 0);
 
-            $networkDescription =
-                'Kapasitas jaringan belum memenuhi kebutuhan pelaksanaan TKAP. ' .
-                'Bandwidth tersedia ' .
-                $e($effectiveBandwidth) .
-                ' Mbps dari kebutuhan ' .
-                $e($networkNeed) .
-                ' Mbps, sehingga masih terdapat kekurangan ' .
-                $e($kekuranganBandwidth) .
-                ' Mbps. Access Point tersedia ' .
-                $e($accessPoint) .
-                ' unit dari kebutuhan ' .
-                $e($apRequired) .
-                ' unit, sehingga masih terdapat kekurangan ' .
-                $e($kekuranganAP) .
-                ' unit.';
-
-        } elseif ($networkStatus === 'Baik') {
-
-            $networkDescription =
-                'Kapasitas jaringan telah memenuhi kebutuhan pelaksanaan TKAP. ' .
-                'Tersedia ' .
-                $e($effectiveBandwidth) .
-                ' Mbps dari kebutuhan ' .
-                $e($networkNeed) .
-                ' Mbps, serta tersedia ' .
-                $e($accessPoint) .
-                ' unit Access Point dari kebutuhan ' .
-                $e($apRequired) .
-                ' unit.';
-
-        } elseif ($networkStatus === 'Sangat Baik') {
-
-            $networkDescription =
-                'Kapasitas jaringan sangat baik dan telah memenuhi kebutuhan pelaksanaan TKAP.';
-
-        } else {
-
-            $networkDescription =
-                'Kapasitas jaringan cukup tersedia, namun masih terdapat aspek yang perlu diperhatikan untuk memastikan kestabilan selama pelaksanaan TKAP.';
-        }
-
-        return '
-
-        <div class="subtable-title">
-            Data Hasil Monitoring
-        </div>
-
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="width:65%;">Komponen</th>
-                    <th style="width:35%; text-align:center;">Hasil</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                <tr>
-                    <td>Jenis/Jaringan Internet</td>
-                    <td style="text-align:center;">
-                        ' . $e($metrics['jaringan'] ?? '-') . '
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Bandwidth Upload</td>
-                    <td style="text-align:center;">
-                        ' . $e($upload) . ' Mbps
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Bandwidth Download</td>
-                    <td style="text-align:center;">
-                        ' . $e($download) . ' Mbps
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Switch Hub</td>
-                    <td style="text-align:center;">
-                        ' . $e($metrics['switch'] ?? 0) . ' unit
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Access Point</td>
-                    <td style="text-align:center;">
-                        ' . $e($accessPoint) . ' unit
-                    </td>
-                </tr>
-
-            </tbody>
-        </table>
-
-
-        <div class="subtable-title">
-            Perhitungan Kebutuhan Berdasarkan Juknis
-        </div>
-
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="width:65%;">Uraian</th>
-                    <th style="width:35%; text-align:center;">Hasil</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                <tr>
-                    <td>Siswa Aktif per Sesi</td>
-                    <td style="text-align:center;">
-                        ' . $e($networkClients) . ' Siswa
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Rumus Kebutuhan Bandwidth</td>
-                    <td style="text-align:center;">
-                        0,4 Mbps × jumlah siswa
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Kebutuhan Bandwidth</td>
-                    <td style="text-align:center;">
-                        <strong>' . $e($networkNeed) . ' Mbps</strong>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Rumus Kebutuhan Access Point</td>
-                    <td style="text-align:center;">
-                        jumlah siswa ÷ 20
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Kebutuhan Access Point</td>
-                    <td style="text-align:center;">
-                        <strong>' . $e($apRequired) . ' unit</strong>
-                    </td>
-                </tr>
-
-            </tbody>
-        </table>
-
-
-        <div class="subtable-title">
-            Perbandingan Hasil Monitoring dengan Kebutuhan
-        </div>
-
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="width:35%;">Komponen</th>
-                    <th style="width:20%; text-align:center;">Tersedia</th>
-                    <th style="width:20%; text-align:center;">Kebutuhan</th>
-                    <th style="width:25%; text-align:center;">Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                <tr>
-                    <td>Bandwidth Efektif</td>
-                    <td style="text-align:center;">
-                        ' . $e($effectiveBandwidth) . ' Mbps
-                    </td>
-                    <td style="text-align:center;">
-                        ' . $e($networkNeed) . ' Mbps
-                    </td>
-                    <td style="text-align:center;">
-                        ' . (
-                            $kekuranganBandwidth > 0
-                                ? '<strong style="color:#dc2626;">' .
-                                $e($kekuranganBandwidth) .
-                                ' Mbps</strong>'
-                                : '<span style="color:#16a34a;">Memenuhi</span>'
-                        ) . '
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Access Point</td>
-                    <td style="text-align:center;">
-                        ' . $e($accessPoint) . ' unit
-                    </td>
-                    <td style="text-align:center;">
-                        ' . $e($apRequired) . ' unit
-                    </td>
-                    <td style="text-align:center;">
-                        ' . (
-                            $kekuranganAP > 0
-                                ? '<strong style="color:#dc2626;">' .
-                                $e($kekuranganAP) .
-                                ' unit</strong>'
-                                : '<span style="color:#16a34a;">Memenuhi</span>'
-                        ) . '
-                    </td>
-                </tr>
-
-            </tbody>
-        </table>
-
-
-        <div class="status-summary" style="
-            ' . $statusBoxStyle . '
-        ">
-
-            <div class="status-header">
-                <strong>Status:</strong>
-
-                <span class="status ' . $statusClass($networkStatus) . '" style="
-                    font-size:8.5pt;
-                    padding:3px 7px;
-                    border-radius:4px;
-                    ' . $statusBadgeStyle . '
-                ">
-                    ' . $e($networkStatus) . '
-                </span>
-            </div>
-
-            <div class="status-description" style="
-                color:' . $statusDescriptionColor . ';
-            ">
-                ' . $networkDescription . '
-            </div>
-
-        </div>';
+    // Jika pilihan ISP = Lainnya, gunakan nama ISP yang diisi manual
+    if (strcasecmp($ispUtama, 'Lainnya') === 0 && $ispUtamaLainnya !== '') {
+        $ispUtamaDisplay = $ispUtamaLainnya;
+    } else {
+        $ispUtamaDisplay = $ispUtama !== '' ? $ispUtama : '-';
     }
+
+    if (
+        $ispCadangan !== '' &&
+        strcasecmp($ispCadangan, 'Tidak Ada') !== 0
+    ) {
+        if (
+            strcasecmp($ispCadangan, 'Lainnya') === 0 &&
+            $ispCadanganLainnya !== ''
+        ) {
+            $ispCadanganDisplay = $ispCadanganLainnya;
+        } else {
+            $ispCadanganDisplay = $ispCadangan;
+        }
+    } else {
+        $ispCadanganDisplay = 'Tidak Ada';
+    }
+
+    $effectiveBandwidth = $bandwidthIspUtama;
+
+    $networkClients = (int) ($metrics['network_clients'] ?? 0);
+    $networkNeed = (float) ($metrics['network_need'] ?? 0);
+
+    $accessPoint = (int) ($metrics['access_point'] ?? 0);
+    $apRequired = (int) ($metrics['ap_required'] ?? 0);
+
+    // ==============================
+    // STATUS BACKUP INTERNET
+    // ==============================
+    $adaBackup = (
+        $ispCadangan !== '' &&
+        strcasecmp($ispCadangan, 'Tidak Ada') !== 0
+    );
+
+    // ==============================
+    // PERBANDINGAN
+    // ==============================
+    $kekuranganBandwidth = max(
+        0,
+        round($networkNeed - $effectiveBandwidth, 2)
+    );
+
+    $kekuranganAP = max(
+        0,
+        $apRequired - $accessPoint
+    );
+
+    // ==============================
+    // STATUS
+    // Status bandwidth utama menjadi dasar.
+    // ISP cadangan TIDAK dijumlahkan.
+    // ==============================
+    if (
+        ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
+        ($apRequired > 0 && $accessPoint < $apRequired)
+    ) {
+        $networkStatus = 'Kurang Memadai';
+
+    } elseif (
+        $networkNeed > 0 &&
+        $effectiveBandwidth >= $networkNeed &&
+        $accessPoint >= $apRequired
+    ) {
+        $networkStatus = 'Baik';
+
+    } else {
+        $networkStatus = 'Cukup';
+    }
+
+    // ==============================
+    // WARNA STATUS
+    // ==============================
+    if ($networkStatus === 'Kurang Memadai') {
+
+        $statusBoxStyle =
+            'background:#fef2f2;' .
+            'border:1px solid #fecaca;';
+
+        $statusBadgeStyle =
+            'color:#dc2626;' .
+            'background:#fee2e2;' .
+            'border:1px solid #fecaca;';
+
+        $statusDescriptionColor = '#1e293b';
+
+    } elseif ($networkStatus === 'Baik') {
+
+        $statusBoxStyle =
+            'background:#eff6ff;' .
+            'border:1px solid #bfdbfe;';
+
+        $statusBadgeStyle =
+            'color:#2563eb;' .
+            'background:#dbeafe;' .
+            'border:1px solid #bfdbfe;';
+
+        $statusDescriptionColor = '#1e293b';
+
+    } else {
+
+        $statusBoxStyle =
+            'background:#fffbeb;' .
+            'border:1px solid #fde68a;';
+
+        $statusBadgeStyle =
+            'color:#92400e;' .
+            'background:#fef3c7;' .
+            'border:1px solid #fde68a;';
+
+        $statusDescriptionColor = '#1e293b';
+    }
+
+    // ==============================
+    // DESKRIPSI STATUS
+    // ==============================
+    if ($networkStatus === 'Kurang Memadai') {
+
+        $networkDescription =
+            'Kapasitas bandwidth ISP utama belum memenuhi kebutuhan pelaksanaan TKAP. ' .
+            'Bandwidth ISP utama sebesar ' .
+            $e($effectiveBandwidth) .
+            ' Mbps dari kebutuhan ' .
+            $e($networkNeed) .
+            ' Mbps, sehingga masih terdapat kekurangan ' .
+            $e($kekuranganBandwidth) .
+            ' Mbps. ' .
+            'Access Point tersedia ' .
+            $e($accessPoint) .
+            ' unit dari kebutuhan ' .
+            $e($apRequired) .
+            ' unit, sehingga masih terdapat kekurangan ' .
+            $e($kekuranganAP) .
+            ' unit.';
+
+    } elseif ($networkStatus === 'Baik') {
+
+        $networkDescription =
+            'Bandwidth ISP utama telah memenuhi kebutuhan pelaksanaan TKAP. ' .
+            'Tersedia ' .
+            $e($effectiveBandwidth) .
+            ' Mbps dari kebutuhan minimum ' .
+            $e($networkNeed) .
+            ' Mbps, serta tersedia ' .
+            $e($accessPoint) .
+            ' unit Access Point dari kebutuhan ' .
+            $e($apRequired) .
+            ' unit.';
+
+    } else {
+
+        $networkDescription =
+            'Kapasitas jaringan cukup tersedia, namun aspek kestabilan jaringan ' .
+            'masih perlu diperhatikan untuk memastikan kelancaran pelaksanaan TKAP.';
+    }
+
+    // Tambahkan informasi ISP cadangan
+    if ($adaBackup) {
+
+        $networkDescription .=
+            ' Sekolah juga memiliki jaringan internet cadangan melalui ISP ' .
+            $e($ispCadanganDisplay) .
+            ' dengan bandwidth ' .
+            $e($bandwidthIspCadangan) .
+            ' Mbps. Ketersediaan jaringan cadangan merupakan nilai tambah ' .
+            'karena dapat mendukung kesinambungan koneksi apabila terjadi ' .
+            'gangguan pada ISP utama.';
+
+    } else {
+
+        $networkDescription .=
+            ' Sekolah belum memiliki jaringan internet cadangan. ' .
+            'Disarankan menyediakan ISP atau jaringan internet cadangan ' .
+            'untuk meningkatkan keandalan dan kesinambungan koneksi selama ' .
+            'pelaksanaan TKAP.';
+    }
+
+    return '
+
+    <div class="subtable-title">
+        Data Hasil Monitoring
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:65%;">Komponen</th>
+                <th style="width:35%; text-align:center;">Hasil</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>ISP Utama</td>
+                <td style="text-align:center;">
+                    ' . $e($ispUtamaDisplay) . '
+                </td>
+            </tr>
+
+            <tr>
+                <td>Bandwidth ISP Utama</td>
+                <td style="text-align:center;">
+                    ' . $e($bandwidthIspUtama) . ' Mbps
+                </td>
+            </tr>
+
+            <tr>
+                <td>ISP Cadangan</td>
+                <td style="text-align:center;">
+                    ' . $e($ispCadanganDisplay) . '
+                </td>
+            </tr>
+
+            <tr>
+                <td>Bandwidth ISP Cadangan</td>
+                <td style="text-align:center;">
+                    ' . (
+                        $adaBackup
+                            ? $e($bandwidthIspCadangan) . ' Mbps'
+                            : '-'
+                    ) . '
+                </td>
+            </tr>
+
+            <tr>
+                <td>Switch Hub</td>
+                <td style="text-align:center;">
+                    ' . $e($metrics['switch'] ?? 0) . ' unit
+                </td>
+            </tr>
+
+            <tr>
+                <td>Access Point</td>
+                <td style="text-align:center;">
+                    ' . $e($accessPoint) . ' unit
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+
+    <div class="subtable-title">
+        Perhitungan Kebutuhan Berdasarkan Juknis
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:65%;">Uraian</th>
+                <th style="width:35%; text-align:center;">Hasil</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>Siswa Aktif per Sesi</td>
+                <td style="text-align:center;">
+                    ' . $e($networkClients) . ' Siswa
+                </td>
+            </tr>
+
+            <tr>
+                <td>Rumus Kebutuhan Bandwidth</td>
+                <td style="text-align:center;">
+                    0,4 Mbps × jumlah siswa
+                </td>
+            </tr>
+
+            <tr>
+                <td>Kebutuhan Bandwidth Minimum</td>
+                <td style="text-align:center;">
+                    <strong>' . $e($networkNeed) . ' Mbps</strong>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Bandwidth ISP Utama</td>
+                <td style="text-align:center;">
+                    <strong>' . $e($bandwidthIspUtama) . ' Mbps</strong>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Rumus Kebutuhan Access Point</td>
+                <td style="text-align:center;">
+                    jumlah siswa ÷ 20
+                </td>
+            </tr>
+
+            <tr>
+                <td>Kebutuhan Access Point</td>
+                <td style="text-align:center;">
+                    <strong>' . $e($apRequired) . ' unit</strong>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+
+    <div class="subtable-title">
+        Perbandingan Hasil Monitoring dengan Kebutuhan
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:35%;">Komponen</th>
+                <th style="width:20%; text-align:center;">Tersedia</th>
+                <th style="width:20%; text-align:center;">Kebutuhan</th>
+                <th style="width:25%; text-align:center;">Keterangan</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>Bandwidth ISP Utama</td>
+
+                <td style="text-align:center;">
+                    ' . $e($effectiveBandwidth) . ' Mbps
+                </td>
+
+                <td style="text-align:center;">
+                    ' . $e($networkNeed) . ' Mbps
+                </td>
+
+                <td style="text-align:center;">
+                    ' . (
+                        $kekuranganBandwidth > 0
+                            ? '<strong style="color:#dc2626;">' .
+                              $e($kekuranganBandwidth) .
+                              ' Mbps</strong>'
+                            : '<span style="color:#16a34a;">Memenuhi</span>'
+                    ) . '
+                </td>
+            </tr>
+
+            <tr>
+                <td>Bandwidth ISP Cadangan</td>
+
+                <td style="text-align:center;">
+                    ' . (
+                        $adaBackup
+                            ? $e($bandwidthIspCadangan) . ' Mbps'
+                            : '<span style="color:#64748b;">Tidak Ada</span>'
+                    ) . '
+                </td>
+
+                <td style="text-align:center;">
+                    ' . $e($networkNeed) . ' Mbps
+                </td>
+
+                <td style="text-align:center;">
+                    ' . (
+                        !$adaBackup
+                            ? '<span style="color:#64748b;">Tidak Ada</span>'
+                            : (
+                                $bandwidthIspCadangan < $networkNeed
+                                    ? '<strong style="color:#dc2626;">Kurang</strong>'
+                                    : '<span style="color:#16a34a;">Memenuhi</span>'
+                            )
+                    ) . '
+                </td>
+            </tr>
+
+            <tr>
+                <td>Access Point</td>
+
+                <td style="text-align:center;">
+                    ' . $e($accessPoint) . ' unit
+                </td>
+
+                <td style="text-align:center;">
+                    ' . $e($apRequired) . ' unit
+                </td>
+
+                <td style="text-align:center;">
+                    ' . (
+                       $accessPoint < $apRequired
+                        ? '<strong style="color:#dc2626;">Kekurangan<br/.>' .
+                        $e($apRequired - $accessPoint) .
+                        ' unit</strong>'
+                        : '<span style="color:#16a34a;">Memenuhi</span>'
+                    ) . '
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+
+    <div class="status-summary" style="
+        ' . $statusBoxStyle . '
+    ">
+
+        <div class="status-header">
+            <strong>Status:</strong>
+
+            <span class="status ' . $statusClass($networkStatus) . '" style="
+                font-size:8.5pt;
+                padding:3px 7px;
+                border-radius:4px;
+                ' . $statusBadgeStyle . '
+            ">
+                ' . $e($networkStatus) . '
+            </span>
+        </div>
+
+        <div class="status-description" style="
+            color:' . $statusDescriptionColor . ';
+        ">
+            ' . $networkDescription . '
+        </div>
+
+    </div>';
+}
+
     if (str_contains($title, 'LISTRIK') || str_contains($title, 'PERANGKAT PENDUKUNG')) {
         $electricityStatus = $metrics['electricity_status'] ?? '-';
         $electricityStatus = $normalizeStatus($electricityStatus);
@@ -1074,40 +1188,93 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         $kebutuhanPerangkat - $totalPerangkat
     );
 
-    // =====================================================
+   // =====================================================
     // JARINGAN
     // =====================================================
-    $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+
+    $ispUtama = trim((string) ($metrics['isp_utama'] ?? ''));
+    $ispUtamaLainnya = trim((string) ($metrics['isp_utama_lainnya'] ?? ''));
+    $bandwidthIspUtama = (float) ($metrics['bandwidth_isp_utama'] ?? 0);
+
+    $ispCadangan = trim((string) ($metrics['isp_cadangan'] ?? ''));
+    $ispCadanganLainnya = trim((string) ($metrics['isp_cadangan_lainnya'] ?? ''));
+    $bandwidthIspCadangan = (float) ($metrics['bandwidth_isp_cadangan'] ?? 0);
+
+    // Nama ISP utama
+    if (
+        strcasecmp($ispUtama, 'Lainnya') === 0 &&
+        $ispUtamaLainnya !== ''
+    ) {
+        $ispUtamaDisplay = $ispUtamaLainnya;
+    } else {
+        $ispUtamaDisplay = $ispUtama !== ''
+            ? $ispUtama
+            : '-';
+    }
+
+    // Nama ISP cadangan
+    if (
+        $ispCadangan !== '' &&
+        strcasecmp($ispCadangan, 'Tidak Ada') !== 0
+    ) {
+        if (
+            strcasecmp($ispCadangan, 'Lainnya') === 0 &&
+            $ispCadanganLainnya !== ''
+        ) {
+            $ispCadanganDisplay = $ispCadanganLainnya;
+        } else {
+            $ispCadanganDisplay = $ispCadangan;
+        }
+    } else {
+        $ispCadanganDisplay = 'Tidak Ada';
+    }
+
+    // ISP utama menjadi bandwidth yang digunakan
+    // dalam perhitungan kebutuhan jaringan.
+    // Bandwidth ISP cadangan TIDAK dijumlahkan.
+    $effectiveBandwidth = $bandwidthIspUtama;
+
+    $networkClients = (int) ($metrics['network_clients'] ?? 0);
     $networkNeed = (float) ($metrics['network_need'] ?? 0);
 
     $accessPoint = (int) ($metrics['access_point'] ?? 0);
     $apRequired = (int) ($metrics['ap_required'] ?? 0);
 
+    // Ada ISP cadangan?
+    $adaBackup = (
+        $ispCadangan !== '' &&
+        strcasecmp($ispCadangan, 'Tidak Ada') !== 0
+    );
+
+    // Kekurangan bandwidth
+    $kekuranganBandwidth = max(
+        0,
+        round($networkNeed - $effectiveBandwidth, 2)
+    );
+
+    // Kekurangan Access Point
+    $kekuranganAP = max(
+        0,
+        $apRequired - $accessPoint
+    );
+
+    // Status jaringan
     if (
         ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
         ($apRequired > 0 && $accessPoint < $apRequired)
     ) {
         $networkStatus = 'Kurang Memadai';
+
     } elseif (
         $networkNeed > 0 &&
         $effectiveBandwidth >= $networkNeed &&
         $accessPoint >= $apRequired
     ) {
         $networkStatus = 'Baik';
+
     } else {
         $networkStatus = 'Cukup';
     }
-
-    $kekuranganBandwidth = max(
-        0,
-        round($networkNeed - $effectiveBandwidth, 2)
-    );
-
-    $kekuranganAP = max(
-        0,
-        $apRequired - $accessPoint
-    );
-
     // =====================================================
     // STATUS FINAL KESIAPAN SEKOLAH
     // PRIORITAS:
@@ -1135,7 +1302,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
     // PERSENTASE KEIKUTSERTAAN
     // =====================================================
     $persenPeserta = $totalSiswa > 0
-        ? round(($ikut / $totalSiswa) * 100)
+        ? round(($ikut / $totalSiswa) * 100, 2)
         : 0;
 
     return '
@@ -1230,7 +1397,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                                 color:#64748b;
                                 margin-top:2px;
                             ">
-                                Laboratorium Komputer
+                                Lab. Komputer
                             </div>
 
                         </td>
@@ -1469,146 +1636,302 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                  4. KESIAPAN JARINGAN
                  ===================================================== -->
             <td colspan="2" style="
-                width:66.66%;
-                border:1px solid #cbd5e1;
-                background:#f8fafc;
-                padding:12px;
-                vertical-align:top;
-                text-align:center;
+            width:66.66%;
+            border:1px solid #cbd5e1;
+            background:#f8fafc;
+            padding:12px;
+            vertical-align:top;
+            text-align:center;
+        ">
+
+            <div style="
+                font-size:11pt;
+                font-weight:bold;
+                color:#1e3a5f;
+                margin-bottom:10px;
+                text-align:left;
+            ">
+                KESIAPAN JARINGAN
+            </div>
+
+            <!-- DATA ISP -->
+            <table style="
+                width:100%;
+                border-collapse:collapse;
+                margin-bottom:8px;
+            ">
+                <tr>
+
+                    <td style="
+                        width:50%;
+                        text-align:center;
+                        border-right:1px solid #cbd5e1;
+                        padding:5px;
+                    ">
+                        <div style="
+                            font-size:15pt;
+                            font-weight:bold;
+                            color:#1e293b;
+                        ">
+                            ' . $e($ispUtamaDisplay) . '
+                        </div>
+
+                        <div style="
+                            font-size:8.5pt;
+                            color:#64748b;
+                        ">
+                            ISP Utama
+                        </div>
+                    </td>
+
+                    <td style="
+                        width:50%;
+                        text-align:center;
+                        padding:5px;
+                    ">
+                        <div style="
+                            font-size:15pt;
+                            font-weight:bold;
+                            color:#1e293b;
+                        ">
+                            ' . $e($bandwidthIspUtama) . ' Mbps
+                        </div>
+
+                        <div style="
+                            font-size:8.5pt;
+                            color:#64748b;
+                        ">
+                            Bandwidth ISP Utama
+                        </div>
+                    </td>
+
+                </tr>
+            </table>
+
+            <!-- ISP CADANGAN -->
+            <table style="
+                width:100%;
+                border-collapse:collapse;
+                margin-bottom:8px;
+            ">
+                <tr>
+
+                    <td style="
+                        width:50%;
+                        text-align:center;
+                        border-right:1px solid #cbd5e1;
+                        padding:5px;
+                    ">
+                        <div style="
+                            font-size:13pt;
+                            font-weight:bold;
+                            color:#1e293b;
+                        ">
+                          ' . $e(($metrics['isp_cadangan_lainnya'] ?? '') ?: ($metrics['isp_cadangan'] ?? 'Tidak Ada')) . '
+                        </div>
+
+                        <div style="
+                            font-size:8.5pt;
+                            color:#64748b;
+                        ">
+                            ISP Cadangan
+                        </div>
+                    </td>
+
+                    <td style="
+                        width:50%;
+                        text-align:center;
+                        padding:5px;
+                    ">
+                        <div style="
+                            font-size:13pt;
+                            font-weight:bold;
+                            color:#1e293b;
+                        ">
+                            ' .
+                            (
+                                $adaBackup
+                                    ? $e($bandwidthIspCadangan) . ' Mbps'
+                                    : '-'
+                            ) . '
+                        </div>
+
+                        <div style="
+                            font-size:8.5pt;
+                            color:#64748b;
+                        ">
+                            Bandwidth ISP Cadangan
+                        </div>
+                    </td>
+
+                </tr>
+            </table>
+
+            <!-- PERHITUNGAN JUKNIS -->
+            <div style="
+                margin-top:8px;
+                padding:7px 9px;
+                background:#ffffff;
+                border:1px solid #e2e8f0;
+                text-align:left;
             ">
 
                 <div style="
-                    font-size:11pt;
+                    font-size:9pt;
                     font-weight:bold;
                     color:#1e3a5f;
-                    margin-bottom:10px;
-                    text-align:left;
+                    margin-bottom:5px;
                 ">
-                    KESIAPAN JARINGAN
+                    Perhitungan Berdasarkan Juknis
                 </div>
 
-                <table style="
-                    width:100%;
-                    border-collapse:collapse;
+                <div style="
+                    font-size:8.5pt;
+                    color:#475569;
+                    line-height:1.5;
                 ">
-                    <tr>
+                    Siswa aktif per sesi:
+                    <strong>' . $e($networkClients) . ' siswa</strong>
+                    <br>
 
-                        <td style="
-                            width:50%;
-                            text-align:center;
-                            border-right:1px solid #cbd5e1;
-                        ">
+                    Kebutuhan bandwidth:
+                    <strong>0,4 Mbps × jumlah siswa</strong>
+                    <br>
 
-                            <div style="
-                                font-size:20pt;
-                                font-weight:bold;
-                                color:#1e293b;
-                            ">
-                                ' . $e($networkNeed) . ' Mbps
-                            </div>
+                    Kebutuhan bandwidth minimum:
+                    <strong>' . $e($networkNeed) . ' Mbps</strong>
+                    <br>
 
-                            <div style="font-size:9.5pt;">
-                                Kebutuhan Bandwidth
-                            </div>
+                    Bandwidth ISP utama:
+                    <strong>' . $e($bandwidthIspUtama) . ' Mbps</strong>
+                </div>
 
-                        </td>
+            </div>
 
-                        <td style="
-                            width:50%;
-                            text-align:center;
-                        ">
+            <!-- ACCESS POINT -->
+            <div style="
+                margin-top:6px;
+                padding:7px 9px;
+                background:#ffffff;
+                border:1px solid #e2e8f0;
+                text-align:left;
+            ">
 
-                            <div style="
-                                font-size:20pt;
-                                font-weight:bold;
-                                color:#1e293b;
-                            ">
-                                ' . $e($effectiveBandwidth) . ' Mbps
-                            </div>
+                <div style="
+                    font-size:8.5pt;
+                    color:#475569;
+                    line-height:1.5;
+                ">
+                    Access Point tersedia:
+                    <strong>' . $e($accessPoint) . ' unit</strong>
+                    &nbsp;|&nbsp;
 
-                            <div style="font-size:9.5pt;">
-                                Bandwidth Efektif
-                            </div>
+                    Kebutuhan:
+                    <strong>' . $e($apRequired) . ' unit</strong>
+                </div>
 
-                        </td>
+            </div>
 
-                    </tr>
-                </table>
+            <!-- STATUS -->
+            <div class="status-summary" style="
+                margin:8px 0 0;
+                padding:7px 8px;
+                ' .
+                (
+                    $networkStatus === 'Kurang Memadai'
+                        ? 'background:#fef2f2;border:1px solid #fecaca;'
+                        : (
+                            $networkStatus === 'Cukup'
+                                ? 'background:#fffbeb;border:1px solid #fde68a;'
+                                : 'background:#eff6ff;border:1px solid #bfdbfe;'
+                        )
+                ) . '
+            ">
 
-                <div class="status-summary" style="
-                    margin:8px 0 0;
-                    padding:6px 8px;
-                    ' . (
-                        $networkStatus === 'Kurang Memadai'
-                            ? 'background:#fef2f2;border:1px solid #fecaca;'
-                            : (
-                                $networkStatus === 'Cukup'
-                                    ? 'background:#fffbeb;border:1px solid #fde68a;'
-                                    : ''
-                            )
-                    ) . '
+                <div class="status-header" style="
+                    justify-content:center;
                 ">
 
-                    <div class="status-header" style="
-                        justify-content:center;
-                    ">
+                    <strong style="font-size:10pt;">
+                        Status:
+                    </strong>
 
-                        <strong style="font-size:10pt;">
-                            Status:
-                        </strong>
-
-                        <span class="status ' . $statusClass($networkStatus) . '" style="
-                            font-size:8.5pt;
-                            padding:3px 7px;
-                            border-radius:4px;
-                            ' .
-                            ($networkStatus === 'Kurang Memadai'
+                    <span class="status ' . $statusClass($networkStatus) . '" style="
+                        font-size:8.5pt;
+                        padding:3px 7px;
+                        border-radius:4px;
+                        ' .
+                        (
+                            $networkStatus === 'Kurang Memadai'
                                 ? 'color:#dc2626;background:#fee2e2;border-color:#fecaca;'
                                 : (
                                     $networkStatus === 'Baik'
                                         ? 'color:#2563eb;background:#dbeafe;border-color:#bfdbfe;'
-                                        : (
-                                            $networkStatus === 'Sangat Baik'
-                                                ? 'color:#16a34a;background:#dcfce7;border-color:#bbf7d0;'
-                                                : 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
-                                        )
+                                        : 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
                                 )
-                            ) .
-                        '">
-                            ' . $e($networkStatus) . '
-                        </span>
-
-                    </div>
+                        ) .
+                    '">
+                        ' . $e($networkStatus) . '
+                    </span>
 
                 </div>
 
-                <div style="
-                    margin-top:8px;
-                    font-size:8.5pt;
-                    color:#64748b;
-                    line-height:1.35;
-                ">
-                    <strong>Keterangan:</strong>
-                    ' . (
-                        ($kekuranganBandwidth > 0 && $kekuranganAP > 0)
-                            ? 'Kekurangan ' . $e($kekuranganBandwidth) . ' Mbps dan ' .
-                              $e($kekuranganAP) . ' AP.'
+            </div>
 
-                            : (
-                                $kekuranganBandwidth > 0
-                                    ? 'Kekurangan ' . $e($kekuranganBandwidth) . ' Mbps.'
+            <!-- KETERANGAN -->
+            <div style="
+                margin-top:8px;
+                font-size:8.5pt;
+                color:#64748b;
+                line-height:1.45;
+                text-align:left;
+            ">
 
-                                    : (
-                                        $kekuranganAP > 0
-                                            ? 'Kekurangan ' . $e($kekuranganAP) . ' AP.'
-                                            : 'Kebutuhan jaringan telah terpenuhi.'
-                                    )
-                            )
-                    ) . '
-                </div>
+                <strong>Keterangan:</strong>
 
-            </td>
+                ' .
+                (
+                    ($kekuranganBandwidth > 0 && $kekuranganAP > 0)
 
+                        ? 'Bandwidth ISP utama masih kurang ' .
+                        $e($kekuranganBandwidth) .
+                        ' Mbps dan Access Point masih kurang ' .
+                        $e($kekuranganAP) . ' unit.'
+
+                        : (
+                            $kekuranganBandwidth > 0
+
+                                ? 'Bandwidth ISP utama masih kurang ' .
+                                $e($kekuranganBandwidth) . ' Mbps.'
+
+                                : (
+                                    $kekuranganAP > 0
+
+                                        ? 'Access Point masih kurang ' .
+                                        $e($kekuranganAP) . ' unit.'
+
+                                        : 'Kebutuhan bandwidth dan Access Point telah terpenuhi.'
+                                )
+                        )
+                ) . '
+
+                ' .
+
+                (
+                    $adaBackup
+
+                        ? ' Sekolah juga memiliki ISP cadangan melalui ' .
+                        $e($ispCadanganDisplay) .
+                        ' dengan bandwidth ' .
+                        $e($bandwidthIspCadangan) .
+                        ' Mbps. Ketersediaan jaringan cadangan merupakan nilai tambah karena dapat mendukung kesinambungan koneksi apabila terjadi gangguan pada ISP utama.'
+
+                        : ' Sekolah belum memiliki ISP cadangan. Disarankan menyediakan jaringan internet cadangan untuk meningkatkan keandalan dan kesinambungan koneksi selama pelaksanaan TKAP.'
+                ) . '
+
+            </div>
+
+        </td>
 
             <!-- =====================================================
                  5. KESIAPAN LISTRIK
@@ -1819,21 +2142,166 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 $kekurangan . ' unit.';
         }
 
+        // =====================================================
         // JARINGAN
-        $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+        // =====================================================
+
+        $ispUtama = trim((string) ($metrics['isp_utama'] ?? ''));
+        $ispUtamaLainnya = trim((string) ($metrics['isp_utama_lainnya'] ?? ''));
+        $bandwidthIspUtama = (float) ($metrics['bandwidth_isp_utama'] ?? 0);
+
+        $ispCadangan = trim((string) ($metrics['isp_cadangan'] ?? ''));
+        $ispCadanganLainnya = trim((string) ($metrics['isp_cadangan_lainnya'] ?? ''));
+        $bandwidthIspCadangan = (float) ($metrics['bandwidth_isp_cadangan'] ?? 0);
+
+        // Nama ISP utama
+        if (
+            strcasecmp($ispUtama, 'Lainnya') === 0 &&
+            $ispUtamaLainnya !== ''
+        ) {
+            $ispUtamaDisplay = $ispUtamaLainnya;
+        } else {
+            $ispUtamaDisplay = $ispUtama !== ''
+                ? $ispUtama
+                : '-';
+        }
+
+        // Cek ISP cadangan
+        $adaBackup = (
+            $ispCadangan !== '' &&
+            strcasecmp($ispCadangan, 'Tidak Ada') !== 0
+        );
+
+        // Nama ISP cadangan
+        if ($adaBackup) {
+
+            if (
+                strcasecmp($ispCadangan, 'Lainnya') === 0 &&
+                $ispCadanganLainnya !== ''
+            ) {
+                $ispCadanganDisplay = $ispCadanganLainnya;
+            } else {
+                $ispCadanganDisplay = $ispCadangan;
+            }
+
+        } else {
+            $ispCadanganDisplay = 'Tidak Ada';
+        }
+
+        // =====================================================
+        // KEBUTUHAN BANDWIDTH
+        // =====================================================
+
+        $effectiveBandwidth = $bandwidthIspUtama;
         $networkNeed = (float) ($metrics['network_need'] ?? 0);
 
-        if ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) {
+        // =====================================================
+        // CEK BANDWIDTH ISP UTAMA
+        // =====================================================
+
+        if ($networkNeed > 0 && $bandwidthIspUtama < $networkNeed) {
+
             $kekuranganBandwidth = round(
-                $networkNeed - $effectiveBandwidth,
+                $networkNeed - $bandwidthIspUtama,
                 2
             );
 
             $findings[] =
-                'Kapasitas bandwidth efektif belum memenuhi kebutuhan. Bandwidth efektif sebesar ' .
-                $effectiveBandwidth . ' Mbps, sedangkan kebutuhan sebesar ' .
-                $networkNeed . ' Mbps, sehingga terdapat kekurangan sebesar ' .
-                $kekuranganBandwidth . ' Mbps.';
+                'Kapasitas bandwidth ISP utama belum memenuhi kebutuhan. ' .
+                'ISP utama ' . $ispUtamaDisplay .
+                ' memiliki bandwidth sebesar ' .
+                $bandwidthIspUtama .
+                ' Mbps, sedangkan kebutuhan berdasarkan Juknis sebesar ' .
+                $networkNeed .
+                ' Mbps, sehingga terdapat kekurangan sebesar ' .
+                $kekuranganBandwidth .
+                ' Mbps.';
+
+        }
+         // =====================================================
+        // CEK ACCESS POINT (TAMBAHKAN KODE INI DI SINI)
+        // =====================================================
+
+        $accessPoint = (int) ($metrics['access_point'] ?? 0);
+        $apRequired  = (int) ($metrics['ap_required'] ?? 0);
+
+        if ($apRequired > 0 && $accessPoint < $apRequired) {
+
+            $kekuranganAP = $apRequired - $accessPoint;
+
+            $findings[] =
+                'Ketersediaan Access Point belum memenuhi kebutuhan. ' .
+                'Tersedia ' . $accessPoint . ' unit dari kebutuhan berdasarkan Juknis sebesar ' .
+                $apRequired . ' unit, sehingga masih terdapat kekurangan ' .
+                $kekuranganAP . ' unit Access Point.';
+
+        }
+        // =====================================================
+        // CEK ISP CADANGAN
+        // =====================================================
+
+        if (!$adaBackup) {
+
+            // TIDAK ADA ISP CADANGAN = TEMUAN
+            $findings[] =
+                'Sekolah belum memiliki ISP atau jaringan internet cadangan. ' .
+                'Konektivitas internet masih bergantung pada ISP utama sehingga ' .
+                'berpotensi menghambat pelaksanaan TKAP apabila terjadi gangguan ' .
+                'pada jaringan utama.';
+
+            // TINDAK LANJUT
+            $followUps[] =
+                'Sekolah disarankan menyediakan ISP atau jaringan internet cadangan ' .
+                'untuk meningkatkan keandalan dan kesinambungan koneksi selama ' .
+                'pelaksanaan TKAP.';
+
+        } else {
+
+            // =================================================
+            // CEK BANDWIDTH ISP CADANGAN
+            // =================================================
+
+            if ($networkNeed > 0 && $bandwidthIspCadangan < $networkNeed) {
+
+                $kekuranganBandwidthCadangan = round(
+                    $networkNeed - $bandwidthIspCadangan,
+                    2
+                );
+
+                $findings[] =
+                    'Bandwidth ISP cadangan belum memenuhi kebutuhan minimum. ' .
+                    'ISP cadangan ' . $ispCadanganDisplay .
+                    ' memiliki bandwidth sebesar ' .
+                    $bandwidthIspCadangan .
+                    ' Mbps, sedangkan kebutuhan berdasarkan Juknis sebesar ' .
+                    $networkNeed .
+                    ' Mbps, sehingga terdapat kekurangan sebesar ' .
+                    $kekuranganBandwidthCadangan .
+                    ' Mbps apabila jaringan cadangan digunakan sebagai pengganti ISP utama.';
+
+                $followUps[] =
+                    'Sekolah disarankan meningkatkan kapasitas bandwidth ISP cadangan ' .
+                    'agar mampu memenuhi kebutuhan minimum jaringan berdasarkan Juknis.';
+
+            } else {
+
+                // ISP CADANGAN ADA DAN BANDWIDTH MEMENUHI
+                $findings[] =
+                    'Sekolah telah memiliki ISP utama ' .
+                    $ispUtamaDisplay .
+                    ' sebesar ' .
+                    $bandwidthIspUtama .
+                    ' Mbps dan ISP cadangan ' .
+                    $ispCadanganDisplay .
+                    ' sebesar ' .
+                    $bandwidthIspCadangan .
+                    ' Mbps. ISP cadangan tersedia sebagai alternatif koneksi apabila ' .
+                    'terjadi gangguan pada ISP utama.';
+
+                $followUps[] =
+                    'Memastikan ISP cadangan tetap aktif, berfungsi dengan baik, ' .
+                    'dan siap digunakan apabila terjadi gangguan pada ISP utama.';
+            }
         }
 
         if (empty($findings)) {
@@ -1886,7 +2354,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
     ) {
         $recommendations = [];
 
-        // PERANGKAT
+        // 1. PERANGKAT
         $totalPerangkat = (int) ($metrics['total_perangkat'] ?? 0);
         $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
 
@@ -1896,19 +2364,61 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             $recommendations[] =
                 'Menambah atau menyiapkan ' .
                 $kekurangan .
-                ' unit perangkat serta memastikan seluruh perangkat siap digunakan.';
+                ' unit perangkat komputer atau laptop serta memastikan seluruh perangkat siap digunakan.';
         }
 
-        // JARINGAN
-        $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+        // 2. JARINGAN - BANDWIDTH ISP UTAMA
+        $bandwidthIspUtama = (float) ($metrics['bandwidth_isp_utama'] ?? 0);
         $networkNeed = (float) ($metrics['network_need'] ?? 0);
 
-        if ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) {
+        if ($networkNeed > 0 && $bandwidthIspUtama < $networkNeed) {
+            $kekuranganBandwidth = round($networkNeed - $bandwidthIspUtama, 2);
+
             $recommendations[] =
-                'Meningkatkan kapasitas bandwidth agar memenuhi kebutuhan ' .
-                'pelaksanaan TKAP dan memastikan kestabilan jaringan selama pelaksanaan.';
+                'Meningkatkan kapasitas bandwidth ISP utama minimal sebesar ' .
+                $kekuranganBandwidth .
+                ' Mbps agar memenuhi kebutuhan minimum pelaksanaan TKAP dan menjaga kestabilan jaringan.';
         }
 
+        // 3. JARINGAN - ACCESS POINT
+        $accessPoint = (int) ($metrics['access_point'] ?? 0);
+        $apRequired  = (int) ($metrics['ap_required'] ?? 0);
+
+        if ($apRequired > 0 && $accessPoint < $apRequired) {
+            $kekuranganAP = $apRequired - $accessPoint;
+
+            $recommendations[] =
+                'Menambah ketersediaan Access Point sebanyak ' .
+                $kekuranganAP .
+                ' unit untuk memastikan distribusi sinyal jaringan merata di area pelaksanaan TKAP.';
+        }
+
+        // 4. JARINGAN - ISP CADANGAN
+        $ispCadangan = trim((string) ($metrics['isp_cadangan'] ?? ''));
+        $bandwidthIspCadangan = (float) ($metrics['bandwidth_isp_cadangan'] ?? 0);
+
+        $adaBackup = (
+            $ispCadangan !== '' &&
+            strcasecmp($ispCadangan, 'Tidak Ada') !== 0
+        );
+
+        if (!$adaBackup) {
+            // Jika Tidak Ada ISP Cadangan
+            $recommendations[] =
+                'Menyediakan ISP atau jaringan internet cadangan untuk meningkatkan keandalan dan kesinambungan koneksi selama pelaksanaan TKAP.';
+        } else {
+            // Jika ISP Cadangan Ada tapi Bandwidth Kurang
+            if ($networkNeed > 0 && $bandwidthIspCadangan < $networkNeed) {
+                $recommendations[] =
+                    'Meningkatkan kapasitas bandwidth ISP cadangan agar mampu memenuhi kebutuhan minimum jaringan apabila digunakan sebagai pengganti ISP utama.';
+            } else {
+                // Jika ISP Cadangan Ada dan Cukup
+                $recommendations[] =
+                    'Memastikan ISP cadangan tetap aktif, berfungsi dengan baik, dan siap digunakan secara optimal apabila terjadi gangguan pada ISP utama.';
+            }
+        }
+
+        // TAMPILAN JIKA TIDAK ADA TINDAK LANJUT
         if (empty($recommendations)) {
             return '
             <div class="status-summary">
@@ -1917,12 +2427,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <span class="status sangat-baik">Tidak Ada</span>
                 </div>
                 <div class="status-description">
-                    Berdasarkan hasil monitoring dan evaluasi, tidak terdapat
-                    tindak lanjut khusus yang diperlukan.
+                    Berdasarkan hasil monitoring dan evaluasi, seluruh infrastruktur telah terpenuhi sehingga tidak terdapat tindak lanjut khusus yang diperlukan.
                 </div>
             </div>';
         }
 
+        // RENDER TABEL TINDAK LANJUT
         $html = '
         <table class="data-table">
             <thead>
@@ -1960,9 +2470,9 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         $komputerUtama = (int) ($metrics['komputer_utama'] ?? 0);
         $kebutuhanPerangkat = (int) ($metrics['kebutuhan_perangkat_juknis'] ?? 0);
 
-        $upload = (float) ($metrics['upload'] ?? 0);
-        $download = (float) ($metrics['download'] ?? 0);
-        $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? 0);
+        $bandwidthIspUtama = (float) ($metrics['bandwidth_isp_utama'] ?? 0);
+        $bandwidthIspCadangan = (float) ($metrics['bandwidth_isp_cadangan'] ?? 0);
+        $ispCadangan = trim((string) ($metrics['isp_cadangan'] ?? ''));
         $networkNeed = (float) ($metrics['network_need'] ?? 0);
 
         $accessPoint = (int) ($metrics['access_point'] ?? 0);
@@ -1972,8 +2482,14 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         $ups = (int) ($metrics['ups'] ?? 0);
 
         $persenPeserta = $totalSiswa > 0
-            ? round(($ikut / $totalSiswa) * 100)
+            ? round(($ikut / $totalSiswa) * 100, 2)
             : 0;
+
+        // Cek ISP Cadangan
+        $adaBackup = (
+            $ispCadangan !== '' &&
+            strcasecmp($ispCadangan, 'Tidak Ada') !== 0
+        );
 
         // =====================================================
         // STATUS PERANGKAT
@@ -1999,7 +2515,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         // STATUS JARINGAN
         // =====================================================
         if (
-            ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
+            ($networkNeed > 0 && $bandwidthIspUtama < $networkNeed) ||
             ($apRequired > 0 && $accessPoint < $apRequired)
         ) {
 
@@ -2007,7 +2523,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
         } elseif (
             $networkNeed > 0 &&
-            $effectiveBandwidth >= $networkNeed &&
+            $bandwidthIspUtama >= $networkNeed &&
             $accessPoint >= $apRequired
         ) {
 
@@ -2020,8 +2536,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
         // =====================================================
         // STATUS FINAL KESIAPAN SEKOLAH
-        // PRIORITAS:
-        // KURANG MEMADAI > CUKUP > BAIK > SANGAT BAIK
         // =====================================================
         if (
             $deviceStatus === 'Kurang Memadai' ||
@@ -2077,6 +2591,34 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         }
 
         // =====================================================
+        // PENGECEKAN TAMPILAN MERAH (TERSEDIA < KEBUTUHAN)
+        // =====================================================
+
+        // 1. Perangkat
+        $isPerangkatKurang = ($kebutuhanPerangkat > 0 && $totalPerangkat < $kebutuhanPerangkat);
+        $stylePerangkat = $isPerangkatKurang ? 'color:#dc2626; font-weight:bold;' : '';
+        $textPerangkat = '<span style="' . $stylePerangkat . '">' . $e($totalPerangkat) . ' tersedia</span> / ' . $e($kebutuhanPerangkat) . ' kebutuhan';
+
+        // 2. Bandwidth ISP Utama
+        $isUtamaKurang = ($networkNeed > 0 && $bandwidthIspUtama < $networkNeed);
+        $styleUtama = $isUtamaKurang ? 'color:#dc2626; font-weight:bold;' : '';
+        $textUtama = '<span style="' . $styleUtama . '">' . $e($bandwidthIspUtama) . ' Mbps tersedia</span> / ' . $e($networkNeed) . ' Mbps kebutuhan';
+
+        // 3. Bandwidth ISP Cadangan
+        if (!$adaBackup) {
+            $textCadangan = 'Tidak Ada';
+        } else {
+            $isCadanganKurang = ($networkNeed > 0 && $bandwidthIspCadangan < $networkNeed);
+            $styleCadangan = $isCadanganKurang ? 'color:#dc2626; font-weight:bold;' : '';
+            $textCadangan = '<span style="' . $styleCadangan . '">' . $e($bandwidthIspCadangan) . ' Mbps tersedia</span> / ' . $e($networkNeed) . ' Mbps kebutuhan';
+        }
+
+        // 4. Access Point
+        $isApKurang = ($apRequired > 0 && $accessPoint < $apRequired);
+        $styleAp = $isApKurang ? 'color:#dc2626; font-weight:bold;' : '';
+        $textAp = '<span style="' . $styleAp . '">' . $e($accessPoint) . ' tersedia</span> / ' . $e($apRequired) . ' kebutuhan';
+
+        // =====================================================
         // TABEL KESIMPULAN
         // =====================================================
         return '
@@ -2109,8 +2651,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 <tr>
                     <td>Perangkat</td>
                     <td style="text-align:center;">
-                        ' . $e($totalPerangkat) . ' tersedia /
-                        ' . $e($kebutuhanPerangkat) . ' kebutuhan
+                        ' . $textPerangkat . '
                     </td>
                 </tr>
 
@@ -2124,18 +2665,23 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 </tr>
 
                 <tr>
-                    <td>Bandwidth</td>
+                    <td>Bandwidth ISP Utama</td>
                     <td style="text-align:center;">
-                        ' . $e($effectiveBandwidth) . ' Mbps tersedia /
-                        ' . $e($networkNeed) . ' Mbps kebutuhan
+                        ' . $textUtama . '
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Bandwidth ISP Cadangan</td>
+                    <td style="text-align:center;">
+                        ' . $textCadangan . '
                     </td>
                 </tr>
 
                 <tr>
                     <td>Access Point</td>
                     <td style="text-align:center;">
-                        ' . $e($accessPoint) . ' tersedia /
-                        ' . $e($apRequired) . ' kebutuhan
+                        ' . $textAp . '
                     </td>
                 </tr>
 

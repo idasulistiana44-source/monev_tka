@@ -1,10 +1,17 @@
 <aside class="app-sidebar">
-    <a href="<?= base_url('dashboard') ?>" class="sidebar-brand">
-        <span class="sidebar-brand-icon">
-            <i class="fas fa-chart-line"></i>
-        </span>
-        <span class="sidebar-brand-text">Monev TKAP</span>
-    </a>
+    <div class="sidebar-header d-flex align-items-center justify-content-between p-3">
+        <a href="<?= base_url('dashboard') ?>" class="sidebar-brand d-flex align-items-center text-decoration-none">
+            <span class="sidebar-brand-icon me-2">
+                <i class="fas fa-chart-line"></i>
+            </span>
+            <span class="sidebar-brand-text">Monev TKAP</span>
+        </a>
+        <!-- Tombol Close (Khusus Mobile/Tablet) -->
+        <button type="button" class="btn-sidebar-close d-lg-none bg-transparent border-0 text-white p-0" id="sidebarCloseBtn" style="font-size: 1.25rem; cursor: pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
     <ul class="sidebar-menu">
         <li class="sidebar-menu-title">Menu Utama</li>
         <li class="<?= url_is('dashboard') || url_is('/') ? 'active' : '' ?>">
@@ -68,3 +75,70 @@
         </li>
     </ul>
 </aside>
+
+<!-- Script penanganan klik tombol close -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+    const sidebar = document.querySelector('.app-sidebar');
+    const body = document.body;
+
+    // Cari kontainer utama yang terdorong
+    const mainContent = document.querySelector('.main-content, .app-content, .content-wrapper, main, .wrapper');
+
+    // Fungsi Kusus Tombol CLOSE (X): Mengembalikan posisi kontainer ke awal secara mutlak
+    if (sidebarCloseBtn) {
+        sidebarCloseBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // 1. Sembunyikan Sidebar
+            if (sidebar) {
+                sidebar.classList.remove('show', 'active', 'open');
+            }
+
+            // 2. Hapus class pendorong di body/wrapper
+            body.classList.remove('sidebar-open', 'sidebar-mobile-open', 'toggled', 'sidebar-enable');
+
+            // 3. Paksa reset margin/transform kontainer ke posisi semula (0)
+            if (mainContent) {
+                mainContent.style.marginLeft = '0px';
+                mainContent.style.transform = 'none';
+                mainContent.style.setProperty('margin-left', '0px', 'important');
+                mainContent.style.setProperty('transform', 'none', 'important');
+            }
+        });
+    }
+});document.addEventListener('DOMContentLoaded', function () {
+    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+    const sidebar = document.querySelector('.app-sidebar');
+    const body = document.body;
+
+    // Cari kontainer utama yang terdorong
+    const mainContent = document.querySelector('.main-content, .app-content, .content-wrapper, main, .wrapper');
+
+    // Fungsi Kusus Tombol CLOSE (X): Mengembalikan posisi kontainer ke awal secara mutlak
+    if (sidebarCloseBtn) {
+        sidebarCloseBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // 1. Sembunyikan Sidebar
+            if (sidebar) {
+                sidebar.classList.remove('show', 'active', 'open');
+            }
+
+            // 2. Hapus class pendorong di body/wrapper
+            body.classList.remove('sidebar-open', 'sidebar-mobile-open', 'toggled', 'sidebar-enable');
+
+            // 3. Paksa reset margin/transform kontainer ke posisi semula (0)
+            if (mainContent) {
+                mainContent.style.marginLeft = '0px';
+                mainContent.style.transform = 'none';
+                mainContent.style.setProperty('margin-left', '0px', 'important');
+                mainContent.style.setProperty('transform', 'none', 'important');
+            }
+        });
+    }
+});
+</script>

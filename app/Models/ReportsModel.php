@@ -209,10 +209,16 @@ class ReportsModel extends Model
         $switch=(int)$this->numberFrom($a['INF-06']??0);
         $ups=(int)$this->numberFrom($a['INF-07']??0);
         $accessPoint=(int)$this->numberFrom($a['INF-08']??0);
-        $daya=$a['INF-09']??'';
-        $jaringan=$a['INF-10']??'';
-        $upload=(float)$this->numberFrom($a['INF-11']??0);
-        $download=(float)$this->numberFrom($a['INF-12']??0);
+        $daya = $a['INF-09'] ?? '';
+        $jaringan = $a['INF-10'] ?? '';
+
+        $ispUtama = trim((string)($a['INF-11'] ?? ''));
+        $ispUtamaLainnya = trim((string)($a['INF-12'] ?? ''));
+        $bandwidthIspUtama = (float)$this->numberFrom($a['INF-13'] ?? 0);
+
+        $ispCadangan = trim((string)($a['INF-14'] ?? ''));
+        $ispCadanganLainnya = trim((string)($a['INF-15'] ?? ''));
+        $bandwidthIspCadangan = (float)$this->numberFrom($a['INF-16'] ?? 0);
 
         $totalSiswa=(int)$this->numberFrom($a['KTA-01']??0);
         $ikut=(int)$this->numberFrom($a['KTA-02']??0);
@@ -337,16 +343,32 @@ class ReportsModel extends Model
             $roomStatus='Kurang Memadai';
         }
 
+       /*
+        * Kebutuhan bandwidth berdasarkan juknis:
+        * minimal 16 Mbps untuk 40 klien
+        * ekuivalen 0,4 Mbps per klien.
+        *
+        * Klien yang digunakan untuk pengecekan adalah
+        * jumlah peserta yang dilayani dalam satu sesi.
+        */
+        $networkClients = max(1, $kebutuhanPerSesi);
+
+        $networkNeed = max(
+            16,
+            round($networkClients * 0.4, 2)
+        );
+
         /*
-         * Koneksi jaringan daring:
-         * minimum 16 Mbps untuk 40 klien, ekuivalen 0,4 Mbps/klien.
-         * Untuk penilaian kebutuhan aktual, tetap diberlakukan floor 16 Mbps.
-         */
-        $networkClients=max(1,$komputerUtama);
-        $networkNeed=max(16,round($networkClients*0.4,2));
-        $effectiveBandwidth=min($upload,$download);
-        $networkRatio=$networkNeed>0
-            ? round($effectiveBandwidth/$networkNeed,2)
+        * Bandwidth utama menjadi bandwidth efektif yang
+        * digunakan untuk penilaian jaringan utama.
+        *
+        * Bandwidth ISP cadangan TIDAK dijumlahkan dengan
+        * bandwidth utama karena merupakan koneksi cadangan.
+        */
+        $effectiveBandwidth = $bandwidthIspUtama;
+
+        $networkRatio = $networkNeed > 0
+            ? round($effectiveBandwidth / $networkNeed, 2)
             : 0;
 
         if($networkRatio>=1.50){
@@ -539,10 +561,16 @@ class ReportsModel extends Model
             'switch'=>$switch,
             'ups'=>$ups,
             'access_point'=>$accessPoint,
-            'daya'=>$daya,
+           'daya'=>$daya,
             'jaringan'=>$jaringan,
-            'upload'=>$upload,
-            'download'=>$download,
+
+            'isp_utama'=>$ispUtama,
+            'isp_utama_lainnya'=>$ispUtamaLainnya,
+            'bandwidth_isp_utama'=>$bandwidthIspUtama,
+
+            'isp_cadangan'=>$ispCadangan,
+            'isp_cadangan_lainnya'=>$ispCadanganLainnya,
+            'bandwidth_isp_cadangan'=>$bandwidthIspCadangan,
 
             'total_siswa'=>$totalSiswa,
             'ikut'=>$ikut,

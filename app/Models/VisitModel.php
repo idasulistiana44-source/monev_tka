@@ -409,89 +409,150 @@ class VisitModel extends Model
             'status' => 'IN_PROGRESS'
         ];
     }
-
     public function completeVisit($id)
-    {
-        $id=(int)$id;
-        $visit=$this->find($id);
+{
+    $id = (int)$id;
+    $visit = $this->find($id);
 
-        if(!$visit){
-            return [
-                'status'=>false,
-                'message'=>'Kegiatan Monev tidak ditemukan.'
-            ];
-        }
+    if (!$visit) {
+        return [
+            'status'  => false,
+            'message' => 'Kegiatan Monev tidak ditemukan.'
+        ];
+    }
 
-        if($visit['status']==='COMPLETED'){
-            return [
-                'status'=>false,
-                'message'=>'Kegiatan Monev sudah selesai.'
-            ];
-        }
+    if ($visit['status'] === 'COMPLETED') {
+        return [
+            'status'  => false,
+            'message' => 'Kegiatan Monev sudah selesai.'
+        ];
+    }
 
-        $required=$this->db->table('instruments')
-            ->select('id,code,question')
-            ->where('is_active',1)
-            ->where('is_required',1)
+    /*
+     * Ambil semua instrumen wajib yang aktif
+     */
+    $required = $this->db->table('instruments')
+        ->select('id, code, question')
+        ->where('is_active', 1)
+        ->where('is_required', 1)
+        ->get()
+        ->getResultArray();
+
+    if ($required) {
+
+        /*
+         * Ambil jawaban berdasarkan CODE instrumen
+         * agar validasi INF-12, INF-15, INF-16
+         * bisa dibuat kondisional.
+         */
+        $answerRows = $this->db->table('visit_answers va')
+            ->select('i.code, va.answer')
+            ->join('instruments i', 'i.id = va.question_id', 'inner')
+            ->where('va.visit_id', $id)
             ->get()
             ->getResultArray();
 
-        if($required){
-            $answered=$this->db->table('visit_answers')
-                ->select('question_id')
-                ->where('visit_id',$id)
-                ->get()
-                ->getResultArray();
+        $answerMap = [];
 
-            $answeredIds=[];
-            foreach($answered as $item){
-                $answeredIds[]=(int)$item['question_id'];
-            }
+        foreach ($answerRows as $row) {
+            $answerMap[strtoupper(trim($row['code']))] = trim((string)($row['answer'] ?? ''));
+        }
 
-            $missing=[];
-            foreach($required as $item){
-                if(!in_array((int)$item['id'],$answeredIds,true)){
-                    $missing[]=$item['code'].' - '.$item['question'];
+        /*
+         * ISP UTAMA
+         * INF-12 hanya wajib jika INF-11 = Lainnya
+         */
+        $ispUtama = $answerMap['INF-11'] ?? '';
+
+        /*
+         * ISP CADANGAN
+         * INF-15 dan INF-16 hanya wajib jika
+         * ISP cadangan dipilih dan bukan "Tidak Ada".
+         */
+        $ispCadangan = $answerMap['INF-14'] ?? '';
+
+        $missing = [];
+
+        foreach ($required as $item) {
+
+            $code = strtoupper(trim($item['code']));
+
+            /*
+             * INF-12:
+             * hanya wajib jika ISP Utama = Lainnya
+             */
+            if ($code === 'INF-12') {
+                if (strcasecmp($ispUtama, 'Lainnya') !== 0) {
+                    continue;
                 }
             }
 
-            if(!empty($missing)){
-                return [
-                    'status'=>false,
-                    'message'=>'Masih ada instrumen wajib yang belum diisi.',
-                    'missing'=>$missing
-                ];
+            /*
+             * INF-15 dan INF-16:
+             * hanya wajib jika ISP Cadangan dipilih
+             * dan nilainya bukan "Tidak Ada".
+             */
+            if ($code === 'INF-15' || $code === 'INF-16') {
+                if (
+                    $ispCadangan === '' ||
+                    strcasecmp($ispCadangan, 'Tidak Ada') === 0
+                ) {
+                    continue;
+                }
+            }
+
+            /*
+             * Untuk instrumen lainnya:
+             * tetap wajib diisi.
+             *
+             * Tidak cukup hanya mengecek apakah row ada.
+             * Jawaban kosong juga dianggap belum diisi.
+             */
+            $answer = $answerMap[$code] ?? '';
+
+            if ($answer === '') {
+                $missing[] = $item['code'] . ' - ' . $item['question'];
             }
         }
 
-        $userId=(int)session()->get('user_id');
-
-        $this->db->transBegin();
-
-        $this->db->table('visits')
-            ->where('id',$id)
-            ->update([
-                'status'=>'COMPLETED',
-                'submitted_by'=>$userId,
-                'updated_at'=>date('Y-m-d H:i:s')
-            ]);
-
-        if($this->db->transStatus()===false){
-            $this->db->transRollback();
-
+        if (!empty($missing)) {
             return [
-                'status'=>false,
-                'message'=>'Gagal menyelesaikan kegiatan Monev.'
+                'status'  => false,
+                'message' => 'Masih ada instrumen wajib yang belum diisi.',
+                'missing' => $missing
             ];
         }
+    }
 
-        $this->db->transCommit();
+    $userId = (int)session()->get('user_id');
+
+    $this->db->transBegin();
+
+    $this->db->table('visits')
+        ->where('id', $id)
+        ->update([
+            'status'       => 'COMPLETED',
+            'submitted_by' => $userId,
+            'updated_at'   => date('Y-m-d H:i:s')
+        ]);
+
+    if ($this->db->transStatus() === false) {
+        $this->db->transRollback();
 
         return [
-            'status'=>true,
-            'message'=>'Kegiatan Monev berhasil diselesaikan.',
-            'status_value'=>'COMPLETED',
-            'submitted_by'=>$userId
+            'status'  => false,
+            'message' => 'Gagal menyelesaikan kegiatan Monev.'
         ];
     }
+
+    $this->db->transCommit();
+
+    return [
+        'status'       => true,
+        'message'      => 'Kegiatan Monev berhasil diselesaikan.',
+        'status_value' => 'COMPLETED',
+        'submitted_by' => $userId
+    ];
+}
+    
 }

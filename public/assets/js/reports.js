@@ -161,19 +161,31 @@
 
         $('#reportTotal').text(data.length);
 
-        if (!data.length) {
+       if (!data.length) {
+            $('#btnExportAllPdf').hide();
+
             tbody.html(`
                 <tr>
-                    <td colspan="8" class="reports-empty">
-                        <i class="fas fa-inbox"></i>
-                        <div>Tidak ada data Monev.</div>
+                    <td colspan="8" class="reports-empty" style="
+                        text-align: center;
+                        vertical-align: middle;
+                    ">
+                        <div style="
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                        ">
+                            <i class="fas fa-inbox"></i>
+                            <div>Tidak ada data Monev.</div>
+                        </div>
                     </td>
                 </tr>
             `);
 
             return;
         }
-
+        $('#btnExportAllPdf').show();
         let html = '';
 
         data.forEach(function (row, index) {
