@@ -34,39 +34,63 @@
         </div>
     </div>
     <div class="dashboard-stats">
+        <!-- Jumlah Sekolah -->
         <div class="stat-card">
-            <div class="stat-card-icon"><i class="fas fa-school"></i></div>
-            <div>
-                <div class="stat-card-label">Sekolah Disurvei</div>
-                <div class="stat-card-value" id="summaryTotalSchools">0</div>
-                <div class="stat-card-note">Sekolah Monev</div>
+            <div class="stat-card-icon">
+                <i class="fas fa-school"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">Jumlah Sekolah</div>
+                <div class="stat-card-value" id="summaryTotalSchools">
+                    <?= esc($totalSchools ?? 0) ?>
+                </div>
+                <div class="stat-card-note">Total sekolah terdaftar</div>
             </div>
         </div>
+
+        <!-- Sedang Disurvei -->
         <div class="stat-card">
-            <div class="stat-card-icon"><i class="fas fa-clipboard-check"></i></div>
-            <div>
-                <div class="stat-card-label">Visitasi Selesai</div>
-                <div class="stat-card-value" id="summaryCompleted">0</div>
-                <div class="stat-card-note">Sudah dilakukan Monev</div>
+            <div class="stat-card-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">Sedang Disurvei</div>
+                <div class="stat-card-value" id="summaryInProgress">
+                    0
+                </div>
+                <div class="stat-card-note">Survey sedang berlangsung</div>
             </div>
         </div>
+
+        <!-- Sudah Monev -->
         <div class="stat-card">
-            <div class="stat-card-icon"><i class="fas fa-desktop"></i></div>
-            <div>
+            <div class="stat-card-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">Sudah Di-Monev</div>
+                <div class="stat-card-value" id="summaryCompleted">
+                    <?= esc($visitedSchools ?? 0) ?>
+                </div>
+                <div class="stat-card-note">Monev selesai / terverifikasi</div>
+            </div>
+        </div>
+
+        <!-- Kesiapan Infrastruktur -->
+        <div class="stat-card">
+            <div class="stat-card-icon">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="stat-card-content">
                 <div class="stat-card-label">Kesiapan Infrastruktur</div>
-                <div class="stat-card-value" id="summaryReadiness">0%</div>
+                <div class="stat-card-value" id="summaryReadiness">
+                    <?= esc($readinessPercent ?? 0) ?>%
+                </div>
                 <div class="stat-card-note">Baik / Sangat Baik</div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-card-icon"><i class="fas fa-file-alt"></i></div>
-            <div>
-                <div class="stat-card-label">Kelengkapan Monev</div>
-                <div class="stat-card-value" id="summaryDocuments">0%</div>
-                <div class="stat-card-note">Berkas & dokumentasi</div>
-            </div>
-        </div>
     </div>
+    
     <div class="dashboard-charts">
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">

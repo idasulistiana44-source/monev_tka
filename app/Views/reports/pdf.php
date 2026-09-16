@@ -268,10 +268,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <td>Rasio Kapasitas Jaringan</td>
                     <td>' . $e($metrics['network_ratio'] ?? 0) . ' × kebutuhan minimum</td>
                 </tr>
-                <tr>
-                    <td>Kebutuhan Access Point</td>
-                    <td>' . $e($metrics['ap_required'] ?? 0) . ' unit (maks. 20 klien/Access point)</td>
-                </tr>
             </tbody>
         </table>';
     }
@@ -715,7 +711,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
     $networkNeed = (float) ($metrics['network_need'] ?? 0);
 
     $accessPoint = (int) ($metrics['access_point'] ?? 0);
-    $apRequired = (int) ($metrics['ap_required'] ?? 0);
 
     // ==============================
     // STATUS BACKUP INTERNET
@@ -733,26 +728,21 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         round($networkNeed - $effectiveBandwidth, 2)
     );
 
-    $kekuranganAP = max(
-        0,
-        $apRequired - $accessPoint
-    );
 
     // ==============================
     // STATUS
     // Status bandwidth utama menjadi dasar.
     // ISP cadangan TIDAK dijumlahkan.
     // ==============================
-    if (
-        ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
-        ($apRequired > 0 && $accessPoint < $apRequired)
+   if (
+    $networkNeed > 0 &&
+        $effectiveBandwidth < $networkNeed
     ) {
         $networkStatus = 'Kurang Memadai';
 
     } elseif (
         $networkNeed > 0 &&
-        $effectiveBandwidth >= $networkNeed &&
-        $accessPoint >= $apRequired
+        $effectiveBandwidth >= $networkNeed
     ) {
         $networkStatus = 'Baik';
 
@@ -816,14 +806,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             $e($networkNeed) .
             ' Mbps, sehingga masih terdapat kekurangan ' .
             $e($kekuranganBandwidth) .
-            ' Mbps. ' .
-            'Access Point tersedia ' .
-            $e($accessPoint) .
-            ' unit dari kebutuhan ' .
-            $e($apRequired) .
-            ' unit, sehingga masih terdapat kekurangan ' .
-            $e($kekuranganAP) .
-            ' unit.';
+            ' Mbps.';
 
     } elseif ($networkStatus === 'Baik') {
 
@@ -833,11 +816,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             $e($effectiveBandwidth) .
             ' Mbps dari kebutuhan minimum ' .
             $e($networkNeed) .
-            ' Mbps, serta tersedia ' .
-            $e($accessPoint) .
-            ' unit Access Point dari kebutuhan ' .
-            $e($apRequired) .
-            ' unit.';
+            ' Mbps.';
 
     } else {
 
@@ -974,21 +953,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     <strong>' . $e($bandwidthIspUtama) . ' Mbps</strong>
                 </td>
             </tr>
-
-            <tr>
-                <td>Rumus Kebutuhan Access Point</td>
-                <td style="text-align:center;">
-                    jumlah siswa ÷ 20
-                </td>
-            </tr>
-
-            <tr>
-                <td>Kebutuhan Access Point</td>
-                <td style="text-align:center;">
-                    <strong>' . $e($apRequired) . ' unit</strong>
-                </td>
-            </tr>
-
         </tbody>
     </table>
 
@@ -1059,27 +1023,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 </td>
             </tr>
 
-            <tr>
-                <td>Access Point</td>
-
-                <td style="text-align:center;">
-                    ' . $e($accessPoint) . ' unit
-                </td>
-
-                <td style="text-align:center;">
-                    ' . $e($apRequired) . ' unit
-                </td>
-
-                <td style="text-align:center;">
-                    ' . (
-                       $accessPoint < $apRequired
-                        ? '<strong style="color:#dc2626;">Kekurangan<br/.>' .
-                        $e($apRequired - $accessPoint) .
-                        ' unit</strong>'
-                        : '<span style="color:#16a34a;">Memenuhi</span>'
-                    ) . '
-                </td>
-            </tr>
 
         </tbody>
     </table>
@@ -1238,7 +1181,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
     $networkNeed = (float) ($metrics['network_need'] ?? 0);
 
     $accessPoint = (int) ($metrics['access_point'] ?? 0);
-    $apRequired = (int) ($metrics['ap_required'] ?? 0);
 
     // Ada ISP cadangan?
     $adaBackup = (
@@ -1252,23 +1194,16 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         round($networkNeed - $effectiveBandwidth, 2)
     );
 
-    // Kekurangan Access Point
-    $kekuranganAP = max(
-        0,
-        $apRequired - $accessPoint
-    );
-
     // Status jaringan
     if (
-        ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
-        ($apRequired > 0 && $accessPoint < $apRequired)
+        $networkNeed > 0 &&
+        $effectiveBandwidth < $networkNeed
     ) {
         $networkStatus = 'Kurang Memadai';
 
     } elseif (
         $networkNeed > 0 &&
-        $effectiveBandwidth >= $networkNeed &&
-        $accessPoint >= $apRequired
+        $effectiveBandwidth >= $networkNeed
     ) {
         $networkStatus = 'Baik';
 
@@ -1824,10 +1759,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 ">
                     Access Point tersedia:
                     <strong>' . $e($accessPoint) . ' unit</strong>
-                    &nbsp;|&nbsp;
-
-                    Kebutuhan:
-                    <strong>' . $e($apRequired) . ' unit</strong>
                 </div>
 
             </div>
@@ -1891,28 +1822,10 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
                 ' .
                 (
-                    ($kekuranganBandwidth > 0 && $kekuranganAP > 0)
-
+                    $kekuranganBandwidth > 0
                         ? 'Bandwidth ISP utama masih kurang ' .
-                        $e($kekuranganBandwidth) .
-                        ' Mbps dan Access Point masih kurang ' .
-                        $e($kekuranganAP) . ' unit.'
-
-                        : (
-                            $kekuranganBandwidth > 0
-
-                                ? 'Bandwidth ISP utama masih kurang ' .
-                                $e($kekuranganBandwidth) . ' Mbps.'
-
-                                : (
-                                    $kekuranganAP > 0
-
-                                        ? 'Access Point masih kurang ' .
-                                        $e($kekuranganAP) . ' unit.'
-
-                                        : 'Kebutuhan bandwidth dan Access Point telah terpenuhi.'
-                                )
-                        )
+                          $e($kekuranganBandwidth) . ' Mbps.'
+                        : 'Kebutuhan bandwidth telah terpenuhi.'
                 ) . '
 
                 ' .
@@ -2225,17 +2138,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         $accessPoint = (int) ($metrics['access_point'] ?? 0);
         $apRequired  = (int) ($metrics['ap_required'] ?? 0);
 
-        if ($apRequired > 0 && $accessPoint < $apRequired) {
-
-            $kekuranganAP = $apRequired - $accessPoint;
-
-            $findings[] =
-                'Ketersediaan Access Point belum memenuhi kebutuhan. ' .
-                'Tersedia ' . $accessPoint . ' unit dari kebutuhan berdasarkan Juknis sebesar ' .
-                $apRequired . ' unit, sehingga masih terdapat kekurangan ' .
-                $kekuranganAP . ' unit Access Point.';
-
-        }
         // =====================================================
         // CEK ISP CADANGAN
         // =====================================================
@@ -2380,19 +2282,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 ' Mbps agar memenuhi kebutuhan minimum pelaksanaan TKAP dan menjaga kestabilan jaringan.';
         }
 
-        // 3. JARINGAN - ACCESS POINT
-        $accessPoint = (int) ($metrics['access_point'] ?? 0);
-        $apRequired  = (int) ($metrics['ap_required'] ?? 0);
-
-        if ($apRequired > 0 && $accessPoint < $apRequired) {
-            $kekuranganAP = $apRequired - $accessPoint;
-
-            $recommendations[] =
-                'Menambah ketersediaan Access Point sebanyak ' .
-                $kekuranganAP .
-                ' unit untuk memastikan distribusi sinyal jaringan merata di area pelaksanaan TKAP.';
-        }
-
         // 4. JARINGAN - ISP CADANGAN
         $ispCadangan = trim((string) ($metrics['isp_cadangan'] ?? ''));
         $bandwidthIspCadangan = (float) ($metrics['bandwidth_isp_cadangan'] ?? 0);
@@ -2474,9 +2363,9 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         $bandwidthIspCadangan = (float) ($metrics['bandwidth_isp_cadangan'] ?? 0);
         $ispCadangan = trim((string) ($metrics['isp_cadangan'] ?? ''));
         $networkNeed = (float) ($metrics['network_need'] ?? 0);
+        $effectiveBandwidth = (float) ($metrics['effective_bandwidth'] ?? $bandwidthIspUtama);
 
         $accessPoint = (int) ($metrics['access_point'] ?? 0);
-        $apRequired = (int) ($metrics['ap_required'] ?? 0);
 
         $daya = $metrics['daya'] ?? '-';
         $ups = (int) ($metrics['ups'] ?? 0);
@@ -2515,22 +2404,18 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         // STATUS JARINGAN
         // =====================================================
         if (
-            ($networkNeed > 0 && $bandwidthIspUtama < $networkNeed) ||
-            ($apRequired > 0 && $accessPoint < $apRequired)
+            $networkNeed > 0 &&
+            $effectiveBandwidth < $networkNeed
         ) {
-
             $networkStatus = 'Kurang Memadai';
 
         } elseif (
             $networkNeed > 0 &&
-            $bandwidthIspUtama >= $networkNeed &&
-            $accessPoint >= $apRequired
+            $effectiveBandwidth >= $networkNeed
         ) {
-
             $networkStatus = 'Baik';
 
         } else {
-
             $networkStatus = 'Cukup';
         }
 
@@ -2614,9 +2499,8 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         }
 
         // 4. Access Point
-        $isApKurang = ($apRequired > 0 && $accessPoint < $apRequired);
-        $styleAp = $isApKurang ? 'color:#dc2626; font-weight:bold;' : '';
-        $textAp = '<span style="' . $styleAp . '">' . $e($accessPoint) . ' tersedia</span> / ' . $e($apRequired) . ' kebutuhan';
+        // Tidak dibandingkan dengan standar jumlah tertentu.
+        $textAp = $e($accessPoint) . ' unit tersedia';
 
         // =====================================================
         // TABEL KESIMPULAN
@@ -2761,7 +2645,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
     $networkNeed = (float) ($metrics['network_need'] ?? 0);
 
     $accessPoint = (int) ($metrics['access_point'] ?? 0);
-    $apRequired = (int) ($metrics['ap_required'] ?? 0);
 
     // =====================================================
     // STATUS PERANGKAT
@@ -2787,22 +2670,18 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
     // STATUS JARINGAN
     // =====================================================
     if (
-        ($networkNeed > 0 && $effectiveBandwidth < $networkNeed) ||
-        ($apRequired > 0 && $accessPoint < $apRequired)
+        $networkNeed > 0 &&
+        $effectiveBandwidth < $networkNeed
     ) {
-
         $networkStatus = 'Kurang Memadai';
 
     } elseif (
         $networkNeed > 0 &&
-        $effectiveBandwidth >= $networkNeed &&
-        $accessPoint >= $apRequired
+        $effectiveBandwidth >= $networkNeed
     ) {
-
         $networkStatus = 'Baik';
 
     } else {
-
         $networkStatus = 'Cukup';
     }
 
@@ -2843,10 +2722,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         round($networkNeed - $effectiveBandwidth, 2)
     );
 
-    $kekuranganAP = max(
-        0,
-        $apRequired - $accessPoint
-    );
 
     // =====================================================
     // SARAN DINAMIS
@@ -2870,13 +2745,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 ' Mbps</strong> menjadi minimal <strong>' .
                 $e($networkNeed) .
                 ' Mbps</strong>.';
-        }
-
-        if ($kekuranganAP > 0) {
-            $saranItems[] =
-                'Menambah <strong>' .
-                $e($kekuranganAP) .
-                ' unit Access Point</strong> sesuai kebutuhan.';
         }
 
         $saranItems[] =

@@ -25,10 +25,7 @@ class DashboardModel extends Model
         return $builder;
     }
 
-    public function getTotalSchools()
-    {
-        return $this->db->table('schools')->countAllResults();
-    }
+    
 
     public function getTotalOfficers()
     {
@@ -43,30 +40,110 @@ class DashboardModel extends Model
         return $this->db->table('visits')->countAllResults();
     }
 
+    public function getTotalSchools($filters=[])
+    {
+        $builder=$this->db->table('schools s')
+            ->select('COUNT(*) AS total');
+
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+
+        $result=$builder->get()->getRowArray();
+
+        return (int)($result['total']??0);
+    }
+
+   public function getInProgressSchools($filters=[])
+    {
+        $builder=$this->db->table('visits v')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->where('v.status','in_progress');
+
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+
+        $result=$builder
+            ->select('COUNT(DISTINCT v.school_id) AS total')
+            ->get()
+            ->getRowArray();
+
+        return (int)($result['total']??0);
+    }
     public function getVisitedSchools($filters=[])
     {
-        $builder=$this->baseVisitQuery($filters);
-        return $builder
-            ->select('v.school_id')
-            ->groupBy('v.school_id')
-            ->countAllResults();
+        $builder=$this->db->table('visits v')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->whereIn('v.status',['completed','verified']);
+
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+
+        $result=$builder
+            ->select('COUNT(DISTINCT v.school_id) AS total')
+            ->get()
+            ->getRowArray();
+
+        return (int)($result['total']??0);
+    }
+    
+
+    public function getReadinessPercent($filters=[])
+    {
+        $readiness=$this->getInfrastructureReadiness($filters);
+
+        $total=array_sum($readiness);
+
+        if($total<=0){
+            return 0;
+        }
+
+        $good=($readiness['Sangat Baik']??0)+
+            ($readiness['Baik']??0);
+
+        return round(($good/$total)*100,1);
     }
 
     public function getDashboardSummary($filters=[])
     {
-        $visited=$this->getVisitedSchools($filters);
-        $totalVisits=$this->baseVisitQuery($filters)->countAllResults();
-        $readiness=$this->getInfrastructureReadiness($filters);
-        $totalReady=array_sum($readiness);
-        $good=($readiness['Sangat Baik']??0)+($readiness['Baik']??0);
-        $readinessPercent=$totalReady>0?round(($good/$totalReady)*100,1):0;
         return [
-            'totalSchools'=>$visited,
-            'visitedSchools'=>$visited,
-            'totalVisits'=>$totalVisits,
-            'readinessPercent'=>$readinessPercent
+            'totalSchools'=>$this->getTotalSchools($filters),
+            'inProgressSchools'=>$this->getInProgressSchools($filters),
+            'visitedSchools'=>$this->getVisitedSchools($filters),
+            'readinessPercent'=>$this->getReadinessPercent($filters)
         ];
     }
+
 
     public function getVisitStatus()
     {

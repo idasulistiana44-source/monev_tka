@@ -27,6 +27,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         
         // Dashboard
         $routes->get('dashboard', 'Dashboard::index');
+        $routes->get('dashboard/data', 'Dashboard::data');
 
         // Visitasi / Monitoring
         $routes->get('visits', 'Visits::index');

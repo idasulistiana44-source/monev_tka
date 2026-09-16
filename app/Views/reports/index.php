@@ -32,7 +32,9 @@
         </div>
         <div class="reports-filter-body">
             <div class="row g-3 align-items-end">
-                <div class="col-xl-4 col-lg-4 col-md-6">
+
+                <!-- Cari -->
+                <div class="col-xl-3 col-lg-3 col-md-6">
                     <label for="reportKeyword">Cari</label>
                     <div class="reports-input-icon">
                         <i class="fas fa-search"></i>
@@ -43,20 +45,45 @@
                             placeholder="Sekolah, NPSN, atau wilayah">
                     </div>
                 </div>
-                <div class="col-xl-3 col-lg-3 col-md-6">
+
+                <!-- Wilayah -->
+                <div class="col-xl-2 col-lg-2 col-md-6">
                     <label for="reportRegion">Wilayah</label>
                     <select id="reportRegion" class="form-select">
                         <option value="">Semua Wilayah</option>
                     </select>
                 </div>
+
+                <!-- Status -->
+                <div class="col-xl-2 col-lg-2 col-md-6">
+                    <label for="reportStatus">Status</label>
+                    <select id="reportStatus" class="form-select">
+                        <option value="">Semua Status</option>
+                        <option value="DRAFT">Draft</option>
+                        <option value="IN_PROGRESS">Sedang Berjalan</option>
+                        <option value="COMPLETED">Selesai</option>
+                    </select>
+                </div>
+
+                <!-- Dari Tanggal -->
                 <div class="col-xl-2 col-lg-2 col-md-6">
                     <label for="reportDateFrom">Dari Tanggal</label>
-                    <input type="date" id="reportDateFrom" class="form-control">
+                    <input
+                        type="date"
+                        id="reportDateFrom"
+                        class="form-control">
                 </div>
+
+                <!-- Sampai Tanggal -->
                 <div class="col-xl-2 col-lg-2 col-md-6">
                     <label for="reportDateTo">Sampai Tanggal</label>
-                    <input type="date" id="reportDateTo" class="form-control">
+                    <input
+                        type="date"
+                        id="reportDateTo"
+                        class="form-control">
                 </div>
+
+                <!-- Tombol -->
                 <div class="col-xl-1 col-lg-1 col-md-6">
                     <button
                         type="button"
@@ -65,6 +92,7 @@
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
+
             </div>
         </div>
     </div>
@@ -94,7 +122,10 @@
     </div>
     <div class="reports-table-card">
         <div class="table-responsive">
-            <table class="table reports-table mb-0">
+            <table
+                id="reportsTable"
+                class="table reports-table mb-0"
+                style="width:100%;">
                 <thead>
                     <tr>
                         <th width="55">No</th>
@@ -107,14 +138,7 @@
                         <th width="130">Laporan</th>
                     </tr>
                 </thead>
-                <tbody id="reportsTableBody">
-                    <tr>
-                        <td colspan="8" class="reports-loading">
-                            <i class="fas fa-spinner fa-spin me-2"></i>
-                            Memuat data laporan...
-                        </td>
-                    </tr>
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
     </div>

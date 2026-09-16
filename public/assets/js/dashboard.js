@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded',function(){
         return document.getElementById(id);
     };
     const state={
-        data:window.dashboardData||null,
+        data:null,
         charts:{},
         pages:{
             infrastructure:1,
@@ -295,7 +295,9 @@ document.addEventListener('DOMContentLoaded',function(){
         createChart(name,$(canvasId),{
             type:'bar',
             data:{
-                labels:labels,
+                labels:labels.map(function(label){
+                    return name==='electricity' ? label+' Watt' : label;
+                }),
                 datasets:[{
                     label:'Jumlah Sekolah',
                     data:values,
@@ -334,17 +336,37 @@ document.addEventListener('DOMContentLoaded',function(){
         });
     };
     const renderElectricity=function(){
+
         const source=state.data?.electricity||{distribution:{},data:[]};
+
         renderDistributionChart('electricity','electricityChart',source.distribution);
+
         const entries=Object.entries(source.distribution||{});
+
         let most=['-',0];
+
         entries.forEach(function(item){
+
             if(Number(item[1])>Number(most[1]))most=item;
+
         });
-        if($('electricityMostUsed'))$('electricityMostUsed').textContent=most[0];
+
+        if($('electricityMostUsed'))$('electricityMostUsed').textContent=most[0]+' Watt';
+
         if($('electricityMostUsedCount'))$('electricityMostUsedCount').textContent=numberFormat(most[1])+' sekolah';
+
         fillSelect('electricityFilter',source.distribution,'Semua Daya');
-        renderCategoricalTable('electricity',source.data||[],'electricityTableBody','electricityPagination','electricityFilter',4,'Daya');
+
+        renderCategoricalTable(
+            'electricity',
+            source.data||[],
+            'electricityTableBody',
+            'electricityPagination',
+            'electricityFilter',
+            4,
+            'Daya'
+        );
+
     };
     const renderInternet=function(){
         const source=state.data?.internet||{distribution:{},data:[]};
@@ -401,7 +423,7 @@ document.addEventListener('DOMContentLoaded',function(){
         const start=(page-1)*state.pageSize;
         tbody.innerHTML=rows.map(function(item,index){
             const npsn=colspan===4?'<td>'+escapeHtml(item.npsn)+'</td>':'';
-            return '<tr><td>'+(start+index+1)+'</td><td>'+escapeHtml(item.school_name)+'</td>'+npsn+'<td><strong>'+escapeHtml(item.value)+'</strong></td></tr>';
+            return '<tr><td>'+(start+index+1)+'</td><td>'+escapeHtml(item.school_name)+'</td>'+npsn+'<td><strong>'+escapeHtml(item.value)+' Watt</strong></td></tr>';
         }).join('');
         renderPagination(paginationId,filtered.length,page,function(newPage){
             state.pages[stateName]=newPage;
@@ -534,11 +556,28 @@ document.addEventListener('DOMContentLoaded',function(){
     };
     const updateSummary=function(){
         const summary=state.data?.summary||{};
-        if($('summaryTotalSchools'))$('summaryTotalSchools').textContent=numberFormat(summary.totalSchools);
-        if($('summaryCompleted'))$('summaryCompleted').textContent=numberFormat(summary.totalVisits);
-        if($('summaryReadiness'))$('summaryReadiness').textContent=Number(summary.readinessPercent||0).toFixed(1)+'%';
-        if($('summaryDocuments'))$('summaryDocuments').textContent=Number(summary.documentPercent||0).toFixed(1)+'%';
+
+        if($('summaryTotalSchools')){
+            $('summaryTotalSchools').textContent=
+                numberFormat(summary.totalSchools);
+        }
+
+        if($('summaryInProgress')){
+            $('summaryInProgress').textContent=
+                numberFormat(summary.inProgressSchools);
+        }
+
+        if($('summaryCompleted')){
+            $('summaryCompleted').textContent=
+                numberFormat(summary.visitedSchools);
+        }
+
+        if($('summaryReadiness')){
+            $('summaryReadiness').textContent=
+                Number(summary.readinessPercent||0).toFixed(1)+'%';
+        }
     };
+
     const renderAll=function(){
         updateSummary();
         renderInfrastructure();
@@ -661,9 +700,7 @@ document.addEventListener('DOMContentLoaded',function(){
     $('btnExportExcel')?.addEventListener('click',function(){
         exportReport('excel');
     });
-    if(state.data){
-        renderAll();
-    }else{
-        loadDashboard();
-    }
+  
+    loadDashboard();
+    
 });

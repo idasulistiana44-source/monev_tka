@@ -242,11 +242,10 @@ class ReportsModel extends Model
          * komputer utama = ceil(peserta / (sesi x gelombang))
          *
          * Jaringan daring:
-         * - minimal 16 Mbps untuk 40 klien
-         * - ekuivalen 0,4 Mbps/klien
-         * - koneksi khusus untuk TKAP
-         * - LAN CAT5E 100/1000 atau AP stabil maksimal 20 klien/AP
-         *
+        * - minimal 16 Mbps untuk 40 klien
+        * - ekuivalen 0,4 Mbps/klien
+        * - koneksi khusus untuk TKAP
+        * - LAN CAT5E 100/1000 atau Access Point yang memadai dan stabil
          * Catatan:
          * Threshold "Sangat Baik/Baik/Cukup/Kurang Memadai"
          * adalah klasifikasi monitoring internal, bukan nilai threshold
@@ -382,10 +381,8 @@ class ReportsModel extends Model
         }
 
         $networkDedicated=trim((string)$jaringan)!=='';
-        $apRequired=(int)ceil($networkClients/20);
-        $apCoverage=$apRequired>0
-            ? round(($accessPoint/$apRequired)*100,2)
-            : 100;
+        $apRequired = 0;
+        $apCoverage = 100;
 
         /*
          * Kelistrikan:
@@ -461,11 +458,6 @@ class ReportsModel extends Model
         if(!$networkDedicated){
             $findings[]='Informasi mengenai jaringan khusus pelaksanaan TKAP belum tercatat pada hasil monitoring.';
             $recommendations[]='Memastikan koneksi jaringan yang digunakan untuk TKAP dikhususkan selama pelaksanaan.';
-        }
-
-        if($accessPoint>0 && $accessPoint<$apRequired){
-            $findings[]='Jumlah Access Point yang tersedia belum mencapai kebutuhan berdasarkan batas maksimal 20 klien per Access Point.';
-            $recommendations[]='Menambah atau menata Access Point agar akses stabil dapat melayani jumlah klien sesuai kebutuhan.';
         }
 
         if($electricityStatus==='Kurang Memadai'){
@@ -598,8 +590,8 @@ class ReportsModel extends Model
             'network_need'=>$networkNeed,
             'effective_bandwidth'=>$effectiveBandwidth,
             'network_ratio'=>$networkRatio,
-            'ap_required'=>$apRequired,
-            'ap_coverage'=>$apCoverage,
+            'ap_required'=>0,
+            'ap_coverage'=>100,
             'network_dedicated'=>$networkDedicated,
 
             'participant_percentage'=>$participantPercentage,
