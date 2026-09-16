@@ -5,6 +5,7 @@
     let officers=[];
     let searchTimer=null;
     let editChangingRegion=false;
+    let visitsTable=null;
     function request(url,options){
         options=options||{};
         return $.ajax({
@@ -22,113 +23,429 @@
             console.error('Global notification function showGlobalAlert tidak ditemukan:',message);
         }
     }
-    function loadVisits(){
-        const keyword=$.trim($('#searchVisit').val()||'');
-        const status=$('#filterStatus').val()||'';
-        $('#visitTableBody').html('<tr><td colspan="8" class="visit-loading"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data...</td></tr>');
-        if($('#visitEmpty').length){
-            $('#visitEmpty').hide();
-        }
-        request(URLS.data,{
-            data:{
-                keyword:keyword,
-                status:status
-            }
-        }).done(function(res){
-            if(!res||res.status===false||res.success===false){
-                renderError(res&&res.message?res.message:'Data visitasi gagal dimuat.');
-                notify(res&&res.message?res.message:'Data visitasi gagal dimuat.','error');
-                return;
-            }
-            if(res.csrfHash){
-                window.VISITS_CSRF_HASH=res.csrfHash;
-            }
-            renderVisits(res.data||[]);
-        }).fail(function(xhr){
-            let message='Gagal memuat data visitasi.';
-            if(xhr.responseJSON&&xhr.responseJSON.message){
-                message=xhr.responseJSON.message;
-            }
-            renderError(message);
-            notify(message,'error');
-            console.error('VISITS DATA ERROR:',xhr.responseText);
+    function initVisitsTable(){
+
+        visitsTable = $('#visitsTable').DataTable({
+
+            processing: false,
+
+            serverSide: false,
+
+            searching: false,
+
+            ordering: true,
+
+            pageLength: 10,
+
+            lengthMenu: [
+                [10, 25, 50, 100],
+                [10, 25, 50, 100]
+            ],
+
+            autoWidth: false,
+
+            ajax: function(data, callback){
+
+                const keyword =
+                    $.trim($('#searchVisit').val() || '');
+
+                const status =
+                    $('#filterStatus').val() || '';
+
+                // Loading di dalam tabel
+                $('#visitsTable tbody').html(
+                    '<tr>' +
+                        '<td colspan="10" class="school-loading">' +
+                            '<div class="school-spinner"></div>' +
+                            'Memuat data...' +
+                        '</td>' +
+                    '</tr>'
+                );
+
+                request(URLS.data, {
+                    data: {
+                        keyword: keyword,
+                        status: status
+                    }
+                }).done(function(res){
+
+                    console.log('VISITS DATA:', res);
+
+                    if(
+                        !res ||
+                        res.status === false ||
+                        res.success === false
+                    ){
+
+                        $('#visitTotal').text('0');
+
+                        callback({
+                            data: []
+                        });
+
+                        notify(
+                            res && res.message
+                                ? res.message
+                                : 'Data visitasi gagal dimuat.',
+                            'error'
+                        );
+
+                        return;
+                    }
+
+                    if(res.csrfHash){
+                        window.VISITS_CSRF_HASH =
+                            res.csrfHash;
+                    }
+
+                    const rows =
+                        Array.isArray(res.data)
+                            ? res.data
+                            : [];
+
+                    $('#visitTotal').text(
+                        rows.length
+                    );
+
+                    callback({
+                        data: rows
+                    });
+
+                }).fail(function(xhr){
+
+                    console.error(
+                        'VISITS DATA ERROR:',
+                        xhr.status,
+                        xhr.responseText
+                    );
+
+                    $('#visitTotal').text('0');
+
+                    callback({
+                        data: []
+                    });
+
+                    let message =
+                        'Gagal memuat data visitasi.';
+
+                    if(
+                        xhr.responseJSON &&
+                        xhr.responseJSON.message
+                    ){
+                        message =
+                            xhr.responseJSON.message;
+                    }
+
+                    notify(message, 'error');
+
+                });
+
+            },
+
+            language: {
+
+                emptyTable:
+                    'Belum ada kegiatan Monev',
+
+                zeroRecords:
+                    'Data tidak ditemukan',
+
+                lengthMenu:
+                    'Tampilkan _MENU_ data',
+
+                info:
+                    'Menampilkan _START_–_END_ dari _TOTAL_ kegiatan',
+
+                infoEmpty:
+                    'Menampilkan 0–0 dari 0 kegiatan',
+
+                paginate: {
+                    first: 'Awal',
+                    last: 'Akhir',
+                    next: '›',
+                    previous: '‹'
+                }
+            },
+
+            columns: [
+
+                {
+                    data: null,
+                    className: 'text-center',
+                    orderable: false,
+                    width: '55px',
+
+                    render: function(data, type, row, meta){
+
+                        return (
+                            meta.row +
+                            meta.settings._iDisplayStart +
+                            1
+                        );
+
+                    }
+                },
+
+                {
+                    data: 'npsn',
+
+                    render: function(data){
+
+                        return (
+                            '<strong>' +
+                            escapeHtml(data || '-') +
+                            '</strong>'
+                        );
+
+                    }
+                },
+
+                {
+                    data: 'school_name',
+
+                    render: function(data){
+
+                        return (
+                            '<strong>' +
+                            escapeHtml(data || '-') +
+                            '</strong>'
+                        );
+
+                    }
+                },
+
+                {
+                    data: 'region_name',
+
+                    render: function(data){
+
+                        return escapeHtml(
+                            data || '-'
+                        );
+
+                    }
+                },
+
+                {
+                    data: 'level',
+
+                    render: function(data){
+
+                        return escapeHtml(
+                            data || '-'
+                        );
+
+                    }
+                },
+
+                {
+                    data: 'visit_date',
+
+                    render: function(data){
+
+                        return formatDate(data);
+
+                    }
+                },
+
+                {
+                    data: 'members',
+
+                    orderable: false,
+
+                    render: function(members){
+
+                        members =
+                            Array.isArray(members)
+                                ? members
+                                : [];
+
+                        if(!members.length){
+
+                            return (
+                                '<span class="text-muted">' +
+                                'Belum ada petugas' +
+                                '</span>'
+                            );
+
+                        }
+
+                        let html =
+                            '<div class="visit-team-list">';
+
+                        $.each(
+                            members,
+                            function(index, member){
+
+                                html +=
+                                    '<span class="visit-team-badge">' +
+                                    escapeHtml(
+                                        member.name ||
+                                        'Petugas'
+                                    ) +
+                                    '</span>';
+
+                            }
+                        );
+
+                        html += '</div>';
+
+                        return html;
+                    }
+                },
+
+                {
+                    data: 'status',
+
+                    render: function(data){
+
+                        return renderStatus(data);
+
+                    }
+                },
+
+                {
+                    data: 'submitted_by_name',
+
+                    render: function(data){
+
+                        return data
+                            ? escapeHtml(data)
+                            : '-';
+
+                    }
+                },
+
+                {
+                    data: null,
+
+                    orderable: false,
+
+                    searchable: false,
+
+                    width: '180px',
+
+                    className: 'text-center',
+
+                    render: function(row){
+
+                        let action = '';
+
+                        if(row.status === 'DRAFT'){
+
+                            action +=
+                                '<a href="' +
+                                baseVisitUrl(
+                                    'visits/form/' + row.id
+                                ) +
+                                '" ' +
+                                'class="btn btn-sm btn-primary" ' +
+                                'title="Mulai Monev">' +
+
+                                '<i class="fas fa-play me-1"></i>' +
+                                'Mulai' +
+
+                                '</a>';
+
+                            action +=
+                                '<button type="button" ' +
+                                'class="btn btn-sm btn-outline-primary btn-edit-visit" ' +
+                                'data-id="' +
+                                escapeAttr(row.id) +
+                                '" ' +
+                                'title="Edit Kegiatan">' +
+
+                                '<i class="fas fa-edit"></i>' +
+
+                                '</button>';
+
+                        }else if(
+                            row.status === 'IN_PROGRESS'
+                        ){
+
+                            action +=
+                                '<a href="' +
+                                baseVisitUrl(
+                                    'visits/form/' + row.id
+                                ) +
+                                '" ' +
+                                'class="btn btn-sm btn-primary" ' +
+                                'title="Lanjutkan Monev">' +
+
+                                '<i class="fas fa-edit me-1"></i>' +
+                                'Lanjutkan' +
+
+                                '</a>';
+
+                        }else if(
+                            row.status === 'COMPLETED' ||
+                            row.status === 'VERIFIED'
+                        ){
+
+                            action +=
+                                '<a href="' +
+                                baseVisitUrl(
+                                    'visits/form/' + row.id
+                                ) +
+                                '" ' +
+                                'class="btn btn-sm btn-outline-primary" ' +
+                                'title="Lihat Monev">' +
+
+                                '<i class="fas fa-eye me-1"></i>' +
+                                'Lihat' +
+
+                                '</a>';
+
+                        }
+
+                        if(window.IS_ADMIN){
+
+                            action +=
+                                '<button type="button" ' +
+                                'class="btn btn-sm btn-outline-danger btn-delete-visit" ' +
+                                'data-id="' +
+                                escapeAttr(row.id) +
+                                '" ' +
+                                'data-school="' +
+                                escapeAttr(
+                                    row.school_name || ''
+                                ) +
+                                '" ' +
+                                'title="Hapus">' +
+
+                                '<i class="fas fa-trash"></i>' +
+
+                                '</button>';
+
+                        }
+
+                        return (
+                            '<div class="visit-actions">' +
+                            action +
+                            '</div>'
+                        );
+
+                    }
+                }
+
+            ]
+
         });
+
     }
-    function renderVisits(rows){
-        $('#visitTotal').text(rows.length);
-        if(!rows.length){
-            $('#visitTableBody').html('');
-            if($('#visitEmpty').length){
-                $('#visitEmpty').show();
-            }
+    function loadVisits(){
+
+        if(!visitsTable){
             return;
         }
-        if($('#visitEmpty').length){
-            $('#visitEmpty').hide();
-        }
-        let html='';
-        $.each(rows,function(index,row){
-            const members=Array.isArray(row.members)?row.members:[];
-            let team='';
-            if(members.length){
-                $.each(members,function(i,member){
-                    team+='<span class="visit-team-badge">'+escapeHtml(member.name||'Petugas')+'</span>';
-                });
-            }else{
-                team='<span class="text-muted">Belum ada petugas</span>';
-            }
-            let action='';
-            if(row.status === 'DRAFT'){
-                action =
-                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
-                    'class="btn btn-sm btn-primary" title="Mulai Monev">'+
-                    '<i class="fas fa-play me-1"></i>Mulai'+
-                    '</a>';
-                action +=
-                    '<button type="button" '+
-                    'class="btn btn-sm btn-outline-primary btn-edit-visit" '+
-                    'data-id="'+escapeAttr(row.id)+'" '+
-                    'title="Edit Kegiatan">'+
-                    '<i class="fas fa-edit"></i>'+
-                    '</button>';
-            }else if(row.status === 'IN_PROGRESS'){
-                action =
-                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
-                    'class="btn btn-sm btn-primary" title="Lanjutkan Monev">'+
-                    '<i class="fas fa-edit me-1"></i>Lanjutkan'+
-                    '</a>';
-            }else if(row.status === 'COMPLETED' || row.status === 'VERIFIED'){
-                action =
-                    '<a href="'+baseVisitUrl('visits/form/'+row.id)+'" '+
-                    'class="btn btn-sm btn-outline-primary" title="Lihat Monev">'+
-                    '<i class="fas fa-eye me-1"></i>Lihat'+
-                    '</a>';
-            }
-            if(window.IS_ADMIN){
-                action +=
-                    '<button type="button" '+
-                    'class="btn btn-sm btn-outline-danger btn-delete-visit" '+
-                    'data-id="'+escapeAttr(row.id)+'" '+
-                    'data-school="'+escapeAttr(row.school_name||'')+'" '+
-                    'title="Hapus">'+
-                    '<i class="fas fa-trash"></i>'+
-                    '</button>';
-            }
-            html+='<tr>';
-            html+='<td>'+(index+1)+'</td>';
-            html+='<td><strong>'+escapeHtml(row.npsn||'-')+'</strong></td>';
-            html+='<td><strong>'+escapeHtml(row.school_name||'-')+'</strong></td>';
-            html+='<td>'+escapeHtml(row.region_name||'-')+'</td>';
-            html+='<td>'+escapeHtml(row.level||'-')+'</td>';
-            html+='<td>'+formatDate(row.visit_date)+'</td>';
-            html+='<td><div class="visit-team-list">'+team+'</div></td>';
-            html+='<td>'+renderStatus(row.status)+'</td>';
-            html+='<td>'+(row.submitted_by_name?escapeHtml(row.submitted_by_name):'-')+'</td>';
-            html+='<td><div class="visit-actions">'+action+'</div></td>';
-            html+='</tr>';
-        });
-        $('#visitTableBody').html(html);
+
+        visitsTable.ajax.reload(
+            null,
+            true
+        );
+
     }
+
     function renderStatus(status){
         let text='-';
         let cls='visit-status-draft';
@@ -512,6 +829,7 @@
         $('#visitTableBody').html('<tr><td colspan="8" class="text-center text-danger py-5"><i class="fas fa-exclamation-circle me-2"></i>'+escapeHtml(message)+'</td></tr>');
     }
     $(document).ready(function(){
+        initVisitsTable();
         loadVisits();
         $('#visitAddModal').on('shown.bs.modal', function () {
             initVisitSelect2();

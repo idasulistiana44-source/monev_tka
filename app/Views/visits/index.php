@@ -39,17 +39,20 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                     <option value="DRAFT">Draft</option>
                     <option value="IN_PROGRESS">Berlangsung</option>
                     <option value="COMPLETED">Selesai</option>
-                    <option value="VERIFIED">Terverifikasi</option>
                 </select>
             </div>
             <div class="visits-table-responsive">
-                <table class="table visits-table">
+                <table
+                    id="visitsTable"
+                    class="table visits-table"
+                    style="width:100%;">
+
                     <thead>
                         <tr>
                             <th width="55">No</th>
                             <th>NPSN</th>
                             <th>Sekolah</th>
-                            <th> Wilayah</th>
+                            <th>Wilayah</th>
                             <th>Level</th>
                             <th>Tanggal Monev</th>
                             <th>Tim Monev</th>
@@ -58,13 +61,12 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
                             <th width="180">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="visitTableBody">
-                        <tr>
-                            <td colspan="8" class="visit-loading"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data...</td>
-                        </tr>
-                    </tbody>
+
+                    <tbody></tbody>
+
                 </table>
             </div>
+          
             <div id="visitEmpty" class="visit-empty" style="display:none;">
                 <div class="visit-empty-icon"><i class="fas fa-clipboard-check"></i></div>
                 <h5>Belum ada kegiatan Monev</h5>
