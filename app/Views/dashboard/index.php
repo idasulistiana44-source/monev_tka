@@ -47,6 +47,20 @@
                 <div class="stat-card-note">Total sekolah terdaftar</div>
             </div>
         </div>
+        
+        <!-- Draft -->
+        <div class="stat-card">
+            <div class="stat-card-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">Draft</div>
+                <div class="stat-card-value" id="summaryDraft">
+                     <?= esc($draftSchools ?? 0) ?>
+                </div>
+                <div class="stat-card-note">Monev belum dimulai</div>
+            </div>
+        </div>
 
         <!-- Sedang Disurvei -->
         <div class="stat-card">

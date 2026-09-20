@@ -39,6 +39,13 @@ class DashboardModel extends Model
     {
         return $this->db->table('visits')->countAllResults();
     }
+    
+    public function getDraftSchools()
+    {
+        return $this->db->table('visits')
+            ->where('status', 'Draft')
+            ->countAllResults();
+    }
 
     public function getTotalSchools($filters=[])
     {

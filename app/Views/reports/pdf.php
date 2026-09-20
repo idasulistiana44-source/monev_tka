@@ -31,18 +31,29 @@ $formatDate = function ($date) {
     ];
     return ltrim($parts[2], '0') . ' ' . ($months[$parts[1]] ?? $parts[1]) . ' ' . $parts[0];
 };
+$formatWatt = function ($value) {
+    if ($value === null || $value === '' || $value === '-') {
+        return '-';
+    }
+
+    return number_format((float) $value, 0, ',', '.') . ' Watt';
+};
 $statusClass = function ($status) {
     $status = strtoupper(trim((string) $status));
 
-    if (str_contains($status, 'SANGAT')) {
+    if (str_contains($status, 'KURANG MEMADAI')) {
+        return 'kurang-memadai';
+    }
+
+    if (str_contains($status, 'SANGAT BAIK')) {
         return 'sangat-baik';
     }
 
-    if (str_contains($status, 'BAIK') || str_contains($status, 'MEMADAI')) {
+    if (str_contains($status, 'BAIK')) {
         return 'baik';
     }
 
-    if (str_contains($status, 'CUKUP') || str_contains($status, 'PERLU')) {
+    if (str_contains($status, 'CUKUP')) {
         return 'cukup';
     }
 
@@ -161,7 +172,7 @@ $cleanHtml = function ($html) {
     $html = preg_replace('/\son\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $html);
     return strip_tags($html, '<p><br><strong><b><em><i><u><ul><ol><li><table><thead><tbody><tfoot><tr><td><th><div><span>');
 };
-$dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate, $statusClass, $normalizeStatus, $statusDescription, $scoreStatus, $scoreLabel) {
+$dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate, $formatWatt, $statusClass, $normalizeStatus, $statusDescription, $scoreStatus, $scoreLabel) {
     $title = strtoupper(trim((string) $itemTitle));
     if (str_contains($title, 'WAKTU DAN TEMPAT')) {
         return '
@@ -356,21 +367,33 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 <tr>
                     <td>PC Milik</td>
                     <td style="text-align:center;">
-                        ' . $e($metrics['pc'] ?? 0) . ' unit
+                       ' . (
+                            (int)($metrics['pc'] ?? 0) > 0
+                                ? $e($metrics['pc']) . ' unit'
+                                : 'Tidak Ada'
+                        ) . '
                     </td>
                 </tr>
 
                 <tr>
                     <td>Laptop Milik</td>
                     <td style="text-align:center;">
-                        ' . $e($metrics['laptop_milik'] ?? 0) . ' unit
+                      ' . (
+                            (int)($metrics['laptop_milik'] ?? 0) > 0
+                                ? $e($metrics['laptop_milik']) . ' unit'
+                                : 'Tidak Ada'
+                        ) . '
                     </td>
                 </tr>
 
                 <tr>
                     <td>Laptop Bukan Milik</td>
                     <td style="text-align:center;">
-                        ' . $e($metrics['laptop_bukan_milik'] ?? 0) . ' unit
+                       ' . (
+                            (int)($metrics['laptop_bukan_milik'] ?? 0) > 0
+                                ? $e($metrics['laptop_bukan_milik']) . ' unit'
+                                : 'Tidak Ada'
+                        ) . '
                     </td>
                 </tr>
 
@@ -879,7 +902,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             <tr>
                 <td>ISP Cadangan</td>
                 <td style="text-align:center;">
-                    ' . $e($ispCadanganDisplay) . '
+                    ' . $e(($metrics['isp_cadangan_lainnya'] ?? '') ?: ($metrics['isp_cadangan'] ?? 'Tidak Ada')) . '
                 </td>
             </tr>
 
@@ -944,13 +967,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 <td>Kebutuhan Bandwidth Minimum</td>
                 <td style="text-align:center;">
                     <strong>' . $e($networkNeed) . ' Mbps</strong>
-                </td>
-            </tr>
-
-            <tr>
-                <td>Bandwidth ISP Utama</td>
-                <td style="text-align:center;">
-                    <strong>' . $e($bandwidthIspUtama) . ' Mbps</strong>
                 </td>
             </tr>
         </tbody>
@@ -1071,14 +1087,18 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 <tr>
                     <td>Daya Listrik</td>
                     <td style="text-align:center;">
-                        ' . $e($metrics['daya'] ?? '-') . ' Watt
+                        ' . $e($formatWatt($metrics['daya'] ?? '-')) . '
                     </td>
                 </tr>
 
                 <tr>
                     <td>UPS</td>
                     <td style="text-align:center;">
-                        ' . $e($metrics['ups'] ?? 0) . ' unit
+                        ' . (
+                            !empty($metrics['ups']) && (int)$metrics['ups'] > 0
+                                ? $e($metrics['ups']) . ' unit'
+                                : 'Tidak Ada'
+                        ) . '
                     </td>
                 </tr>
             </tbody>
@@ -1426,7 +1446,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                                         : (
                                             $deviceStatus === 'Sangat Baik'
                                                 ? 'color:#16a34a;background:#dcfce7;border-color:#bbf7d0;'
-                                                : 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
+                                             : 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
                                         )
                                 )
                             ) .
@@ -1702,112 +1722,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 </tr>
             </table>
 
-            <!-- PERHITUNGAN JUKNIS -->
-            <div style="
-                margin-top:8px;
-                padding:7px 9px;
-                background:#ffffff;
-                border:1px solid #e2e8f0;
-                text-align:left;
-            ">
-
-                <div style="
-                    font-size:9pt;
-                    font-weight:bold;
-                    color:#1e3a5f;
-                    margin-bottom:5px;
-                ">
-                    Perhitungan Berdasarkan Juknis
-                </div>
-
-                <div style="
-                    font-size:8.5pt;
-                    color:#475569;
-                    line-height:1.5;
-                ">
-                    Siswa aktif per sesi:
-                    <strong>' . $e($networkClients) . ' siswa</strong>
-                    <br>
-
-                    Kebutuhan bandwidth:
-                    <strong>0,4 Mbps × jumlah siswa</strong>
-                    <br>
-
-                    Kebutuhan bandwidth minimum:
-                    <strong>' . $e($networkNeed) . ' Mbps</strong>
-                    <br>
-
-                    Bandwidth ISP utama:
-                    <strong>' . $e($bandwidthIspUtama) . ' Mbps</strong>
-                </div>
-
-            </div>
-
-            <!-- ACCESS POINT -->
-            <div style="
-                margin-top:6px;
-                padding:7px 9px;
-                background:#ffffff;
-                border:1px solid #e2e8f0;
-                text-align:left;
-            ">
-
-                <div style="
-                    font-size:8.5pt;
-                    color:#475569;
-                    line-height:1.5;
-                ">
-                    Access Point tersedia:
-                    <strong>' . $e($accessPoint) . ' unit</strong>
-                </div>
-
-            </div>
-
-            <!-- STATUS -->
-            <div class="status-summary" style="
-                margin:8px 0 0;
-                padding:7px 8px;
-                ' .
-                (
-                    $networkStatus === 'Kurang Memadai'
-                        ? 'background:#fef2f2;border:1px solid #fecaca;'
-                        : (
-                            $networkStatus === 'Cukup'
-                                ? 'background:#fffbeb;border:1px solid #fde68a;'
-                                : 'background:#eff6ff;border:1px solid #bfdbfe;'
-                        )
-                ) . '
-            ">
-
-                <div class="status-header" style="
-                    justify-content:center;
-                ">
-
-                    <strong style="font-size:10pt;">
-                        Status:
-                    </strong>
-
-                    <span class="status ' . $statusClass($networkStatus) . '" style="
-                        font-size:8.5pt;
-                        padding:3px 7px;
-                        border-radius:4px;
-                        ' .
-                        (
-                            $networkStatus === 'Kurang Memadai'
-                                ? 'color:#dc2626;background:#fee2e2;border-color:#fecaca;'
-                                : (
-                                    $networkStatus === 'Baik'
-                                        ? 'color:#2563eb;background:#dbeafe;border-color:#bfdbfe;'
-                                        : 'color:#92400e;background:#fef3c7;border-color:#fde68a;'
-                                )
-                        ) .
-                    '">
-                        ' . $e($networkStatus) . '
-                    </span>
-
-                </div>
-
-            </div>
 
             <!-- KETERANGAN -->
             <div style="
@@ -1858,7 +1772,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 text-align:center;
             ">
 
-                <div style="
+               <div style="
                     font-size:11pt;
                     font-weight:bold;
                     color:#1e3a5f;
@@ -1872,7 +1786,14 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     color:#1e293b;
                     margin-top:10px;
                 ">
-                    ' . $e($metrics['daya'] ?? '-') . '
+                    ' . (
+                        isset($metrics['daya']) &&
+                        $metrics['daya'] !== '' &&
+                        $metrics['daya'] !== null &&
+                        $metrics['daya'] !== '-'
+                            ? number_format((float)$metrics['daya'], 0, ',', '.')
+                            : '-'
+                    ) . '
                 </div>
 
                 <div style="
@@ -1889,7 +1810,11 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     font-size:11pt;
                 ">
                     <strong>UPS</strong><br>
-                    ' . $e($metrics['ups'] ?? 0) . ' unit
+                    ' . (
+                        (int)($metrics['ups'] ?? 0) > 0
+                            ? $e($metrics['ups']) . ' unit'
+                            : 'Tidak Ada'
+                    ) . '
                 </div>
 
                 <div style="
@@ -1956,16 +1881,16 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                             padding:5px 10px;
                             border-radius:5px;
                             ' .
-                            ($overallStatus === 'Kurang Memadai'
-                                ? 'color:#dc2626;background:#fee2e2;border:1px solid #fecaca;'
-                                : ($overallStatus === 'Baik'
-                                    ? 'color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;'
-                                    : ($overallStatus === 'Sangat Baik'
-                                        ? 'color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;'
-                                        : 'color:#92400e;background:#fef3c7;border:1px solid #fde68a;'
-                                    )
+                            (strtoupper(trim($overallStatus)) === 'KURANG MEMADAI'
+                            ? 'color:#dc2626;background:#fee2e2;border:1px solid #fecaca;'
+                            : (strtoupper(trim($overallStatus)) === 'BAIK'
+                                ? 'color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;'
+                                : (strtoupper(trim($overallStatus)) === 'SANGAT BAIK'
+                                    ? 'color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;'
+                                    : 'color:#dc2626;background:#fee2e2;border:1px solid #fecaca;'
                                 )
-                            ) .
+                            )
+                        ).
                         '">
                             ' . $e($overallStatus) . '
                         </span>
@@ -2132,11 +2057,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
         }
          // =====================================================
-        // CEK ACCESS POINT (TAMBAHKAN KODE INI DI SINI)
+        // ACCESS POINT
+        // Tidak dihitung berdasarkan jumlah komputer.
+        // Juknis hanya menyebut AP mampu diakses stabil
+        // oleh 20 klien secara bersamaan.
         // =====================================================
-
         $accessPoint = (int) ($metrics['access_point'] ?? 0);
-        $apRequired  = (int) ($metrics['ap_required'] ?? 0);
 
         // =====================================================
         // CEK ISP CADANGAN
@@ -2499,8 +2425,9 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         }
 
         // 4. Access Point
-        // Tidak dibandingkan dengan standar jumlah tertentu.
-        $textAp = $e($accessPoint) . ' unit tersedia';
+        // Tidak dihitung terhadap jumlah komputer dan tidak
+        // dibandingkan dengan standar jumlah AP tertentu.
+        $textAp = $e($accessPoint) . ' unit - ' . ($accessPoint > 0 ? 'Tersedia' : 'Tidak tersedia');
 
         // =====================================================
         // TABEL KESIMPULAN
@@ -2572,14 +2499,22 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                 <tr>
                     <td>Daya Listrik</td>
                     <td style="text-align:center;">
-                        ' . $e($daya) . ' Watt
+                          ' . (
+                                $daya !== null && $daya !== '' && $daya !== '-'
+                                    ? number_format((float)$daya, 0, ',', '.') . ' Watt'
+                                    : '-'
+                            ) . '
                     </td>
                 </tr>
 
                 <tr>
                     <td>UPS</td>
                     <td style="text-align:center;">
-                        ' . $e($ups) . ' unit
+                        ' . (
+                            (int)($ups ?? 0) > 0
+                                ? $e($ups) . ' unit'
+                                : 'Tidak Ada'
+                        ) . '
                     </td>
                 </tr>
 
@@ -2590,25 +2525,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
 
                     <td style="text-align:center;">
 
-                        <span class="status ' . $statusClass($overallStatus) . '" style="
-                            display:inline-block;
-                            font-size:9pt;
-                            padding:4px 8px;
-                            border-radius:4px;
-                            ' .
-                            ($overallStatus === 'Kurang Memadai'
-                                ? 'color:#dc2626;background:#fee2e2;border:1px solid #fecaca;'
-                                : (
-                                    $overallStatus === 'Baik'
-                                        ? 'color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;'
-                                        : (
-                                            $overallStatus === 'Sangat Baik'
-                                                ? 'color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;'
-                                                : 'color:#92400e;background:#fef3c7;border:1px solid #fde68a;'
-                                        )
-                                )
-                            ) . '
-                        ">
+                        <span class="status ' . $statusClass($overallStatus) . '">
                             ' . $e($overallStatus) . '
                         </span>
 

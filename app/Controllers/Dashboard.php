@@ -36,6 +36,7 @@ class Dashboard extends BaseController
             'readinessPercent'=> $model->getReadinessPercent(),
 
             // Data dashboard
+            'draftSchools' => $model->getDraftSchools(),
             'totalOfficers'   => $model->getTotalOfficers(),
             'totalVisits'     => $model->getTotalVisits(),
             'status'          => $model->getVisitStatus(),

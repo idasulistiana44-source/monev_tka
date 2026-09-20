@@ -423,7 +423,8 @@ document.addEventListener('DOMContentLoaded',function(){
         const start=(page-1)*state.pageSize;
         tbody.innerHTML=rows.map(function(item,index){
             const npsn=colspan===4?'<td>'+escapeHtml(item.npsn)+'</td>':'';
-            return '<tr><td>'+(start+index+1)+'</td><td>'+escapeHtml(item.school_name)+'</td>'+npsn+'<td><strong>'+escapeHtml(item.value)+' Watt</strong></td></tr>';
+            const suffix = stateName === 'electricity' ? ' Watt' : '';
+            return '<tr><td>'+(start+index+1)+'</td><td>'+escapeHtml(item.school_name)+'</td>'+npsn+'<td><strong>'+escapeHtml(item.value)+suffix+'</strong></td></tr>';
         }).join('');
         renderPagination(paginationId,filtered.length,page,function(newPage){
             state.pages[stateName]=newPage;
