@@ -30,6 +30,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->get('dashboard/data', 'Dashboard::data');
         $routes->get('dashboard/regions','Dashboard::regions');
         $routes->get('dashboard/districts', 'Dashboard::districts');
+        $routes->get('dashboard/export', 'Dashboard::export');
 
         // Visitasi / Monitoring
         $routes->get('visits', 'Visits::index');

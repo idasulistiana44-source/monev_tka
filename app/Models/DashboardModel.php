@@ -851,8 +851,9 @@ class DashboardModel extends Model
 
         $groups=[
             'device'=>[
-                'problem'=>'Ketersediaan perangkat belum memenuhi kebutuhan.',
+                'problem'=>'Ketersediaan perangkat komputer/laptop belum memenuhi kebutuhan.',
                 'schools'=>[],
+                'details'=>[],
                 'recommendation'=>''
             ],
             'main_isp'=>[
@@ -875,144 +876,156 @@ class DashboardModel extends Model
         foreach($visits as $visit){
 
             $metrics=$this->getVisitMetricsForProblemRecap($visit['id']);
-
-            if(empty($metrics)){
-                continue;
-            }
-
-            $schoolName=$visit['school_name'];
-
-            $totalPerangkat=(int)($metrics['total_perangkat']??0);
-            $kebutuhanPerangkat=(int)($metrics['kebutuhan_perangkat_juknis']??0);
-
-            $bandwidthIspUtama=(float)($metrics['bandwidth_isp_utama']??0);
-            $bandwidthIspCadangan=(float)($metrics['bandwidth_isp_cadangan']??0);
-            $networkNeed=(float)($metrics['network_need']??0);
-
-            $ispCadangan=trim((string)($metrics['isp_cadangan']??''));
-
-            $adaBackup=(
-                $ispCadangan!=='' &&
-                strcasecmp($ispCadangan,'Tidak Ada')!==0
-            );
-
-            if(
-                $kebutuhanPerangkat>0 &&
-                $totalPerangkat<$kebutuhanPerangkat
-            ){
-                $groups['device']['schools'][$schoolName]=[
-                    'total'=>$totalPerangkat,
-                    'need'=>$kebutuhanPerangkat
-                ];
-            }
-
-            if(
-                $networkNeed>0 &&
-                $bandwidthIspUtama<$networkNeed
-            ){
-                $groups['main_isp']['schools'][$schoolName]=[
-                    'bandwidth'=>$bandwidthIspUtama,
-                    'need'=>$networkNeed,
-                    'isp'=>$metrics['isp_utama']??'-'
-                ];
-            }
-
-            if(!$adaBackup){
-                $groups['backup_missing']['schools'][$schoolName]=true;
-            }
-
-            if(
-                $adaBackup &&
-                $networkNeed>0 &&
-                $bandwidthIspCadangan<$networkNeed
-            ){
-                $groups['backup_bandwidth']['schools'][$schoolName]=[
-                    'bandwidth'=>$bandwidthIspCadangan,
-                    'need'=>$networkNeed
-                ];
-            }
-        }
-
-        $data=[];
-        $no=1;
-
-        foreach($groups as $type=>$group){
-
-            if(empty($group['schools'])){
-                continue;
-            }
-
-            $schoolNames=array_keys($group['schools']);
-
-            $problem=$group['problem'];
-
-            if($type==='device'){
-                $details=[];
-
-                foreach($group['schools'] as $school=>$value){
-                    $shortage=$value['need']-$value['total'];
-
-                    $details[]=$school.
-                        ': Tersedia '.$value['total'].
-                        ' unit dari kebutuhan '.$value['need'].
-                        ' unit, kekurangan '.$shortage.' unit.';
+                if(empty($metrics)){
+                    continue;
                 }
 
-                $problem.=' '.implode(' ',$details);
+                $schoolName=$visit['school_name'];
 
-                $recommendation='Memenuhi kekurangan perangkat komputer atau laptop sesuai kebutuhan pelaksanaan TKAP serta memastikan seluruh perangkat siap digunakan.';
-            }
+                $totalPerangkat=(int)($metrics['total_perangkat']??0);
+                $kebutuhanPerangkat=(int)($metrics['kebutuhan_perangkat_juknis']??0);
 
-            elseif($type==='main_isp'){
-                $details=[];
+                $bandwidthIspUtama=(float)($metrics['bandwidth_isp_utama']??0);
+                $bandwidthIspCadangan=(float)($metrics['bandwidth_isp_cadangan']??0);
+                $networkNeed=(float)($metrics['network_need']??0);
 
-                foreach($group['schools'] as $school=>$value){
-                    $shortage=round($value['need']-$value['bandwidth'],2);
+                $ispCadangan=trim((string)($metrics['isp_cadangan']??''));
 
-                    $details[]=$school.
-                        ': ISP utama '.$value['isp'].
-                        ' memiliki bandwidth '.$value['bandwidth'].
-                        ' Mbps dari kebutuhan '.$value['need'].
-                        ' Mbps, kekurangan '.$shortage.' Mbps.';
+                $adaBackup=(
+                    $ispCadangan!=='' &&
+                    strcasecmp($ispCadangan,'Tidak Ada')!==0
+                );
+
+               $kebutuhanUtama=(int)($metrics['komputer_utama']??0);
+                $kebutuhanCadangan=(int)($metrics['komputer_cadangan']??0);
+                $totalKebutuhan=$kebutuhanUtama+$kebutuhanCadangan;
+
+                if($totalKebutuhan>0 && $totalPerangkat<$totalKebutuhan){
+
+                    $groups['device']['schools'][$schoolName]=[
+                        'total'=>$totalPerangkat,
+                        'need'=>$totalKebutuhan,
+                        'peserta'=>(int)($metrics['siswa_ikut']??0),
+                        'sesi'=>(int)($metrics['jumlah_sesi']??1),
+                        'gelombang'=>(int)($metrics['jumlah_gelombang']??1),
+                        'komputer_utama'=>$kebutuhanUtama,
+                        'komputer_cadangan'=>$kebutuhanCadangan,
+                        'total_kebutuhan'=>$totalKebutuhan
+                    ];
                 }
 
-                $problem.=' '.implode(' ',$details);
-
-                $recommendation='Meningkatkan kapasitas bandwidth ISP utama agar memenuhi kebutuhan minimum pelaksanaan TKAP dan menjaga kestabilan jaringan.';
-            }
-
-            elseif($type==='backup_bandwidth'){
-                $details=[];
-
-                foreach($group['schools'] as $school=>$value){
-                    $shortage=round($value['need']-$value['bandwidth'],2);
-
-                    $details[]=$school.
-                        ': bandwidth ISP cadangan '.$value['bandwidth'].
-                        ' Mbps dari kebutuhan '.$value['need'].
-                        ' Mbps, kekurangan '.$shortage.' Mbps.';
+                if(
+                    $networkNeed>0 &&
+                    $bandwidthIspUtama<$networkNeed
+                ){
+                    $groups['main_isp']['schools'][$schoolName]=[
+                        'bandwidth'=>$bandwidthIspUtama,
+                        'need'=>$networkNeed,
+                        'isp'=>$metrics['isp_utama']??'-'
+                    ];
                 }
 
-                $problem.=' '.implode(' ',$details);
+                if(!$adaBackup){
+                    $groups['backup_missing']['schools'][$schoolName]=true;
+                }
 
+                if(
+                    $adaBackup &&
+                    $networkNeed>0 &&
+                    $bandwidthIspCadangan<$networkNeed
+                ){
+                    $groups['backup_bandwidth']['schools'][$schoolName]=[
+                        'bandwidth'=>$bandwidthIspCadangan,
+                        'need'=>$networkNeed
+                    ];
+                }
+            }
+
+            $data=[];
+            $no=1;
+            foreach($groups as $type=>$group){
+                $schoolNames=array_keys($group['schools']);
+                $totalSchool=count($schoolNames);
+
+                $problem=$group['problem'];
                 $recommendation=$group['recommendation'];
-            }
-            else{
-                $recommendation=$group['recommendation'];
+                $details=[];
+
+                if($type==='device' && $totalSchool>0){
+
+                        foreach($group['schools'] as $school=>$value){
+
+                            $details[]=[
+                                'school'=>$school,
+                                'peserta'=>$value['peserta'],
+                                'sesi'=>$value['sesi'],
+                                'gelombang'=>$value['gelombang'],
+                                'kebutuhan_utama'=>$value['komputer_utama'],
+                                'kebutuhan_cadangan'=>$value['komputer_cadangan'],
+                                'total_kebutuhan'=>$value['total_kebutuhan'],
+                                'available'=>$value['total']
+                            ];
+                        }
+
+                        $recommendation='Menambah atau menyiapkan perangkat komputer/laptop sesuai kebutuhan pelaksanaan TKAP serta memastikan seluruh perangkat siap digunakan.';
+                    }
+
+                elseif($type==='main_isp' && $totalSchool>0){
+                    foreach($group['schools'] as $school=>$value){
+                        $shortage=max(0,round($value['need']-$value['bandwidth'],2));
+
+                        $details[]=[
+                            'school'=>$school,
+                            'isp'=>$value['isp']?:'-',
+                            'bandwidth'=>$value['bandwidth'],
+                            'need'=>$value['need'],
+                            'shortage'=>$shortage
+                        ];
+                    }
+
+                    $recommendation='Meningkatkan kapasitas bandwidth ISP utama agar memenuhi kebutuhan minimum pelaksanaan TKAP dan menjaga kestabilan jaringan.';
+                }
+
+                elseif($type==='backup_missing' && $totalSchool>0){
+                    foreach($schoolNames as $school){
+                        $details[]=[
+                            'school'=>$school
+                        ];
+                    }
+
+                    $recommendation=$group['recommendation'];
+                }
+
+                elseif($type==='backup_bandwidth' && $totalSchool>0){
+                    foreach($group['schools'] as $school=>$value){
+                        $shortage=max(0,round($value['need']-$value['bandwidth'],2));
+
+                        $details[]=[
+                            'school'=>$school,
+                            'bandwidth'=>$value['bandwidth'],
+                            'need'=>$value['need'],
+                            'shortage'=>$shortage
+                        ];
+                    }
+
+                    $recommendation=$group['recommendation'];
+                }
+
+                $data[]=[
+                    'no'=>$no++,
+                    'type'=>$type,
+                    'problem'=>$problem,
+                    'total_school'=>$totalSchool,
+                    'recommendation'=>$totalSchool>0?$recommendation:'Tidak ada',
+                    'details'=>$details
+                ];
             }
 
-            $data[]=[
-                'no'=>$no++,
-                'problem'=>$problem,
-                'total_school'=>count($schoolNames),
-                'schools'=>$schoolNames,
-                'recommendation'=>$recommendation
-            ];
-        }
-
+            return $data;
         return $data;
     }
-    private function getVisitMetricsForProblemRecap($visitId)
+
+   private function getVisitMetricsForProblemRecap($visitId)
     {
         $rows=$this->db->table('visit_answers')
             ->select('question_id,answer')
@@ -1020,23 +1033,154 @@ class DashboardModel extends Model
             ->get()
             ->getResultArray();
 
+        if(empty($rows)){
+            return [];
+        }
+
         $answers=[];
 
         foreach($rows as $row){
-            $answers[(int)$row['question_id']]=trim((string)($row['answer']??''));
+            $questionId=(int)($row['question_id']??0);
+            $answer=trim((string)($row['answer']??''));
+
+            if($questionId>0){
+                $answers[$questionId]=$answer;
+            }
         }
 
+        // ==============================
+        // PERANGKAT TERSEDIA
+        // ==============================
+        $pc=(int)($answers[1]??0);
+        $laptopMilik=(int)($answers[2]??0);
+        $laptopBukanMilik=(int)($answers[3]??0);
+
+        $totalPerangkat=
+            $pc+
+            $laptopMilik+
+            $laptopBukanMilik;
+
+        // ==============================
+        // PESERTA
+        // ==============================
+        $totalSiswa=(int)($answers[13]??0);
+        $siswaIkut=(int)($answers[14]??0);
+
+        // ==============================
+        // SESI DAN GELOMBANG
+        // ==============================
+        $jumlahSesi=(int)($answers[16]??1);
+        $jumlahGelombang=(int)($answers[17]??1);
+
+        if($jumlahSesi<1)$jumlahSesi=1;
+        if($jumlahGelombang<1)$jumlahGelombang=1;
+
+        $komputerUtama=(int)ceil(
+            $siswaIkut/($jumlahSesi*$jumlahGelombang)
+        );
+
+        $komputerCadangan=(int)ceil($komputerUtama*0.10);
+
+        $kebutuhanPerangkat=$komputerUtama+$komputerCadangan;
+
+        // ==============================
+        // KEBUTUHAN PERANGKAT JUKNIS
+        // Peserta / (Sesi x Gelombang)
+        // ==============================
+        $komputerUtama=ceil(
+            $siswaIkut/($jumlahSesi*$jumlahGelombang)
+        );
+
+        // Cadangan 10%
+        $komputerCadangan=ceil($komputerUtama*0.10);
+
+        $kebutuhanPerangkat=
+            $komputerUtama+
+            $komputerCadangan;
+
+        // ==============================
+        // ISP UTAMA
+        // ==============================
+        $bandwidthIspUtama=$this->extractNumber(
+            $answers[11]??0
+        );
+
+        $ispUtama=trim(
+            (string)($answers[22]??'')
+        );
+
+        $ispUtamaLainnya=trim(
+            (string)($answers[23]??'')
+        );
+
+        if(
+            strcasecmp($ispUtama,'Lainnya')===0 &&
+            $ispUtamaLainnya!==''
+        ){
+            $ispUtama=$ispUtamaLainnya;
+        }
+
+        // ==============================
+        // ISP CADANGAN
+        // ==============================
+        $ispCadangan=trim(
+            (string)($answers[12]??'')
+        );
+
+        $ispCadanganLainnya=trim(
+            (string)($answers[24]??'')
+        );
+
+        if(
+            strcasecmp($ispCadangan,'Lainnya')===0 &&
+            $ispCadanganLainnya!==''
+        ){
+            $ispCadangan=$ispCadanganLainnya;
+        }
+
+        $bandwidthIspCadangan=$this->extractNumber(
+            $answers[25]??0
+        );
+
+        // ==============================
+        // BANDWIDTH
+        // ==============================
+        $networkClients=$komputerUtama;
+
+        $networkNeed=$networkClients>0
+            ? $networkClients*0.4
+            : 0;
+
+        // ==============================
+        // RETURN
+        // ==============================
         return [
-            'total_perangkat'=>0,
-            'kebutuhan_perangkat_juknis'=>0,
-            'isp_utama'=>'',
-            'isp_utama_lainnya'=>'',
-            'bandwidth_isp_utama'=>0,
-            'isp_cadangan'=>'',
-            'isp_cadangan_lainnya'=>'',
-            'bandwidth_isp_cadangan'=>0,
-            'network_need'=>0
+            'pc'=>$pc,
+            'laptop_milik'=>$laptopMilik,
+            'laptop_bukan_milik'=>$laptopBukanMilik,
+            'total_perangkat'=>$totalPerangkat,
+
+            'total_siswa'=>$totalSiswa,
+            'siswa_ikut'=>$siswaIkut,
+
+            'jumlah_sesi'=>$jumlahSesi,
+            'jumlah_gelombang'=>$jumlahGelombang,
+
+            'komputer_utama'=>$komputerUtama,
+            'komputer_cadangan'=>$komputerCadangan,
+            'kebutuhan_perangkat_juknis'=>$kebutuhanPerangkat,
+
+            'isp_utama'=>$ispUtama,
+            'isp_utama_lainnya'=>$ispUtamaLainnya,
+            'bandwidth_isp_utama'=>$bandwidthIspUtama,
+
+            'isp_cadangan'=>$ispCadangan,
+            'isp_cadangan_lainnya'=>$ispCadanganLainnya,
+            'bandwidth_isp_cadangan'=>$bandwidthIspCadangan,
+
+            'network_clients'=>$networkClients,
+            'network_need'=>$networkNeed,
+            'effective_bandwidth'=>$bandwidthIspUtama
         ];
     }
-    
 }

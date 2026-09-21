@@ -187,18 +187,14 @@
                     <table class="monev-table">
                         <thead>
                             <tr>
-                                <th>No</th>
-                                <th>Temuan Utama</th>
-                                <th>Jumlah Sekolah</th>
-                                <th>Sekolah yang Mengalami Temuan</th>
+                                <th style="width:60px;">No</th>
+                                <th>Permasalahan</th>
+                                <th style="width:120px;text-align:center;">Jumlah Sekolah</th>
                                 <th>Rekomendasi</th>
+                                <th style="width:100px;text-align:center;">Detail</th>
                             </tr>
                         </thead>
-                        <tbody id="problemRecommendationTableBody">
-                            <tr>
-                                <td colspan="5" class="table-empty">Belum ada data.</td>
-                            </tr>
-                        </tbody>
+                        <tbody id="problemRecommendationTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -665,14 +661,41 @@
             </div>
         </div>
     </div>
-    <div class="dashboard-export">
+    <div class="dashboard-export" style="display:none;">
         <div>
             <h3>Export Laporan Monev</h3>
             <p>Data mengikuti periode dan filter yang dipilih.</p>
         </div>
         <div>
             <button type="button" class="dashboard-btn dashboard-btn-outline" id="btnExportPDF"><i class="fas fa-file-pdf"></i>Export PDF</button>
-            <button type="button" class="dashboard-btn dashboard-btn-success" id="btnExportExcel"><i class="fas fa-file-excel"></i>Export Excel</button>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="problemDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="problemDetailTitle">Detail Permasalahan</h5>
+                    <small class="text-muted" id="problemDetailSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle">
+                        <thead id="problemDetailHead"></thead>
+                        <tbody id="problemDetailBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Tutup
+                </button>
+            </div>
         </div>
     </div>
 </div>
