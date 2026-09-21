@@ -2,7 +2,7 @@
     <div class="dashboard-header">
         <div>
             <h1>Dashboard Monev TKA Provinsi</h1>
-            <p>Monitoring dan Evaluasi Pelaksanaan TKAP-P</p>
+            <p>Monitoring dan Evaluasi Pelaksanaan TKAP</p>
         </div>
     </div>
     <div class="dashboard-filter">
@@ -20,6 +20,12 @@
                 <option value="">Semua Jenjang</option>
                 <option value="SMA">SMA</option>
                 <option value="SMK">SMK</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Wilayah</label>
+            <select id="filterWilayah" class="form-select">
+                <option value="">Semua Wilayah</option>
             </select>
         </div>
         <div class="filter-group">
@@ -109,6 +115,97 @@
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
+                    <h3 class="dashboard-panel-title">Rekap Status Monev per Wilayah</h3>
+                    <p class="dashboard-panel-subtitle">Rekap status pelaksanaan Monev berdasarkan wilayah sesuai filter yang dipilih.</p>
+                </div>
+            </div>
+            <div class="dashboard-panel-body">
+                <div class="table-responsive">
+                    <table class="table dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Wilayah</th>
+                                <th>Sudah Monev</th>
+                                <th>Sedang Berlangsung</th>
+                                <th>Draft Monev</th>
+                                <th>Persentase</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monevStatusTableBody">
+                            <tr>
+                                <td colspan="6" class="table-empty">Belum ada data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="monevStatusPagination"></div>
+            </div>
+        </div>
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <div>
+                    <h3 class="dashboard-panel-title">Rekap Laporan Pelaksana Monev</h3>
+                    <p class="dashboard-panel-subtitle">Rekap sasaran dan progres Monev berdasarkan pelaksana dan wilayah.</p>
+                </div>
+            </div>
+            <div class="dashboard-panel-body">
+                <div class="table-responsive">
+                    <table class="monev-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Pelaksana</th>
+                                <th>Wilayah</th>
+                                <th>Jumlah Sasaran</th>
+                                <th>Sudah Monev</th>
+                                <th>Sedang Berlangsung</th>
+                                <th>Belum Monev</th>
+                                <th>Persentase</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="officerRecapTableBody">
+                            <tr>
+                                <td colspan="9" class="table-empty">Belum ada data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="officerRecapPagination"></div>
+            </div>
+        </div>
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <div>
+                    <h3 class="dashboard-panel-title">Permasalahan & Rekomendasi</h3>
+                    <p class="dashboard-panel-subtitle">Permasalahan yang ditemukan pada hasil Monev dan rekomendasi tindak lanjut.</p>
+                </div>
+            </div>
+            <div class="dashboard-panel-body">
+                <div class="table-responsive">
+                    <table class="monev-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Temuan Utama</th>
+                                <th>Jumlah Sekolah</th>
+                                <th>Sekolah yang Mengalami Temuan</th>
+                                <th>Rekomendasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="problemRecommendationTableBody">
+                            <tr>
+                                <td colspan="5" class="table-empty">Belum ada data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <div>
                     <h3 class="dashboard-panel-title">Infrastruktur dan Sarana</h3>
                     <p class="dashboard-panel-subtitle">Perbandingan jumlah perangkat dan fasilitas sekolah.</p>
                 </div>
@@ -140,8 +237,8 @@
                             <span id="infrastructureTableInfo">Menampilkan 5 data</span>
                         </div>
                         <select id="infrastructureSort" class="form-select">
-                            <option value="asc">Terendah → Tertinggi</option>
                             <option value="desc">Tertinggi → Terendah</option>
+                            <option value="asc">Terendah → Tertinggi</option>
                         </select>
                     </div>
                     <div class="table-responsive">
@@ -189,12 +286,43 @@
                 <div class="dashboard-table">
                     <div class="dashboard-table-header">
                         <div>
-                            <h4>Detail Sekolah</h4>
-                            <span>Daftar sekolah berdasarkan daya listrik.</span>
+                            <h4>Rekap Penggunaan Daya</h4>
+                            <span>Jumlah sekolah berdasarkan kapasitas daya listrik.</span>
                         </div>
-                        <select id="electricityFilter" class="form-select">
-                            <option value="">Semua Daya</option>
+                         <select id="electricityCountSort" class="form-select" style="width:220px;">
+                            <option value="desc">Tertinggi → Terendah</option>
+                            <option value="asc">Terendah → Tertinggi</option>
                         </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="monev-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Daya Listrik</th>
+                                    <th>Jumlah Sekolah</th>
+                                </tr>
+                            </thead>
+                            <tbody id="electricityCountTableBody">
+                                <tr>
+                                    <td colspan="3" class="table-empty">Belum ada data.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="monev-pagination" id="electricityCountPagination"></div>
+                </div>
+                <div class="dashboard-table">
+                    <div class="dashboard-table-header">
+                        <div>
+                            <h4>Detail Sekolah</h4>
+                            <span id="electricityTableInfo">Pilih daya listrik untuk melihat sekolah.</span>
+                        </div>
+                        <div style="min-width:230px;">
+                            <select id="electricityDetailFilter" class="form-select" style="width:100%;">
+                                <option value="">Pilih Daya Listrik</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="monev-table">
@@ -208,7 +336,7 @@
                             </thead>
                             <tbody id="electricityTableBody">
                                 <tr>
-                                    <td colspan="4" class="table-empty">Belum ada data.</td>
+                                    <td colspan="4" class="table-empty">Pilih daya listrik untuk melihat sekolah.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -240,7 +368,6 @@
                             <option value="">Semua Jaringan</option>
                             <option value="LAN">LAN</option>
                             <option value="WIFI">WiFi</option>
-                            <option value="LAN_WIFI">LAN + WiFi</option>
                         </select>
                     </div>
                     <div class="table-responsive">
@@ -265,30 +392,30 @@
             </div>
         </div>
     </div>
-    <div class="dashboard-row">
+   <div class="dashboard-row">
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
-                    <h3 class="dashboard-panel-title">Bandwidth Upload</h3>
-                    <p class="dashboard-panel-subtitle">Distribusi bandwidth upload sekolah.</p>
+                    <h3 class="dashboard-panel-title">Bandwidth ISP Utama</h3>
+                    <p class="dashboard-panel-subtitle">Bandwidth ISP utama yang digunakan sekolah.</p>
                 </div>
             </div>
             <div class="dashboard-panel-body">
                 <div class="chart-container chart-small">
-                    <canvas id="uploadChart"></canvas>
+                    <canvas id="ispUtamaChart"></canvas>
                 </div>
                 <div class="dashboard-highlight">
-                    <i class="fas fa-upload"></i>
+                    <i class="fas fa-download"></i>
                     <div>
-                        <span>Bandwidth upload terbanyak</span>
-                        <strong id="uploadMostUsed">-</strong>
-                        <small id="uploadMostUsedCount">0 sekolah</small>
+                        <span>Bandwidth ISP Utama terbanyak</span>
+                        <strong id="ispUtamaMostUsed">-</strong>
+                        <small id="ispUtamaMostUsedCount">0 sekolah</small>
                     </div>
                 </div>
                 <div class="dashboard-table">
                     <div class="dashboard-table-header">
                         <h4>Detail Sekolah</h4>
-                        <select id="uploadFilter" class="form-select">
+                        <select id="ispUtamaFilter" class="form-select">
                             <option value="">Semua Bandwidth</option>
                         </select>
                     </div>
@@ -298,43 +425,43 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Sekolah</th>
-                                    <th>Upload</th>
+                                    <th>Bandwidth</th>
                                 </tr>
                             </thead>
-                            <tbody id="uploadTableBody">
+                            <tbody id="ispUtamaTableBody">
                                 <tr>
                                     <td colspan="3" class="table-empty">Belum ada data.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <div class="monev-pagination" id="uploadPagination"></div>
+                    <div class="monev-pagination" id="ispUtamaPagination"></div>
                 </div>
             </div>
         </div>
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
-                    <h3 class="dashboard-panel-title">Bandwidth Download</h3>
-                    <p class="dashboard-panel-subtitle">Distribusi bandwidth download sekolah.</p>
+                    <h3 class="dashboard-panel-title">Bandwidth ISP Cadangan</h3>
+                    <p class="dashboard-panel-subtitle">Bandwidth ISP cadangan yang digunakan sekolah.</p>
                 </div>
             </div>
             <div class="dashboard-panel-body">
                 <div class="chart-container chart-small">
-                    <canvas id="downloadChart"></canvas>
+                    <canvas id="ispCadanganChart"></canvas>
                 </div>
                 <div class="dashboard-highlight">
-                    <i class="fas fa-download"></i>
+                    <i class="fas fa-upload"></i>
                     <div>
-                        <span>Bandwidth download terbanyak</span>
-                        <strong id="downloadMostUsed">-</strong>
-                        <small id="downloadMostUsedCount">0 sekolah</small>
+                        <span>Bandwidth ISP cadangan terbanyak</span>
+                        <strong id="ispCadanganMostUsed">-</strong>
+                        <small id="ispCadanganMostUsedCount">0 sekolah</small>
                     </div>
                 </div>
                 <div class="dashboard-table">
                     <div class="dashboard-table-header">
                         <h4>Detail Sekolah</h4>
-                        <select id="downloadFilter" class="form-select">
+                        <select id="ispCadanganFilter" class="form-select">
                             <option value="">Semua Bandwidth</option>
                         </select>
                     </div>
@@ -344,17 +471,17 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Sekolah</th>
-                                    <th>Download</th>
+                                    <th>Bandwidth</th>
                                 </tr>
                             </thead>
-                            <tbody id="downloadTableBody">
+                            <tbody id="ispCadanganTableBody">
                                 <tr>
                                     <td colspan="3" class="table-empty">Belum ada data.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <div class="monev-pagination" id="downloadPagination"></div>
+                    <div class="monev-pagination" id="ispCadanganPagination"></div>
                 </div>
             </div>
         </div>
@@ -364,7 +491,7 @@
             <div class="dashboard-panel-header">
                 <div>
                     <h3 class="dashboard-panel-title">Kesiapan Siswa TKAP</h3>
-                    <p class="dashboard-panel-subtitle">Perbandingan siswa kelas 12 yang mengikuti dan tidak mengikuti TKAP-P.</p>
+                    <p class="dashboard-panel-subtitle">Perbandingan siswa kelas 12 yang mengikuti dan tidak mengikuti TKAP.</p>
                 </div>
             </div>
             <div class="dashboard-panel-body">
@@ -410,7 +537,7 @@
         <div class="dashboard-panel">
             <div class="dashboard-panel-header">
                 <div>
-                    <h3 class="dashboard-panel-title">Sesi TKAP-P</h3>
+                    <h3 class="dashboard-panel-title">Sesi TKAP</h3>
                     <p class="dashboard-panel-subtitle">Distribusi sesi TKAP yang digunakan sekolah.</p>
                 </div>
             </div>
@@ -552,20 +679,23 @@
 <script>
 window.dashboardConfig={
     dataUrl:"<?= site_url('dashboard/data') ?>",
-    exportUrl:"<?= site_url('dashboard/export') ?>"
+    exportUrl:"<?= site_url('dashboard/export') ?>",
+    regionsUrl:"<?= site_url('dashboard/regions') ?>",
+    districtsUrl:"<?= site_url('dashboard/districts') ?>"
 };
 window.dashboardData=<?= json_encode([
     'summary'=>$summary??[],
     'infrastructure'=>$infrastructure??[],
     'electricity'=>$electricity??[],
     'internet'=>$internet??[],
-    'upload'=>$upload??[],
-    'download'=>$download??[],
+    'ispUtama'    => $ispUtama ?? [],
+    'ispCadangan' => $ispCadangan ?? [],
     'students'=>$students??[],
     'sessions'=>$sessions??[],
     'waves'=>$waves??[],
     'readiness'=>$readiness??[],
-    'readinessData'=>$readinessData??[]
+    'readinessData'=>$readinessData??[],
+    'problemRecommendations'=>$problemRecommendations??[]
 ],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <div class="dashboard-content">

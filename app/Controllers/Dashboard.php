@@ -44,8 +44,8 @@ class Dashboard extends BaseController
             'infrastructure'  => $model->getInfrastructureData(),
             'electricity'     => $model->getElectricityData(),
             'internet'        => $model->getInternetData(),
-            'upload'          => $model->getBandwidthData(11),
-            'download'        => $model->getBandwidthData(12),
+            'ispUtama'          => $model->getBandwidthData(11),
+            'ispCadangan'        => $model->getBandwidthData(25),
             'students'        => $model->getStudentData(),
             'sessions'        => $model->getSessionData(),
             'waves'           => $model->getWaveData(),
@@ -63,24 +63,45 @@ class Dashboard extends BaseController
             'start_date'  => $this->request->getGet('start_date'),
             'end_date'    => $this->request->getGet('end_date'),
             'level'       => $this->request->getGet('level'),
+            'region_id'   => $this->request->getGet('region_id'),
             'district_id' => $this->request->getGet('district_id'),
         ];
 
         $model = $this->dashboardModel;
 
-        return $this->response->setJSON([
+       return $this->response->setJSON([
             'summary' => $model->getDashboardSummary($filters),
 
             'infrastructure' => $model->getInfrastructureData($filters),
             'electricity'    => $model->getElectricityData($filters),
             'internet'       => $model->getInternetData($filters),
-            'upload'         => $model->getBandwidthData(11, $filters),
-            'download'       => $model->getBandwidthData(12, $filters),
+            'ispUtama'         => $model->getBandwidthData(11, $filters),
+            'ispCadangan'       => $model->getBandwidthData(25, $filters),
             'students'       => $model->getStudentData($filters),
             'sessions'       => $model->getSessionData($filters),
             'waves'          => $model->getWaveData($filters),
             'readiness'      => $model->getInfrastructureReadiness($filters),
+
+            'readinessData'  => $model->getReadinessData($filters),
+            'monevStatus'=>$model->getMonevStatusRecap($filters),
+            'officerRecap'=>$model->getMonevOfficerRecap($filters),
+            'problemRecommendations'=>$model->getProblemRecommendationRecap($filters)
         ]);
     }
     
+    public function regions()
+    {
+        return $this->response->setJSON([
+            'regions'=>$this->dashboardModel->getRegions()
+        ]);
+    }
+
+    public function districts()
+    {
+        $regionId=$this->request->getGet('region_id');
+
+        return $this->response->setJSON([
+            'districts'=>$this->dashboardModel->getDistricts($regionId)
+        ]);
+    }
 }

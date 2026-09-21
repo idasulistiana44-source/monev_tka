@@ -2111,24 +2111,6 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                     'Sekolah disarankan meningkatkan kapasitas bandwidth ISP cadangan ' .
                     'agar mampu memenuhi kebutuhan minimum jaringan berdasarkan Juknis.';
 
-            } else {
-
-                // ISP CADANGAN ADA DAN BANDWIDTH MEMENUHI
-                $findings[] =
-                    'Sekolah telah memiliki ISP utama ' .
-                    $ispUtamaDisplay .
-                    ' sebesar ' .
-                    $bandwidthIspUtama .
-                    ' Mbps dan ISP cadangan ' .
-                    $ispCadanganDisplay .
-                    ' sebesar ' .
-                    $bandwidthIspCadangan .
-                    ' Mbps. ISP cadangan tersedia sebagai alternatif koneksi apabila ' .
-                    'terjadi gangguan pada ISP utama.';
-
-                $followUps[] =
-                    'Memastikan ISP cadangan tetap aktif, berfungsi dengan baik, ' .
-                    'dan siap digunakan apabila terjadi gangguan pada ISP utama.';
             }
         }
 
@@ -2226,11 +2208,7 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
             if ($networkNeed > 0 && $bandwidthIspCadangan < $networkNeed) {
                 $recommendations[] =
                     'Meningkatkan kapasitas bandwidth ISP cadangan agar mampu memenuhi kebutuhan minimum jaringan apabila digunakan sebagai pengganti ISP utama.';
-            } else {
-                // Jika ISP Cadangan Ada dan Cukup
-                $recommendations[] =
-                    'Memastikan ISP cadangan tetap aktif, berfungsi dengan baik, dan siap digunakan secara optimal apabila terjadi gangguan pada ISP utama.';
-            }
+            } 
         }
 
         // TAMPILAN JIKA TIDAK ADA TINDAK LANJUT
