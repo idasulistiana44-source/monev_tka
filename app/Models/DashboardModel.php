@@ -896,8 +896,17 @@ class DashboardModel extends Model
                     strcasecmp($ispCadangan,'Tidak Ada')!==0
                 );
 
-               $kebutuhanUtama=(int)($metrics['komputer_utama']??0);
-                $kebutuhanCadangan=(int)($metrics['komputer_cadangan']??0);
+                $jumlahSesi=max(1,(int)($metrics['jumlah_sesi']??1));
+                $jumlahGelombang=max(1,(int)($metrics['jumlah_gelombang']??1));
+
+                $kebutuhanUtama=(int)ceil(
+                    (($metrics['siswa_ikut']??0)/$jumlahGelombang)/$jumlahSesi
+                );
+
+                $kebutuhanCadangan=(int)ceil(
+                    $kebutuhanUtama*0.10
+                );
+
                 $totalKebutuhan=$kebutuhanUtama+$kebutuhanCadangan;
 
                 if($totalKebutuhan>0 && $totalPerangkat<$totalKebutuhan){
@@ -1022,7 +1031,6 @@ class DashboardModel extends Model
             }
 
             return $data;
-        return $data;
     }
 
    private function getVisitMetricsForProblemRecap($visitId)
@@ -1069,34 +1077,21 @@ class DashboardModel extends Model
         // ==============================
         // SESI DAN GELOMBANG
         // ==============================
-        $jumlahSesi=(int)($answers[16]??1);
+       $jumlahSesi=(int)($answers[16]??1);
         $jumlahGelombang=(int)($answers[17]??1);
 
         if($jumlahSesi<1)$jumlahSesi=1;
         if($jumlahGelombang<1)$jumlahGelombang=1;
 
         $komputerUtama=(int)ceil(
-            $siswaIkut/($jumlahSesi*$jumlahGelombang)
+            ($siswaIkut/$jumlahGelombang)/$jumlahSesi
         );
 
-        $komputerCadangan=(int)ceil($komputerUtama*0.10);
+        $komputerCadangan=(int)ceil(
+            $komputerUtama*0.10
+        );
 
         $kebutuhanPerangkat=$komputerUtama+$komputerCadangan;
-
-        // ==============================
-        // KEBUTUHAN PERANGKAT JUKNIS
-        // Peserta / (Sesi x Gelombang)
-        // ==============================
-        $komputerUtama=ceil(
-            $siswaIkut/($jumlahSesi*$jumlahGelombang)
-        );
-
-        // Cadangan 10%
-        $komputerCadangan=ceil($komputerUtama*0.10);
-
-        $kebutuhanPerangkat=
-            $komputerUtama+
-            $komputerCadangan;
 
         // ==============================
         // ISP UTAMA

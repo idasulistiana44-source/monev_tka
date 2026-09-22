@@ -156,13 +156,13 @@
                             <tr>
                                 <th>No</th>
                                 <th>Nama Pelaksana</th>
-                                <th>Wilayah</th>
-                                <th>Jumlah Sasaran</th>
-                                <th>Sudah Monev</th>
-                                <th>Sedang Berlangsung</th>
-                                <th>Belum Monev</th>
-                                <th>Persentase</th>
-                                <th>Keterangan</th>
+                                <th>Wilayah yang dikerjakan</th>
+                                <th style="text-align:center;">Jumlah Sasaran</th>
+                                <th style="text-align:center;">Sudah Monev</th>
+                                <th style="text-align:center;">Sedang Berlangsung</th>
+                                <th style="text-align:center;">Belum Monev</th>
+                                <th style="text-align:center;">Progres</th>
+                                <th style="text-align:center;">Keterangan</th>
                             </tr>
                         </thead>
                         <tbody id="officerRecapTableBody">

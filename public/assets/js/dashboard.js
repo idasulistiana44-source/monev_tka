@@ -1079,62 +1079,274 @@ document.addEventListener('DOMContentLoaded',function(){
 
         renderMonevStatusPagination(rows.length,totalPages);
     };
-   const renderOfficerRecap=function(){
+    const renderOfficerRecap=function(){
         const tbody=document.getElementById('officerRecapTableBody');
         if(!tbody)return;
 
         const result=state.data?.officerRecap||{};
-        const rows=Array.isArray(result.data)?result.data:[];
-        const total=result.total||{};
+        const sourceRows=Array.isArray(result.data)?result.data:[];
+
         const pageSize=Number(state.pageSize)||5;
 
         if(!state.pages)state.pages={};
         if(!state.pages.officerRecap)state.pages.officerRecap=1;
 
-        const totalPages=Math.max(1,Math.ceil(rows.length/pageSize));
+        // =========================================================
+        // GABUNGKAN DATA BERDASARKAN PELAKSANA
+        // =========================================================
+        const officerMap={};
+
+        sourceRows.forEach(function(item){
+
+            const officerName=String(
+                item.officer_name||'Tidak diketahui'
+            ).trim();
+
+            if(!officerMap[officerName]){
+                officerMap[officerName]={
+                    officer_name:officerName,
+                    wilayah:new Set(),
+                    jumlah_sasaran:0,
+                    sudah_monev:0,
+                    sedang_berlangsung:0,
+                    belum_monev:0,
+                    keterangan:item.keterangan||'-'
+                };
+            }
+
+            // Wilayah yang benar-benar muncul pada data sekolah
+            const regionName=String(
+                item.region_name||''
+            ).trim();
+
+            if(regionName){
+                officerMap[officerName].wilayah.add(regionName);
+            }
+
+            // Rekap seluruh sasaran pelaksana
+            officerMap[officerName].jumlah_sasaran +=
+                Number(item.jumlah_sasaran||0);
+
+            officerMap[officerName].sudah_monev +=
+                Number(item.sudah_monev||0);
+
+            officerMap[officerName].sedang_berlangsung +=
+                Number(item.sedang_berlangsung||0);
+
+            officerMap[officerName].belum_monev +=
+                Number(item.belum_monev||0);
+        });
+
+        // =========================================================
+        // UBAH OBJECT MENJADI ARRAY
+        // =========================================================
+        const rows=Object.values(officerMap).map(function(item){
+
+            const jumlahSasaran=Number(item.jumlah_sasaran||0);
+            const sudahMonev=Number(item.sudah_monev||0);
+
+            const persentase=jumlahSasaran>0
+                ? (sudahMonev/jumlahSasaran)*100
+                : 0;
+
+            return {
+                officer_name:item.officer_name,
+
+                // Urutkan wilayah dan gabungkan
+                region_name:Array.from(item.wilayah)
+                    .sort(function(a,b){
+                        return a.localeCompare(b,'id');
+                    })
+                    .join(', '),
+
+                jumlah_sasaran:jumlahSasaran,
+                sudah_monev:sudahMonev,
+                sedang_berlangsung:Number(item.sedang_berlangsung||0),
+                belum_monev:Number(item.belum_monev||0),
+                persentase:persentase,
+                keterangan:item.keterangan||'-'
+            };
+        });
+
+        // Urutkan berdasarkan nama pelaksana
+        rows.sort(function(a,b){
+            return a.officer_name.localeCompare(
+                b.officer_name,
+                'id'
+            );
+        });
+
+        // =========================================================
+        // TOTAL KESELURUHAN
+        // =========================================================
+        const total={
+            jumlah_sasaran:rows.reduce(function(sum,item){
+                return sum+item.jumlah_sasaran;
+            },0),
+
+            sudah_monev:rows.reduce(function(sum,item){
+                return sum+item.sudah_monev;
+            },0),
+
+            sedang_berlangsung:rows.reduce(function(sum,item){
+                return sum+item.sedang_berlangsung;
+            },0),
+
+            belum_monev:rows.reduce(function(sum,item){
+                return sum+item.belum_monev;
+            },0)
+        };
+
+        total.persentase=total.jumlah_sasaran>0
+            ? (total.sudah_monev/total.jumlah_sasaran)*100
+            : 0;
+
+        // =========================================================
+        // DATA KOSONG
+        // =========================================================
+        if(!rows.length){
+            emptyTable(
+                tbody,
+                8,
+                'Belum ada data pelaksana Monev.'
+            );
+
+            const pagination=$('officerRecapPagination');
+            if(pagination)pagination.innerHTML='';
+
+            return;
+        }
+
+        // =========================================================
+        // PAGINATION
+        // =========================================================
+        const totalPages=pageSize===0
+            ? 1
+            : Math.max(
+                1,
+                Math.ceil(rows.length/pageSize)
+            );
 
         if(state.pages.officerRecap>totalPages){
             state.pages.officerRecap=1;
         }
 
         const currentPage=state.pages.officerRecap;
-        const start=(currentPage-1)*pageSize;
-        const end=start+pageSize;
-        const pageRows=rows.slice(start,end);
 
+        const start=pageSize===0
+            ? 0
+            : (currentPage-1)*pageSize;
+
+        const pageRows=pageSize===0
+            ? rows
+            : rows.slice(
+                start,
+                start+pageSize
+            );
+
+        // =========================================================
+        // RENDER
+        // =========================================================
         let html='';
 
         pageRows.forEach(function(item,index){
+
+            const nomor=pageSize===0
+                ? index+1
+                : start+index+1;
+
             html+='<tr>';
-            html+='<td>'+(start+index+1)+'</td>';
-            html+='<td>'+escapeHtml(item.officer_name||'-')+'</td>';
-            html+='<td>'+escapeHtml(item.region_name||'-')+'</td>';
-            html+='<td>'+numberFormat(item.jumlah_sasaran||0)+'</td>';
-            html+='<td>'+numberFormat(item.sudah_monev||0)+'</td>';
-            html+='<td>'+numberFormat(item.sedang_berlangsung||0)+'</td>';
-            html+='<td>'+numberFormat(item.belum_monev||0)+'</td>';
-            html+='<td><strong>'+Number(item.persentase||0).toFixed(1)+'%</strong></td>';
+
+            html+='<td>'+nomor+'</td>';
+
+            html+='<td style="font-weight:600;">'+
+                escapeHtml(item.officer_name)+
+            '</td>';
+
+            html+='<td>'+
+                escapeHtml(item.region_name||'-')+
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                numberFormat(item.jumlah_sasaran)+ ' Sekolah'
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                numberFormat(item.sudah_monev)+ ' Sekolah'
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                numberFormat(item.sedang_berlangsung)+' Sekolah'
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                numberFormat(item.belum_monev)+ ' Sekolah'
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                '<strong>'+
+                Number(item.persentase||0).toFixed(1)+
+                '%</strong>'+
+            '</td>';
+            
             html+='<td>'+escapeHtml(item.keterangan||'-')+'</td>';
+
             html+='</tr>';
         });
 
-        if(currentPage===totalPages){
+        // =========================================================
+        // TOTAL
+        // =========================================================
+        if(
+            pageSize===0 ||
+            currentPage===totalPages
+        ){
+
             html+='<tr class="table-total">';
-            html+='<td><strong>Total</strong></td>';
-            html+='<td></td>';
-            html+='<td></td>';
-            html+='<td><strong>'+numberFormat(total.jumlah_sasaran||0)+'</strong></td>';
-            html+='<td><strong>'+numberFormat(total.sudah_monev||0)+'</strong></td>';
-            html+='<td><strong>'+numberFormat(total.sedang_berlangsung||0)+'</strong></td>';
-            html+='<td><strong>'+numberFormat(total.belum_monev||0)+'</strong></td>';
-            html+='<td><strong>'+Number(total.persentase||0).toFixed(1)+'%</strong></td>';
-            html+='<td></td>';
+
+            html+='<td colspan="3">'+
+                '<strong>Total</strong>'+
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                '<strong>'+
+                numberFormat(total.jumlah_sasaran)+
+                '</strong>'+
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                '<strong>'+
+                numberFormat(total.sudah_monev)+
+                '</strong>'+
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                '<strong>'+
+                numberFormat(total.sedang_berlangsung)+
+                '</strong>'+
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                '<strong>'+
+                numberFormat(total.belum_monev)+
+                '</strong>'+
+            '</td>';
+
+            html+='<td style="text-align:center;">'+
+                '<strong>'+
+                Number(total.persentase||0).toFixed(1)+
+                '%</strong>'+
+            '</td>';
+
             html+='</tr>';
         }
 
         tbody.innerHTML=html;
 
-        renderOfficerPagination(rows.length,totalPages);
+        renderOfficerPagination(
+            rows.length,
+            totalPages
+        );
     };
     const renderOfficerPagination=function(totalRows,totalPages){
         const container=$('officerRecapPagination');
@@ -1401,61 +1613,184 @@ document.addEventListener('DOMContentLoaded',function(){
                 '<tr style="font-size:11px;">'+
                     '<th>No</th>'+
                     '<th>Sekolah</th>'+
-                    '<th>Sesi</th>'+
-                    '<th>Gelombang</th>'+
-                    '<th>Kebutuhan Utama</th>'+
-                    '<th>Kebutuhan Cadangan</th>'+
-                    '<th>Total Kebutuhan</th>'+
+                    '<th>Jumlah Gelombang</th>'+
+                    '<th>Sesi/Gelombang</th>'+
+                    '<th>Kebutuhan Perangkat Utama Total</th>'+
+                    '<th>Perangkat Utama/Gelombang</th>'+
+                    '<th>Perangkat Utama/Sesi</th>'+
+                    '<th>Perangkat Cadangan/Sesi</th>'+
+                    '<th>Total Kebutuhan/Sesi</th>'+
                     '<th>Perangkat Tersedia</th>'+
                     '<th>Status</th>'+
                     '<th>Kekurangan</th>'+
                 '</tr>';
 
             body.innerHTML=details.map(function(row,i){
-                const utama=Number(row.kebutuhan_utama||0);
-                const cadangan=Number(row.kebutuhan_cadangan||0);
-                const tersedia=Number(row.available||0);
 
-                const kurangUtama=Math.max(0,utama-tersedia);
-                const sisaSetelahUtama=Math.max(0,tersedia-utama);
-                const kurangCadangan=Math.max(0,cadangan-sisaSetelahUtama);
+                // ==========================================
+                // DATA DASAR
+                // ==========================================
+                const jumlahGelombang=Number(row.jumlah_gelombang || row.gelombang_total || 1);
+                const sesiPerGelombang=Number(row.sesi || 1);
 
-                const kurangTotal=kurangUtama+kurangCadangan;
+                const kebutuhanUtamaTotal=Number(
+                    row.kebutuhan_utama || 0
+                );
 
-                const status=kurangUtama>0
-                    ?'<span style="color:#dc2626;font-weight:600;">KURANG</span>'
-                    :'<span style="color:#16a34a;font-weight:600;">CUKUP</span>';
+                const cadanganPerSesi=Number(
+                    row.kebutuhan_cadangan || 0
+                );
+
+                const tersedia=Number(
+                    row.available || 0
+                );
+
+                // ==========================================
+                // PERHITUNGAN
+                // ==========================================
+
+                // Total utama dibagi jumlah gelombang
+                const utamaPerGelombang=Math.ceil(
+                    kebutuhanUtamaTotal / jumlahGelombang
+                );
+
+                // Utama per gelombang dibagi jumlah sesi
+                const utamaPerSesi=Math.ceil(
+                    utamaPerGelombang / sesiPerGelombang
+                );
+
+                // Total kebutuhan untuk 1 sesi
+                const totalKebutuhanPerSesi=
+                    utamaPerSesi + cadanganPerSesi;
+
+                // ==========================================
+                // HITUNG KEKURANGAN
+                // ==========================================
+
+                const kurangUtama=Math.max(
+                    0,
+                    utamaPerSesi - tersedia
+                );
+
+                // Setelah kebutuhan utama terpenuhi,
+                // baru cek cadangan
+                const sisaSetelahUtama=Math.max(
+                    0,
+                    tersedia - utamaPerSesi
+                );
+
+                const kurangCadangan=Math.max(
+                    0,
+                    cadanganPerSesi - sisaSetelahUtama
+                );
+
+                const kurangTotal=
+                    kurangUtama + kurangCadangan;
+
+                // ==========================================
+                // STATUS
+                // ==========================================
+
+                const status=kurangTotal>0
+                    ? '<span style="color:#dc2626;font-weight:600;">KURANG</span>'
+                    : '<span style="color:#16a34a;font-weight:600;">CUKUP</span>';
+
+                // ==========================================
+                // KETERANGAN KEKURANGAN
+                // ==========================================
 
                 let kekurangan='';
 
                 if(kurangUtama>0 && kurangCadangan>0){
+
                     kekurangan=
-                        numberFormat(kurangUtama)+' unit utama + '+
-                        numberFormat(kurangCadangan)+' unit cadangan';
+                        numberFormat(kurangUtama)+
+                        ' unit utama + '+
+                        numberFormat(kurangCadangan)+
+                        ' unit cadangan';
+
                 }else if(kurangUtama>0){
+
                     kekurangan=
-                        numberFormat(kurangUtama)+' unit utama';
+                        numberFormat(kurangUtama)+
+                        ' unit utama';
+
                 }else if(kurangCadangan>0){
+
                     kekurangan=
-                        numberFormat(kurangCadangan)+' unit cadangan';
-                }else{
-                    kekurangan='Tidak ada';
+                        numberFormat(kurangCadangan)+
+                        ' unit cadangan';
                 }
 
+                // ==========================================
+                // JIKA TIDAK ADA KEKURANGAN,
+                // JANGAN TAMPILKAN DI TABEL
+                // ==========================================
+
+                if(kurangTotal<=0){
+                    return '';
+                }
+
+                // ==========================================
+                // RENDER TABEL
+                // ==========================================
+
                 return '<tr style="font-size:11px;">'+
+
                     '<td>'+(i+1)+'</td>'+
-                    '<td>'+escapeHtml(row.school)+'</td>'+
-                    '<td style="text-align:center;">'+numberFormat(row.sesi)+'</td>'+
-                    '<td style="text-align:center;">'+numberFormat(row.gelombang)+'</td>'+
-                    '<td style="text-align:center;">'+numberFormat(utama)+' unit</td>'+
-                    '<td style="text-align:center;">'+numberFormat(cadangan)+' unit</td>'+
-                    '<td style="text-align:center;font-weight:600;">'+numberFormat(row.total_kebutuhan)+' unit</td>'+
-                    '<td style="text-align:center;">'+numberFormat(tersedia)+' unit</td>'+
-                    '<td style="text-align:center;">'+status+'</td>'+
+
+                    '<td>'+
+                        escapeHtml(row.school)+
+                    '</td>'+
+
+                    '<td style="text-align:center;">'+
+                        numberFormat(jumlahGelombang)+
+                    '</td>'+
+
+                    '<td style="text-align:center;">'+
+                        numberFormat(sesiPerGelombang)+
+                    '</td>'+
+
+                    '<td style="text-align:center;">'+
+                        numberFormat(kebutuhanUtamaTotal)+
+                        ' unit'+
+                    '</td>'+
+
+                    '<td style="text-align:center;">'+
+                        numberFormat(utamaPerGelombang)+
+                        ' unit'+
+                    '</td>'+
+
+                    '<td style="text-align:center;font-weight:600;">'+
+                        numberFormat(utamaPerSesi)+
+                        ' unit'+
+                    '</td>'+
+
+                    '<td style="text-align:center;">'+
+                        numberFormat(cadanganPerSesi)+
+                        ' unit'+
+                    '</td>'+
+
+                    '<td style="text-align:center;font-weight:600;">'+
+                        numberFormat(totalKebutuhanPerSesi)+
+                        ' unit'+
+                    '</td>'+
+
+                    '<td style="text-align:center;">'+
+                        numberFormat(tersedia)+
+                        ' unit'+
+                    '</td>'+
+
+                    '<td style="text-align:center;">'+
+                        status+
+                    '</td>'+
+
                     '<td style="text-align:center;font-weight:600;">'+
                         escapeHtml(kekurangan)+
                     '</td>'+
+
                 '</tr>';
+
             }).join('');
         }
         else if(item.type==='main_isp'){
