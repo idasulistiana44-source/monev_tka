@@ -903,7 +903,7 @@ class DashboardModel extends Model
                     (($metrics['siswa_ikut']??0)/$jumlahGelombang)/$jumlahSesi
                 );
 
-                $kebutuhanCadangan=(int)ceil(
+                $kebutuhanCadangan=(int)floor(
                     $kebutuhanUtama*0.10
                 );
 

@@ -570,9 +570,9 @@ class Visits extends BaseController
                         $typeLabel = 'PDF';
                         $maxLabel = '3 MB';
                     } elseif ($type === 'photo') {
-                        $maxSize = 2 * 1024 * 1024;
+                        $maxSize = 3 * 1024 * 1024;
                         $typeLabel = 'foto';
-                        $maxLabel = '2 MB';
+                        $maxLabel = '3 MB';
                     } else {
                         throw new \RuntimeException(
                             'Instrumen tersebut bukan instrumen upload file.'

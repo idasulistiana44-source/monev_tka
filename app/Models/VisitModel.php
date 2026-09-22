@@ -66,10 +66,18 @@ class VisitModel extends Model
             $builder->where('vt_filter.user_id', (int)$userId);
         }
 
-        if ($keyword !== '') {
+       if ($keyword !== '') {
             $builder->groupStart();
             $builder->like('s.npsn', $keyword);
             $builder->orLike('s.school_name', $keyword);
+            $builder->orLike('r.name', $keyword);
+            $builder->orLike('s.level', $keyword);
+            $builder->orLike('v.visit_date', $keyword);
+            $builder->orLike('v.status', $keyword);
+            $builder->orLike('creator.name', $keyword);
+            $builder->orLike('creator.username', $keyword);
+            $builder->orLike('submitter.name', $keyword);
+            $builder->orLike('submitter.username', $keyword);
             $builder->groupEnd();
         }
 
@@ -280,7 +288,7 @@ class VisitModel extends Model
     public function getInstrumentData($visitId)
     {
         $rows = $this->db->table('instruments i')
-            ->select('i.id, i.section_id, i.code, i.question, i.description, i.answer_type, i.options, i.sort_order, i.is_active, s.name AS section_name, s.description AS section_description, s.sort_order AS section_sort_order')
+            ->select('i.id, i.section_id, i.code, i.question, i.description, i.answer_type, i.options, i.sort_order, i.is_active, i.is_required, s.name AS section_name, s.description AS section_description, s.sort_order AS section_sort_order')
             ->join('instrument_sections s', 's.id = i.section_id', 'left')
             ->where('i.is_active', 1)
             ->orderBy('s.sort_order', 'ASC')
@@ -336,6 +344,7 @@ class VisitModel extends Model
                 'description' => $row['description'],
                 'answer_type' => $row['answer_type'],
                 'options'     => $options,
+                'is_required' => (int)$row['is_required'],
                 'answer'      => $answer
             ];
         }

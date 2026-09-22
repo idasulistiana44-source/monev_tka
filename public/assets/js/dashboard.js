@@ -1067,7 +1067,7 @@ document.addEventListener('DOMContentLoaded',function(){
         const pageRows=rows.slice(start,start+pageSize);
 
         tbody.innerHTML=pageRows.map(function(item,index){
-            return '<tr>'+
+            return '<tr style="font-size:12px">'+
                 '<td>'+(start+index+1)+'</td>'+
                 '<td>'+escapeHtml(item.region_name||'-')+'</td>'+
                 '<td>'+numberFormat(item.sudah_monev||0)+'</td>'+
@@ -1435,7 +1435,7 @@ document.addEventListener('DOMContentLoaded',function(){
         const hasDetail=Number(item.total_school)>0;
 
         return '<tr>'+
-            '<td>'+escapeHtml(item.no)+'</td>'+
+            '<td style="text-align:12px;">'+escapeHtml(item.no)+'</td>'+
             '<td style="font-size:12px;">'+escapeHtml(item.problem)+'</td>'+
             '<td style="font-size:12px;text-align:center;">'+numberFormat(item.total_school)+'</td>'+
             '<td style="font-size:12px;">'+escapeHtml(item.recommendation)+'</td>'+
@@ -1595,270 +1595,99 @@ document.addEventListener('DOMContentLoaded',function(){
         );
 
     });
-    window.showProblemDetail=function(index){
-        const item=state.data?.problemRecommendations?.[index];
-        if(!item)return;
-
-        const details=Array.isArray(item.details)?item.details:[];
-
-        document.getElementById('problemDetailTitle').textContent='Detail Permasalahan';
-        document.getElementById('problemDetailSubtitle').textContent=item.problem;
-
-        const head=document.getElementById('problemDetailHead');
-        const body=document.getElementById('problemDetailBody');
-
-        
-        if(item.type==='device'){
-            head.innerHTML=
-                '<tr style="font-size:11px;">'+
-                    '<th>No</th>'+
-                    '<th>Sekolah</th>'+
-                    '<th>Jumlah Gelombang</th>'+
-                    '<th>Sesi/Gelombang</th>'+
-                    '<th>Kebutuhan Perangkat Utama Total</th>'+
-                    '<th>Perangkat Utama/Gelombang</th>'+
-                    '<th>Perangkat Utama/Sesi</th>'+
-                    '<th>Perangkat Cadangan/Sesi</th>'+
-                    '<th>Total Kebutuhan/Sesi</th>'+
-                    '<th>Perangkat Tersedia</th>'+
-                    '<th>Status</th>'+
-                    '<th>Kekurangan</th>'+
-                '</tr>';
-
-            body.innerHTML=details.map(function(row,i){
-
-                // ==========================================
-                // DATA DASAR
-                // ==========================================
-                const jumlahGelombang=Number(row.jumlah_gelombang || row.gelombang_total || 1);
-                const sesiPerGelombang=Number(row.sesi || 1);
-
-                const kebutuhanUtamaTotal=Number(
-                    row.kebutuhan_utama || 0
-                );
-
-                const cadanganPerSesi=Number(
-                    row.kebutuhan_cadangan || 0
-                );
-
-                const tersedia=Number(
-                    row.available || 0
-                );
-
-                // ==========================================
-                // PERHITUNGAN
-                // ==========================================
-
-                // Total utama dibagi jumlah gelombang
-                const utamaPerGelombang=Math.ceil(
-                    kebutuhanUtamaTotal / jumlahGelombang
-                );
-
-                // Utama per gelombang dibagi jumlah sesi
-                const utamaPerSesi=Math.ceil(
-                    utamaPerGelombang / sesiPerGelombang
-                );
-
-                // Total kebutuhan untuk 1 sesi
-                const totalKebutuhanPerSesi=
-                    utamaPerSesi + cadanganPerSesi;
-
-                // ==========================================
-                // HITUNG KEKURANGAN
-                // ==========================================
-
-                const kurangUtama=Math.max(
-                    0,
-                    utamaPerSesi - tersedia
-                );
-
-                // Setelah kebutuhan utama terpenuhi,
-                // baru cek cadangan
-                const sisaSetelahUtama=Math.max(
-                    0,
-                    tersedia - utamaPerSesi
-                );
-
-                const kurangCadangan=Math.max(
-                    0,
-                    cadanganPerSesi - sisaSetelahUtama
-                );
-
-                const kurangTotal=
-                    kurangUtama + kurangCadangan;
-
-                // ==========================================
-                // STATUS
-                // ==========================================
-
-                const status=kurangTotal>0
-                    ? '<span style="color:#dc2626;font-weight:600;">KURANG</span>'
-                    : '<span style="color:#16a34a;font-weight:600;">CUKUP</span>';
-
-                // ==========================================
-                // KETERANGAN KEKURANGAN
-                // ==========================================
-
-                let kekurangan='';
-
-                if(kurangUtama>0 && kurangCadangan>0){
-
-                    kekurangan=
-                        numberFormat(kurangUtama)+
-                        ' unit utama + '+
-                        numberFormat(kurangCadangan)+
-                        ' unit cadangan';
-
-                }else if(kurangUtama>0){
-
-                    kekurangan=
-                        numberFormat(kurangUtama)+
-                        ' unit utama';
-
-                }else if(kurangCadangan>0){
-
-                    kekurangan=
-                        numberFormat(kurangCadangan)+
-                        ' unit cadangan';
+   window.showProblemDetail=function(index){
+    const item=state.data?.problemRecommendations?.[index];
+    if(!item)return;
+    const details=Array.isArray(item.details)?item.details:[];
+    document.getElementById('problemDetailTitle').textContent='Detail Permasalahan';
+     const tableSelector='#problemDetailTable';
+    if(window.jQuery&&window.jQuery.fn&&typeof window.jQuery.fn.DataTable==='function'){
+        if(jQuery.fn.DataTable.isDataTable(tableSelector)){
+            jQuery(tableSelector).DataTable().clear().destroy();
+        }
+    }
+    document.getElementById('problemDetailSubtitle').textContent=item.problem||'';
+    const head=document.getElementById('problemDetailHead');
+    const body=document.getElementById('problemDetailBody');
+    
+    if(!head||!body)return;
+    if(item.type==='device'){
+        head.innerHTML='<tr style="font-size:11px;"><th>No</th><th>Sekolah</th><th style="text-align:center">Siswa Ikut TKA</th><th>Gelombang</th><th>Sesi</th><th style="text-align:center">Kebutuhan Utama/Sesi</th><th style="text-align:center">Cadangan 10%</th><th>Total Kebutuhan/Sesi</th><th style="text-align:center">Perangkat Tersedia</th><th style="text-align:center">Kekurangan</th><th>Status</th></tr>';
+        body.innerHTML=details.map(function(row,i){
+            const pesertaTKA=Number(row.peserta||0);
+            const jumlahGelombang=Number(row.gelombang||1);
+            const sesiPerGelombang=Number(row.sesi||1);
+            const kebutuhanUtamaPerSesi=Number(row.kebutuhan_utama||0);
+            const cadanganPerSesi=Number(row.kebutuhan_cadangan||0);
+            const totalKebutuhanPerSesi=kebutuhanUtamaPerSesi+cadanganPerSesi;
+            const tersedia=Number(row.available||0);
+            const kurangUtama=Math.max(0,kebutuhanUtamaPerSesi-tersedia);
+            const sisaSetelahUtama=Math.max(0,tersedia-kebutuhanUtamaPerSesi);
+            const kurangCadangan=Math.max(0,cadanganPerSesi-sisaSetelahUtama);
+            let kekurangan='-';
+            if(kurangUtama>0&&kurangCadangan>0){
+                kekurangan=numberFormat(kurangUtama)+' unit utama + '+numberFormat(kurangCadangan)+' unit cadangan';
+            }else if(kurangUtama>0){
+                kekurangan=numberFormat(kurangUtama)+' unit utama';
+            }else if(kurangCadangan>0){
+                kekurangan=numberFormat(kurangCadangan)+' unit cadangan';
+            }
+            const status=kurangUtama>0?'<span style="color:#dc2626;font-weight:700;">KURANG</span>':'<span style="color:#16a34a;font-weight:700;">Perangkat Utama CUKUP</span>';
+            return '<tr style="font-size:11px;"><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHtml(row.school||'-')+'</td><td style="text-align:center;font-weight:600;">'+numberFormat(pesertaTKA)+' siswa</td><td style="text-align:center;">'+numberFormat(jumlahGelombang)+'</td><td style="text-align:center;">'+numberFormat(sesiPerGelombang)+'</td><td style="text-align:center;font-weight:600;">'+numberFormat(kebutuhanUtamaPerSesi)+' unit</td><td style="text-align:center;">'+numberFormat(cadanganPerSesi)+' unit</td><td style="text-align:center;font-weight:700;">'+numberFormat(totalKebutuhanPerSesi)+' unit</td><td style="text-align:center;">'+numberFormat(tersedia)+' unit</td><td style="text-align:center;font-weight:700;color:#dc2626;">'+escapeHtml(kekurangan)+'</td><td style="text-align:center;">'+status+'</td></tr>';
+        }).join('');
+    }else if(item.type==='main_isp'){
+        head.innerHTML='<tr style="font-size:12px;"><th>No</th><th>Sekolah</th><th>ISP Utama</th><th style="text-align:center;font-size:12px">Bandwidth Tersedia</th><th style="text-align:center;">Kebutuhan Bandwidth</th><th style="text-align:center;">Kekurangan</th></tr>';
+        body.innerHTML=details.map(function(row,i){
+            return '<tr style="font-size:11px;"><td>'+(i+1)+'</td><td>'+escapeHtml(row.school||'-')+'</td><td>'+escapeHtml(row.isp||'-')+'</td><td style="text-align:center;font-size:12px">'+numberFormat(row.bandwidth)+' Mbps</td><td style="text-align:center;font-size:12px">'+numberFormat(row.need)+' Mbps</td><td style="text-align:center;color:#dc2626;font-weight:700;font-size:12px">'+numberFormat(row.shortage)+' Mbps</td></tr>';
+        }).join('');
+    }else if(item.type==='backup_missing'){
+        head.innerHTML='<tr><th style="font-size:12px;width:8%">No</th><th style="font-size:12px;">Sekolah</th></tr>';
+        body.innerHTML=details.map(function(row,i){
+            return '<tr><td style="font-size:12px;text-align:center">'+(i+1)+'</td><td style="font-size:12px";>'+escapeHtml(row.school||'-')+'</td></tr>';
+        }).join('');
+    }else if(item.type==='backup_bandwidth'){
+        head.innerHTML='<tr style="font-size:12px;"><th style="width:7%;">No</th><th>Sekolah</th><th style="text-align:center;">Bandwidth Cadangan</th><th style="text-align:center;">Kebutuhan</th><th style="text-align:center;">Kekurangan</th></tr>';
+        body.innerHTML=details.map(function(row,i){
+            return '<tr style="font-size:12px;"><td  style="text-align:center;">'+(i+1)+'</td><td>'+escapeHtml(row.school||'-')+'</td><td style="text-align:center;">'+numberFormat(row.bandwidth)+' Mbps</td><td style="text-align:center;">'+numberFormat(row.need)+' Mbps</td><td style="text-align:center;"><strong>'+numberFormat(row.shortage)+' Mbps</strong></td></tr>';
+        }).join('');
+    }
+    if(window.jQuery&&window.jQuery.fn&&typeof window.jQuery.fn.DataTable==='function'){
+        const table=jQuery('#problemDetailTable');
+        if(jQuery.fn.DataTable.isDataTable('#problemDetailTable')){
+            table.DataTable().clear().destroy();
+        }
+        table.DataTable({
+            autoWidth:true,
+            responsive:false,
+            pageLength:10,
+            lengthMenu:[[10,25,50,100,-1],[10,25,50,100,'Semua']],
+            ordering:true,
+            searching:true,
+            paging:true,
+            info:true,
+            language:{
+                search:'Cari:',
+                lengthMenu:'Tampilkan _MENU_ data',
+                info:'Menampilkan _START_–_END_ dari _TOTAL_ data',
+                infoEmpty:'Menampilkan 0–0 dari 0 data',
+                zeroRecords:'Data tidak ditemukan',
+                emptyTable:'Tidak ada data',
+                paginate:{
+                    first:'Awal',
+                    last:'Akhir',
+                    next:'›',
+                    previous:'‹'
                 }
-
-                // ==========================================
-                // JIKA TIDAK ADA KEKURANGAN,
-                // JANGAN TAMPILKAN DI TABEL
-                // ==========================================
-
-                if(kurangTotal<=0){
-                    return '';
-                }
-
-                // ==========================================
-                // RENDER TABEL
-                // ==========================================
-
-                return '<tr style="font-size:11px;">'+
-
-                    '<td>'+(i+1)+'</td>'+
-
-                    '<td>'+
-                        escapeHtml(row.school)+
-                    '</td>'+
-
-                    '<td style="text-align:center;">'+
-                        numberFormat(jumlahGelombang)+
-                    '</td>'+
-
-                    '<td style="text-align:center;">'+
-                        numberFormat(sesiPerGelombang)+
-                    '</td>'+
-
-                    '<td style="text-align:center;">'+
-                        numberFormat(kebutuhanUtamaTotal)+
-                        ' unit'+
-                    '</td>'+
-
-                    '<td style="text-align:center;">'+
-                        numberFormat(utamaPerGelombang)+
-                        ' unit'+
-                    '</td>'+
-
-                    '<td style="text-align:center;font-weight:600;">'+
-                        numberFormat(utamaPerSesi)+
-                        ' unit'+
-                    '</td>'+
-
-                    '<td style="text-align:center;">'+
-                        numberFormat(cadanganPerSesi)+
-                        ' unit'+
-                    '</td>'+
-
-                    '<td style="text-align:center;font-weight:600;">'+
-                        numberFormat(totalKebutuhanPerSesi)+
-                        ' unit'+
-                    '</td>'+
-
-                    '<td style="text-align:center;">'+
-                        numberFormat(tersedia)+
-                        ' unit'+
-                    '</td>'+
-
-                    '<td style="text-align:center;">'+
-                        status+
-                    '</td>'+
-
-                    '<td style="text-align:center;font-weight:600;">'+
-                        escapeHtml(kekurangan)+
-                    '</td>'+
-
-                '</tr>';
-
-            }).join('');
-        }
-        else if(item.type==='main_isp'){
-            head.innerHTML=
-                '<tr style="font-size:11px;">'+
-                    '<th>No</th>'+
-                    '<th>Sekolah</th>'+
-                    '<th>ISP Utama</th>'+
-                    '<th style="text-align:center;">Bandwidth Tersedia</th>'+
-                    '<th style="text-align:center;">Kebutuhan Bandwidth</th>'+
-                    '<th style="text-align:center;">Kekurangan</th>'+
-                '</tr>';
-
-            body.innerHTML=details.map(function(row,i){
-                return '<tr style="font-size:11px;">'+
-                    '<td>'+(i+1)+'</td>'+
-                    '<td>'+escapeHtml(row.school)+'</td>'+
-                    '<td>'+escapeHtml(row.isp||'-')+'</td>'+
-                    '<td style="text-align:center;">'+numberFormat(row.bandwidth)+' Mbps</td>'+
-                    '<td style="text-align:center;">'+numberFormat(row.need)+' Mbps</td>'+
-                    '<td style="text-align:center;color:#dc2626;font-weight:700;">'+
-                        numberFormat(row.shortage)+' Mbps'+
-                    '</td>'+
-                '</tr>';
-            }).join('');
-        }
-
-        else if(item.type==='backup_missing'){
-            head.innerHTML=
-                '<tr>'+
-                    '<th style="width:60px;">No</th>'+
-                    '<th>Sekolah</th>'+
-                    '<th style="text-align:center;">ISP/Jaringan Cadangan</th>'+
-                '</tr>';
-
-            body.innerHTML=details.map(function(row,i){
-                return '<tr>'+
-                    '<td>'+(i+1)+'</td>'+
-                    '<td>'+escapeHtml(row.school)+'</td>'+
-                    '<td style="text-align:center;"><strong>Tidak Ada</strong></td>'+
-                '</tr>';
-            }).join('');
-        }
-
-        else if(item.type==='backup_bandwidth'){
-            head.innerHTML=
-                '<tr>'+
-                    '<th style="width:60px;">No</th>'+
-                    '<th>Sekolah</th>'+
-                    '<th style="text-align:center;">Bandwidth Cadangan</th>'+
-                    '<th style="text-align:center;">Kebutuhan</th>'+
-                    '<th style="text-align:center;">Kekurangan</th>'+
-                '</tr>';
-
-            body.innerHTML=details.map(function(row,i){
-                return '<tr>'+
-                    '<td>'+(i+1)+'</td>'+
-                    '<td>'+escapeHtml(row.school)+'</td>'+
-                    '<td style="text-align:center;">'+numberFormat(row.bandwidth)+' Mbps</td>'+
-                    '<td style="text-align:center;">'+numberFormat(row.need)+' Mbps</td>'+
-                    '<td style="text-align:center;"><strong>'+numberFormat(row.shortage)+' Mbps</strong></td>'+
-                '</tr>';
-            }).join('');
-        }
-
-        const modal=new bootstrap.Modal(document.getElementById('problemDetailModal'));
-        modal.show();
-    };
+            }
+        });
+    }
+    
+    const modalElement=document.getElementById('problemDetailModal');
+    if(!modalElement)return;
+    if(typeof bootstrap==='undefined'||!bootstrap.Modal)return;
+    const modal=bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
+};
     $('studentReadinessSort')?.addEventListener('change',function(){
         state.pages.students=1;
         renderStudents();

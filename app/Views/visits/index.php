@@ -32,7 +32,7 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
             <div class="visits-toolbar">
                 <div class="visits-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchVisit" class="form-control" placeholder="Cari NPSN atau nama sekolah..." autocomplete="off">
+                    <input type="text" id="searchVisit" class="form-control" placeholder="Cari data..." autocomplete="off">
                 </div>
                 <select id="filterStatus" class="form-select visits-filter">
                     <option value="">Semua Status</option>

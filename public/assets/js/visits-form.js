@@ -213,7 +213,7 @@
             '</div>';
     }
 
-    html += renderInput(item, answer);
+    html += renderInput(item, answer,isReq);
 
     html += '</div>';
 
@@ -278,21 +278,25 @@
 
             if (ispUtama === 'Lainnya') {
                 item.show();
+                item.attr('data-required', '1');
             } else {
                 item.hide();
+                item.attr('data-required', '0');
                 clearInstrumentValue(item);
             }
         }
 
         if (code === 'INF-15') {
 
-            if (
+           if (
                 ispCadangan !== '' &&
                 ispCadangan.toLowerCase() !== 'tidak ada'
             ) {
                 item.show();
+                item.attr('data-required', '1');
             } else {
                 item.hide();
+                item.attr('data-required', '0');
                 clearInstrumentValue(item);
             }
         }
@@ -304,8 +308,10 @@
                 ispCadangan.toLowerCase() !== 'tidak ada'
             ) {
                 item.show();
+                item.attr('data-required', '1');
             } else {
                 item.hide();
+                item.attr('data-required', '0');
                 clearInstrumentValue(item);
             }
         }
@@ -362,7 +368,8 @@
 
 
     
-    function renderInput(item, answer) {
+    function renderInput(item, answer, isReq) {
+    const requiredAttr = isReq ? ' required' : '';
     const id = escapeAttr(item.id);
     const name = 'instrument_' + id;
     const type = item.answer_type || 'text';
@@ -1000,13 +1007,9 @@
         let answered = 0;
 
 
-        const items =
-            $('.instrument-item[data-required="1"]')
-                .length > 0
-
-                ? $('.instrument-item[data-required="1"]')
-
-                : $('.instrument-item');
+        const items = $('.instrument-item:visible').filter(function () {
+            return $(this).attr('data-required') === '1';
+        });
 
 
         items.each(function () {

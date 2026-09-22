@@ -123,7 +123,7 @@
                 <div class="table-responsive">
                     <table class="table dashboard-table">
                         <thead>
-                            <tr>
+                            <tr style="font-size:12px">
                                 <th>No</th>
                                 <th>Wilayah</th>
                                 <th>Sudah Monev</th>
@@ -133,7 +133,7 @@
                             </tr>
                         </thead>
                         <tbody id="monevStatusTableBody">
-                            <tr>
+                            <tr style="font-size:12px">
                                 <td colspan="6" class="table-empty">Belum ada data.</td>
                             </tr>
                         </tbody>
@@ -672,29 +672,25 @@
     </div>
 </div>
 <div class="modal fade" id="problemDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
                     <h5 class="modal-title" id="problemDetailTitle">Detail Permasalahan</h5>
-                    <small class="text-muted" id="problemDetailSubtitle"></small>
+                    <div id="problemDetailSubtitle" class="text-muted small"></div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-
             <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle">
+                <div id="problemDetailTableWrapper" style="width:100%;">
+                    <table id="problemDetailTable" class="table table-bordered table-striped table-hover align-middle" style="width:100%;">
                         <thead id="problemDetailHead"></thead>
                         <tbody id="problemDetailBody"></tbody>
                     </table>
                 </div>
             </div>
-
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Tutup
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
