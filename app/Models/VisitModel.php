@@ -78,6 +78,17 @@ class VisitModel extends Model
             $builder->orLike('creator.username', $keyword);
             $builder->orLike('submitter.name', $keyword);
             $builder->orLike('submitter.username', $keyword);
+            $builder->orWhere("EXISTS (
+                SELECT 1
+                FROM visit_team vt_search
+                INNER JOIN users u_search ON u_search.id = vt_search.user_id
+                WHERE vt_search.visit_id = v.id
+                AND (
+                    u_search.name LIKE '%".$this->db->escapeLikeString($keyword)."%'
+                    OR u_search.username LIKE '%".$this->db->escapeLikeString($keyword)."%'
+                    OR u_search.institution LIKE '%".$this->db->escapeLikeString($keyword)."%'
+                )
+            )", null, false);
             $builder->groupEnd();
         }
 

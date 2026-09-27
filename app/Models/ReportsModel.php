@@ -32,12 +32,27 @@ class ReportsModel extends Model
             $builder->join('visit_team vt_filter','vt_filter.visit_id=v.id','inner');
             $builder->where('vt_filter.user_id',$userId);
         }
-        if($keyword!==''){
-            $builder->groupStart();
-            $builder->like('s.school_name',$keyword);
-            $builder->orLike('s.npsn',$keyword);
-            $builder->orLike('r.name',$keyword);
-            $builder->groupEnd();
+       if($keyword!==''){
+            $builder->groupStart()
+            ->like('r.name',$keyword)
+            ->orLike('s.school_name',$keyword)
+            ->orLike('s.npsn',$keyword)
+            ->orLike('s.level',$keyword)
+            ->orLike('v.visit_date',$keyword)
+            ->orLike('v.status',$keyword)
+            ->orLike('creator.name',$keyword)
+            ->orLike('submitter.name',$keyword)
+            ->orWhere("EXISTS (
+                SELECT 1
+                FROM visit_team vt_search
+                INNER JOIN users u_search ON u_search.id=vt_search.user_id
+                WHERE vt_search.visit_id=v.id
+                AND (
+                    u_search.name LIKE '%".$this->db->escapeLikeString($keyword)."%'
+                    OR u_search.institution LIKE '%".$this->db->escapeLikeString($keyword)."%'
+                )
+            )",null,false)
+            ->groupEnd();
         }
         if($regionId!==''){
             $builder->where('s.region_id',(int)$regionId);

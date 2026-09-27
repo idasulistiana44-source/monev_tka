@@ -42,7 +42,7 @@
                             type="text"
                             id="reportKeyword"
                             class="form-control"
-                            placeholder="Sekolah, NPSN, atau wilayah">
+                            placeholder="Cari data ...">
                     </div>
                 </div>
 
