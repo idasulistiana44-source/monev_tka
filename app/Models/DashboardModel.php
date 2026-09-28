@@ -1178,4 +1178,34 @@ class DashboardModel extends Model
             'effective_bandwidth'=>$bandwidthIspUtama
         ];
     }
+    public function getSchoolsWithoutBackupInternet(array $filters = []): array
+    {
+        $builder = $this->db->table('schools s');
+        $builder->select('s.id,s.npsn,s.name,s.level,s.region_id,s.district_id');
+        $builder->join('visit_tka_readiness vtr','vtr.school_id=s.id','left');
+        if (!empty($filters['level'])) {
+            $builder->where('s.level',$filters['level']);
+        }
+        if (!empty($filters['region_id'])) {
+            $builder->where('s.region_id',$filters['region_id']);
+        }
+        if (!empty($filters['district_id'])) {
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+        if (!empty($filters['start_date'])) {
+            $builder->where('vtr.created_at >=',$filters['start_date'].' 00:00:00');
+        }
+        if (!empty($filters['end_date'])) {
+            $builder->where('vtr.created_at <=',$filters['end_date'].' 23:59:59');
+        }
+        $builder->groupStart();
+        $builder->where('vtr.isp_cadangan',null);
+        $builder->orWhere('vtr.isp_cadangan','');
+        $builder->orWhere('vtr.isp_cadangan','Tidak Ada');
+        $builder->orWhere('vtr.isp_cadangan','Tidak');
+        $builder->groupEnd();
+        $builder->groupBy('s.id');
+        $builder->orderBy('s.name','ASC');
+        return $builder->get()->getResultArray();
+    }
 }

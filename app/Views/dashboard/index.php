@@ -661,7 +661,7 @@
             </div>
         </div>
     </div>
-    <div class="dashboard-export" style="display:none;">
+    <div class="dashboard-export">
         <div>
             <h3>Export Laporan Monev</h3>
             <p>Data mengikuti periode dan filter yang dipilih.</p>

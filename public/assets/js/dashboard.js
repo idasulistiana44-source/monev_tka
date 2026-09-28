@@ -1530,15 +1530,20 @@ document.addEventListener('DOMContentLoaded',function(){
         loadRegions();
         loadDashboard();
     };
-    const exportReport=function(type){
-        const params=new URLSearchParams();
-        Object.keys(state.filters).forEach(function(key){
-            if(state.filters[key]){
-                params.set(key,state.filters[key]);
+    const exportReport = function (type) {
+        const params = new URLSearchParams();
+
+        Object.keys(state.filters).forEach(function (key) {
+            if (state.filters[key]) {
+                params.set(key, state.filters[key]);
             }
         });
-        params.set('type',type);
-        window.open(exportUrl+'?'+params.toString(),'_blank');
+
+        params.set('type', type);
+
+        const url = exportUrl + '?' + params.toString();
+
+        window.open(url, '_blank');
     };
     $('btnApplyFilter')?.addEventListener('click',applyFilters);
     $('btnResetFilter')?.addEventListener('click',resetFilters);
