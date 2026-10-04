@@ -239,103 +239,116 @@ class DashboardModel extends Model
     }
 
 
-    public function getInfrastructureReadiness($filters=[])
+    // public function getInfrastructureReadiness($filters=[])
+    // {
+    //     $builder=$this->db->table('visit_answers va')
+    //         ->select('va.answer,COUNT(*) AS total')
+    //         ->join('visits v','v.id=va.visit_id','inner')
+    //         ->join('schools s','s.id=v.school_id','inner')
+    //         ->where('va.question_id',18)
+    //         ->whereIn('v.status',['completed','verified']);
+    //     if(!empty($filters['start_date'])){
+    //         $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+    //     }
+    //     if(!empty($filters['end_date'])){
+    //         $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+    //     }
+    //     if(!empty($filters['level'])){
+    //         $builder->where('s.level',$filters['level']);
+    //     }
+    //     if(!empty($filters['region_id'])){
+    //         $builder->where('s.region_id',$filters['region_id']);
+    //     }
+    //     if(!empty($filters['district_id'])){
+    //         $builder->where('s.district_id',$filters['district_id']);
+    //     }
+    //     $result=$builder
+    //         ->groupBy('va.answer')
+    //         ->get()
+    //         ->getResultArray();
+    //     $data=[
+    //         'Sangat Baik'=>0,
+    //         'Baik'=>0,
+    //         'Cukup'=>0,
+    //         'Kurang Memadai'=>0
+    //     ];
+    //     foreach($result as $row){
+    //         $answer=trim($row['answer']??'');
+    //         if(isset($data[$answer])){
+    //             $data[$answer]=(int)$row['total'];
+    //         }
+    //     }
+    //     return $data;
+    // }
+   public function getInfrastructureReadiness($filters=[])
     {
-        $builder=$this->db->table('visit_answers va')
-            ->select('va.answer,COUNT(*) AS total')
-            ->join('visits v','v.id=va.visit_id','inner')
-            ->join('schools s','s.id=v.school_id','inner')
-            ->where('va.question_id',18)
-            ->whereIn('v.status',['completed','verified']);
-        if(!empty($filters['start_date'])){
-            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
-        }
-        if(!empty($filters['end_date'])){
-            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
-        }
-        if(!empty($filters['level'])){
-            $builder->where('s.level',$filters['level']);
-        }
-        if(!empty($filters['region_id'])){
-            $builder->where('s.region_id',$filters['region_id']);
-        }
-        if(!empty($filters['district_id'])){
-            $builder->where('s.district_id',$filters['district_id']);
-        }
-        $result=$builder
-            ->groupBy('va.answer')
-            ->get()
-            ->getResultArray();
+        $result=$this->getInfrastructureReadinessReportData($filters);
+
         $data=[
             'Sangat Baik'=>0,
             'Baik'=>0,
             'Cukup'=>0,
             'Kurang Memadai'=>0
         ];
-        foreach($result as $row){
-            $answer=trim($row['answer']??'');
-            if(isset($data[$answer])){
-                $data[$answer]=(int)$row['total'];
+
+        if(
+            isset($result['distribution'])&&
+            is_array($result['distribution'])
+        ){
+            foreach($data as $label=>$total){
+                $data[$label]=(int)(
+                    $result['distribution'][$label]??0
+                );
             }
         }
+
         return $data;
     }
 
-    public function getReadinessData($filters = [])
+   public function getReadinessData($filters=[])
     {
-        $builder = $this->db->table('visit_answers va')
-            ->select('s.id, s.school_name, s.npsn, va.answer')
-            ->join('visits v', 'v.id = va.visit_id', 'inner')
-            ->join('schools s', 's.id = v.school_id', 'inner')
-            ->where('va.question_id', 18)
-            ->whereIn('v.status', ['completed', 'verified']);
+        $result=$this->getInfrastructureReadinessReportData($filters);
 
-        if (!empty($filters['start_date'])) {
-            $builder->where('DATE(v.visit_date) >=', $filters['start_date']);
-        }
+        $data=[];
 
-        if (!empty($filters['end_date'])) {
-            $builder->where('DATE(v.visit_date) <=', $filters['end_date']);
-        }
+        if(
+            isset($result['data'])&&
+            is_array($result['data'])
+        ){
+            foreach($result['data'] as $row){
 
-        if (!empty($filters['level'])) {
-            $builder->where('s.level', $filters['level']);
-        }
+                if(!is_array($row)){
+                    continue;
+                }
 
-        if (!empty($filters['district_id'])) {
-            $builder->where('s.district_id', $filters['district_id']);
-        }
+                $value=trim(
+                    (string)($row['value']??'')
+                );
 
-        $rows = $builder
-            ->orderBy('s.school_name', 'ASC')
-            ->get()
-            ->getResultArray();
+                if(!in_array(
+                    $value,
+                    [
+                        'Sangat Baik',
+                        'Baik',
+                        'Cukup',
+                        'Kurang Memadai'
+                    ],
+                    true
+                )){
+                    continue;
+                }
 
-        $data = [];
-
-        foreach ($rows as $row) {
-            $value = trim($row['answer'] ?? '');
-
-            if ($value === '') {
-                continue;
+                $data[]=[
+                    'school_id'=>(int)($row['school_id']??0),
+                    'school_name'=>(string)($row['school_name']??'-'),
+                    'npsn'=>(string)($row['npsn']??'-'),
+                    'value'=>$value,
+                    'komponen_kurang'=>(string)(
+                        $row['komponen_kurang']??
+                        'Memenuhi Kebutuhan'
+                    )
+                ];
             }
-
-            // Hanya kategori kesiapan yang valid
-            if (!in_array($value, [
-                'Sangat Baik',
-                'Baik',
-                'Cukup',
-                'Kurang Memadai'
-            ], true)) {
-                continue;
-            }
-
-            $data[] = [
-                'school_id'   => (int) $row['id'],
-                'school_name' => $row['school_name'],
-                'npsn'        => $row['npsn'],
-                'value'       => $value
-            ];
         }
 
         return $data;
@@ -392,14 +405,14 @@ class DashboardModel extends Model
         $schools=[];
         $distribution=[];
         foreach($rows as $row){
-            $value=trim($row['answer']??'');
+            $value=trim((string)($row['answer']??''));
             if($value===''){
                 continue;
             }
             $schools[]=[
-                'school_id'=>(int)$row['id'],
-                'school_name'=>$row['school_name'],
-                'npsn'=>$row['npsn'],
+                'school_id'=>(int)($row['id']??0),
+                'school_name'=>(string)($row['school_name']??'-'),
+                'npsn'=>(string)($row['npsn']??'-'),
                 'value'=>$value
             ];
             if(!isset($distribution[$value])){
@@ -408,7 +421,7 @@ class DashboardModel extends Model
             $distribution[$value]++;
         }
         uksort($distribution,function($a,$b){
-            return $this->extractNumber($a)<=>$this->extractNumber($b);
+            return $this->extractNumber($b)<=>$this->extractNumber($a);
         });
         return [
             'distribution'=>$distribution,
@@ -416,6 +429,50 @@ class DashboardModel extends Model
         ];
     }
 
+    public function getIspData($questionId, $filters = [])
+    {
+        $builder = $this->baseVisitQuery($filters);
+
+        $rows = $builder
+            ->select('s.id, s.school_name, s.npsn, va.answer')
+            ->join(
+                'visit_answers va',
+                'va.visit_id = v.id AND va.question_id = ' . (int)$questionId,
+                'left'
+            )
+            ->orderBy('s.school_name', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $schools = [];
+        $distribution = [];
+
+        foreach ($rows as $row) {
+            $value = trim($row['answer'] ?? '');
+
+            if ($value === '') {
+                continue;
+            }
+
+            $schools[] = [
+                'school_id'   => (int)$row['id'],
+                'school_name' => $row['school_name'],
+                'npsn'         => $row['npsn'],
+                'value'       => $value
+            ];
+
+            if (!isset($distribution[$value])) {
+                $distribution[$value] = 0;
+            }
+
+            $distribution[$value]++;
+        }
+
+        return [
+            'distribution' => $distribution,
+            'data'         => $schools
+        ];
+    }
     public function getInternetData($filters=[])
     {
         $builder=$this->baseVisitQuery($filters);
@@ -450,41 +507,496 @@ class DashboardModel extends Model
         ];
     }
 
-    public function getBandwidthData($questionId,$filters=[])
-    {
-        $builder=$this->baseVisitQuery($filters);
-        $rows=$builder
+    // public function getBandwidthData($questionId,$filters=[])
+    // {
+    //     $builder=$this->baseVisitQuery($filters);
+    //     $rows=$builder
+    //         ->select('s.id,s.school_name,s.npsn,va.answer')
+    //         ->join('visit_answers va','va.visit_id=v.id AND va.question_id='.$questionId,'left')
+    //         ->orderBy('s.school_name','ASC')
+    //         ->get()
+    //         ->getResultArray();
+    //     $schools=[];
+    //     $distribution=[];
+    //     foreach($rows as $row){
+    //         $value=trim($row['answer']??'');
+    //         if($value===''){
+    //             continue;
+    //         }
+    //         $label=$this->normalizeBandwidth($value);
+    //         $schools[]=[
+    //             'school_id'=>(int)$row['id'],
+    //             'school_name'=>$row['school_name'],
+    //             'npsn'=>$row['npsn'],
+    //             'value'=>$label,
+    //             'numeric_value'=>$this->extractNumber($label)
+    //         ];
+    //         if(!isset($distribution[$label])){
+    //             $distribution[$label]=0;
+    //         }
+    //         $distribution[$label]++;
+    //     }
+    //     uksort($distribution,function($a,$b){
+    //         return $this->extractNumber($a)<=>$this->extractNumber($b);
+    //     });
+    //     return [
+    //         'distribution'=>$distribution,
+    //         'data'=>$schools
+    //     ];
+    // }
+
+    public function getBandwidthData($questionId,$filters=[]){
+            $builder=$this->baseVisitQuery($filters);
+            $rows=$builder
+                ->select('s.id,s.school_name,s.npsn,va.answer')
+                ->join('visit_answers va','va.visit_id=v.id AND va.question_id='.(int)$questionId,'left')
+                ->orderBy('s.school_name','ASC')
+                ->get()
+                ->getResultArray();
+            $schools=[];
+            $distribution=[];
+            foreach($rows as $row){
+                $value=trim((string)($row['answer']??''));
+                if($value===''){
+                    continue;
+                }
+                $value=preg_replace('/\s*Mbps\s*/i','',$value);
+                $value=str_replace(',','.',$value);
+                $number=(float)preg_replace('/[^0-9.]/','',$value);
+                if($number<=0){
+                    continue;
+                }
+                $label=rtrim(rtrim(number_format($number,2,'.',''),'0'),'.').' Mbps';
+                $schools[]=[
+                    'school_id'=>(int)$row['id'],
+                    'school_name'=>$row['school_name'],
+                    'npsn'=>$row['npsn'],
+                    'value'=>$label,
+                    'numeric_value'=>$number
+                ];
+                if(!isset($distribution[$label])){
+                    $distribution[$label]=0;
+                }
+                $distribution[$label]++;
+            }
+            uksort($distribution,function($a,$b){
+                preg_match('/[\d.]+/',$a,$ma);
+                preg_match('/[\d.]+/',$b,$mb);
+                return ((float)($mb[0]??0))<=>((float)($ma[0]??0));
+            });
+            usort($schools,function($a,$b){
+                return $b['numeric_value']<=>$a['numeric_value'];
+            });
+            return[
+                'distribution'=>$distribution,
+                'data'=>$schools
+            ];
+        }
+        private function getSingleAnswerReportData($questionId,$filters=[]){
+        $builder=$this->db->table('visit_answers va')
             ->select('s.id,s.school_name,s.npsn,va.answer')
-            ->join('visit_answers va','va.visit_id=v.id AND va.question_id='.$questionId,'left')
+            ->join('visits v','v.id=va.visit_id','inner')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->where('va.question_id',(int)$questionId)
+            ->whereIn('v.status',['completed','verified']);
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+        if(!empty($filters['region_id'])){
+            $builder->where('s.region_id',$filters['region_id']);
+        }
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+        return $builder
+            ->where("TRIM(va.answer)<>",'')
             ->orderBy('s.school_name','ASC')
             ->get()
             ->getResultArray();
-        $schools=[];
-        $distribution=[];
+    }
+  
+    public function getStudentReadinessReportData($filters=[])
+    {
+        $builder=$this->db->table('visit_answers va')
+            ->select('s.id,s.school_name,s.npsn')
+            ->select('MAX(CASE WHEN va.question_id=13 THEN va.answer END) AS total')
+            ->select('MAX(CASE WHEN va.question_id=14 THEN va.answer END) AS ikut')
+            ->join('visits v','v.id=va.visit_id','inner')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->whereIn('v.status',['completed','verified']);
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+        if(!empty($filters['region_id'])){
+            $builder->where('s.region_id',$filters['region_id']);
+        }
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+        $rows=$builder
+            ->groupBy('s.id,s.school_name,s.npsn')
+            ->orderBy('s.school_name','ASC')
+            ->get()
+            ->getResultArray();
+        $data=[];
         foreach($rows as $row){
-            $value=trim($row['answer']??'');
-            if($value===''){
+            $total=(int)($row['total']??0);
+            $ikut=(int)($row['ikut']??0);
+            if($total<=0){
                 continue;
             }
-            $label=$this->normalizeBandwidth($value);
-            $schools[]=[
+            $data[]=[
                 'school_id'=>(int)$row['id'],
                 'school_name'=>$row['school_name'],
                 'npsn'=>$row['npsn'],
-                'value'=>$label,
-                'numeric_value'=>$this->extractNumber($label)
+                'total'=>$total,
+                'ikut'=>$ikut,
+                'tidak_ikut'=>max(0,$total-$ikut),
+                'percent'=>$total>0?($ikut/$total)*100:0
             ];
-            if(!isset($distribution[$label])){
-                $distribution[$label]=0;
-            }
-            $distribution[$label]++;
         }
-        uksort($distribution,function($a,$b){
-            return $this->extractNumber($a)<=>$this->extractNumber($b);
-        });
-        return [
+        return[
+            'data'=>$data
+        ];
+    }
+    private function getReportQuestionData($questionId,$filters=[])
+    {
+        $builder=$this->db->table('visit_answers va')
+            ->select('s.id,s.school_name,s.npsn,va.answer')
+            ->join('visits v','v.id=va.visit_id','inner')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->where('va.question_id',(int)$questionId)
+            ->whereIn('v.status',['completed','verified']);
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+        if(!empty($filters['region_id'])){
+            $builder->where('s.region_id',$filters['region_id']);
+        }
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+        $rows=$builder
+            ->orderBy('s.school_name','ASC')
+            ->get()
+            ->getResultArray();
+        $data=[];
+        $distribution=[];
+        foreach($rows as $row){
+            $value=trim((string)($row['answer']??''));
+            if($value===''){
+                continue;
+            }
+            $data[]=[
+                'school_id'=>(int)$row['id'],
+                'school_name'=>$row['school_name'],
+                'npsn'=>$row['npsn'],
+                'value'=>$value
+            ];
+            if(!isset($distribution[$value])){
+                $distribution[$value]=0;
+            }
+            $distribution[$value]++;
+        }
+        arsort($distribution);
+        return[
             'distribution'=>$distribution,
-            'data'=>$schools
+            'data'=>$data
+        ];
+    }
+    public function getWaveReportData($filters=[])
+    {
+        return $this->getReportQuestionData(17,$filters);
+    }
+    public function getSessionReportData($filters=[])
+    {
+        return $this->getReportQuestionData(16,$filters);
+    }
+    
+   public function getInfrastructureReadinessReportData($filters=[])
+    {
+        $builder=$this->db->table('visit_answers va')
+            ->select('s.id AS school_id,s.school_name,s.npsn,i.code,va.answer')
+            ->join('visits v','v.id=va.visit_id','inner')
+            ->join('schools s','s.id=v.school_id','inner')
+            ->join('instruments i','i.id=va.question_id','inner')
+            ->whereIn('i.code',[
+                'INF-01',
+                'INF-02',
+                'INF-03',
+                'INF-13',
+                'INF-14',
+                'INF-16',
+                'KTA-02',
+                'KTA-04',
+                'KTA-05'
+            ])
+            ->whereIn('v.status',['completed','verified']);
+
+        if(!empty($filters['start_date'])){
+            $builder->where('DATE(v.visit_date)>=',$filters['start_date']);
+        }
+
+        if(!empty($filters['end_date'])){
+            $builder->where('DATE(v.visit_date)<=',$filters['end_date']);
+        }
+
+        if(!empty($filters['level'])){
+            $builder->where('s.level',$filters['level']);
+        }
+
+        if(!empty($filters['region_id'])){
+            $builder->where('s.region_id',$filters['region_id']);
+        }
+
+        if(!empty($filters['district_id'])){
+            $builder->where('s.district_id',$filters['district_id']);
+        }
+
+        $rows=$builder
+            ->orderBy('s.school_name','ASC')
+            ->get()
+            ->getResultArray();
+
+        $data=[
+            'Sangat Baik'=>0,
+            'Baik'=>0,
+            'Cukup'=>0,
+            'Kurang Memadai'=>0
+        ];
+
+        $details=[];
+        $schools=[];
+
+        foreach($rows as $row){
+
+            $schoolId=(int)$row['school_id'];
+
+            if(!isset($schools[$schoolId])){
+                $schools[$schoolId]=[
+                    'school_id'=>$schoolId,
+                    'school_name'=>$row['school_name'],
+                    'npsn'=>$row['npsn'],
+                    'answers'=>[]
+                ];
+            }
+
+            $schools[$schoolId]['answers'][$row['code']]=trim(
+                (string)($row['answer']??'')
+            );
+        }
+
+        foreach($schools as $school){
+
+            $answers=$school['answers'];
+
+            $pc=(int)($answers['INF-01']??0);
+            $laptopMilik=(int)($answers['INF-02']??0);
+            $laptopBukanMilik=(int)($answers['INF-03']??0);
+
+            $totalPerangkat=
+                $pc+
+                $laptopMilik+
+                $laptopBukanMilik;
+
+            $bandwidthUtama=(float)str_replace(
+                ',',
+                '.',
+                preg_replace(
+                    '/[^0-9.,]/',
+                    '',
+                    $answers['INF-13']??'0'
+                )
+            );
+
+            $ispCadangan=strtolower(
+                trim((string)($answers['INF-14']??''))
+            );
+
+            $bandwidthCadangan=(float)str_replace(
+                ',',
+                '.',
+                preg_replace(
+                    '/[^0-9.,]/',
+                    '',
+                    $answers['INF-16']??'0'
+                )
+            );
+
+            $peserta=(int)($answers['KTA-02']??0);
+
+            $jumlahSesi=(int)($answers['KTA-04']??1);
+            $jumlahGelombang=(int)($answers['KTA-05']??1);
+
+            $jumlahSesi=max(1,$jumlahSesi);
+            $jumlahGelombang=max(1,$jumlahGelombang);
+
+            /*
+            * KEBUTUHAN PERANGKAT UTAMA
+            */
+            $kebutuhanPerangkatUtama=(int)ceil(
+                ($peserta/$jumlahGelombang)/$jumlahSesi
+            );
+
+            /*
+            * KEBUTUHAN PERANGKAT CADANGAN
+            * 10% DARI PERANGKAT UTAMA
+            */
+            $kebutuhanPerangkatCadangan=(int)floor(
+                $kebutuhanPerangkatUtama*0.10
+            );
+
+            /*
+            * KEBUTUHAN BANDWIDTH UTAMA
+            */
+            $kebutuhanBandwidth=
+                $kebutuhanPerangkatUtama*0.4;
+
+            /*
+            * CEK PERANGKAT UTAMA
+            */
+            $perangkatUtamaKurang=
+                $totalPerangkat<$kebutuhanPerangkatUtama;
+
+            /*
+            * CEK BANDWIDTH UTAMA
+            */
+            $bandwidthUtamaKurang=
+                $bandwidthUtama<$kebutuhanBandwidth;
+
+            /*
+            * TOTAL KEBUTUHAN PERANGKAT
+            */
+            $totalKebutuhanPerangkat=
+                $kebutuhanPerangkatUtama+
+                $kebutuhanPerangkatCadangan;
+
+            /*
+            * CEK PERANGKAT CADANGAN
+            */
+            $cadanganKurang=
+                $totalPerangkat<$totalKebutuhanPerangkat;
+
+            /*
+            * CEK ISP CADANGAN
+            */
+            $adaIspCadangan=!in_array(
+                $ispCadangan,
+                [
+                    '',
+                    'tidak ada',
+                    'tidak',
+                    'none',
+                    'null',
+                    '-'
+                ],
+                true
+            );
+
+            /*
+            * PENENTUAN KATEGORI
+            */
+            if(
+                $perangkatUtamaKurang||
+                $bandwidthUtamaKurang
+            ){
+
+                $readiness='Kurang Memadai';
+
+            }elseif(
+                $cadanganKurang||
+                !$adaIspCadangan
+            ){
+
+                $readiness='Cukup';
+
+            }elseif(
+                $totalPerangkat==$totalKebutuhanPerangkat&&
+                $bandwidthUtama==$kebutuhanBandwidth
+            ){
+
+                $readiness='Baik';
+
+            }else{
+
+                $readiness='Sangat Baik';
+            }
+
+            /*
+            * KOMPONEN YANG BELUM MEMENUHI KEBUTUHAN
+            */
+            $komponenKurang=[];
+
+            if($perangkatUtamaKurang){
+                $komponenKurang[]='Kekurangan Perangkat Utama Komputer';
+            }
+
+            if($bandwidthUtamaKurang){
+                $komponenKurang[]='Kekurangan Bandwidth ISP Utama';
+            }
+
+            /*
+            * JIKA KOMPONEN UTAMA SUDAH MEMENUHI,
+            * CEK KOMPONEN CADANGAN
+            */
+            if(
+                !$perangkatUtamaKurang&&
+                !$bandwidthUtamaKurang
+            ){
+
+                if($cadanganKurang){
+                    $komponenKurang[]='Tidak Ada Perangkat Komputer Cadangan';
+                }
+
+                if(!$adaIspCadangan){
+                    $komponenKurang[]='Tidak Ada ISP Cadangan';
+                }
+            }
+
+            $komponenKurangText=empty($komponenKurang)
+                ?'Memenuhi Kebutuhan'
+                :implode(' dan ',$komponenKurang);
+
+            $data[$readiness]++;
+
+            $details[]=[
+                'school_id'=>$school['school_id'],
+                'school_name'=>$school['school_name'],
+                'npsn'=>$school['npsn'],
+                'value'=>$readiness,
+                'komponen_kurang'=>$komponenKurangText,
+                'perangkat_utama'=>$totalPerangkat,
+                'kebutuhan_perangkat_utama'=>$kebutuhanPerangkatUtama,
+                'kebutuhan_perangkat_cadangan'=>$kebutuhanPerangkatCadangan,
+                'total_kebutuhan_perangkat'=>$totalKebutuhanPerangkat,
+                'bandwidth_utama'=>$bandwidthUtama,
+                'kebutuhan_bandwidth'=>$kebutuhanBandwidth,
+                'isp_cadangan'=>$ispCadangan,
+                'bandwidth_cadangan'=>$bandwidthCadangan
+            ];
+        }
+
+        return[
+            'distribution'=>$data,
+            'data'=>$details
         ];
     }
 
@@ -725,7 +1237,8 @@ class DashboardModel extends Model
 
         return $rows;
     }
-   public function getMonevOfficerRecap($filters=[])
+   
+    public function getMonevOfficerRecap($filters=[])
     {
         $builder=$this->db->table('visit_team vt')
             ->join('visits v','v.id=vt.visit_id','inner')
@@ -909,7 +1422,7 @@ class DashboardModel extends Model
 
                 $totalKebutuhan=$kebutuhanUtama+$kebutuhanCadangan;
 
-                if($totalKebutuhan>0 && $totalPerangkat<$totalKebutuhan){
+                if($kebutuhanUtama>0 && $totalPerangkat<$kebutuhanUtama){
 
                     $groups['device']['schools'][$schoolName]=[
                         'total'=>$totalPerangkat,
@@ -996,12 +1509,18 @@ class DashboardModel extends Model
                 }
 
                 elseif($type==='backup_missing' && $totalSchool>0){
-                    foreach($schoolNames as $school){
+                    $schoolRows=$this->db->table('schools')
+                        ->select('school_name,npsn')
+                        ->whereIn('school_name',$schoolNames)
+                        ->orderBy('school_name','ASC')
+                        ->get()
+                        ->getResultArray();
+                    foreach($schoolRows as $school){
                         $details[]=[
-                            'school'=>$school
+                            'school'=>$school['school_name'] ?? '-',
+                            'npsn'=>$school['npsn'] ?? '-'
                         ];
                     }
-
                     $recommendation=$group['recommendation'];
                 }
 

@@ -1693,6 +1693,7 @@ document.addEventListener('DOMContentLoaded',function(){
     const modal=bootstrap.Modal.getOrCreateInstance(modalElement);
     modal.show();
 };
+    
     $('studentReadinessSort')?.addEventListener('change',function(){
         state.pages.students=1;
         renderStudents();
@@ -1715,4 +1716,6 @@ document.addEventListener('DOMContentLoaded',function(){
     loadRegions(); 
     loadDashboard();
     
+
+
 });

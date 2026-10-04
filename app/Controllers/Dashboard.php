@@ -57,62 +57,137 @@ class Dashboard extends BaseController
         return view('layout/template', $data);
     }
     
-public function export()
-{
-    $filters = [
-        'start_date' => $this->request->getGet('start_date'),
-        'end_date' => $this->request->getGet('end_date'),
-        'level' => $this->request->getGet('level'),
-        'region_id' => $this->request->getGet('region_id'),
-        'district_id' => $this->request->getGet('district_id'),
+    public function export()
+    {
+        ini_set('memory_limit','512M');
+        set_time_limit(300);
+
+        $filters=[
+            'start_date'=>$this->request->getGet('start_date'),
+            'end_date'=>$this->request->getGet('end_date'),
+            'level'=>$this->request->getGet('level'),
+            'region_id'=>$this->request->getGet('region_id'),
+            'district_id'=>$this->request->getGet('district_id'),
+        ];
+
+        $model=$this->dashboardModel;
+
+        try{
+            $summary=$model->getDashboardSummary($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil summary: '.$e->getMessage());
+            $summary=[];
+        }
+
+        try{
+            $monevStatus=$model->getMonevStatusRecap($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil status Monev: '.$e->getMessage());
+            $monevStatus=[];
+        }
+
+        try{
+            $officerRecap=$model->getMonevOfficerRecap($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil rekap pelaksana: '.$e->getMessage());
+            $officerRecap=[];
+        }
+
+        try{
+            $problemRecommendations=$model->getProblemRecommendationRecap($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil permasalahan dan rekomendasi: '.$e->getMessage());
+            $problemRecommendations=[];
+        }
+
+        try{
+            $visitsByLevel=$model->getVisitsByLevel($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil data jenjang: '.$e->getMessage());
+            $visitsByLevel=[];
+        }
+
+        try{
+            $infrastructure=$model->getInfrastructureData($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil data infrastruktur: '.$e->getMessage());
+            $infrastructure=[];
+        }
+
+        try{
+            $electricity=$model->getElectricityData($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil data daya listrik: '.$e->getMessage());
+            $electricity=[];
+        }
+
+        try{
+            $backupInternetSchools=$model->getSchoolsWithoutBackupInternet($filters);
+        }catch(\Throwable $e){
+            log_message('error','Gagal mengambil data sekolah tanpa ISP cadangan: '.$e->getMessage());
+            $backupInternetSchools=[];
+        }
+
+     $data=[
+        'title'=>'Laporan Monitoring & Evaluasi TKAP',
+        'generatedAt'=>date('d F Y H:i'),
+        'filters'=>$filters,
+        'summary'=>$summary,
+        'monevStatus'=>$monevStatus,
+        'officerRecap'=>$officerRecap,
+        'problemRecommendations'=>$problemRecommendations,
+        'visitsByLevel'=>$visitsByLevel,
+        'infrastructure'=>$model->getInfrastructureData($filters),
+        'electricity'=>$electricity,
+        'internet'=>$model->getInternetData($filters),
+        'mainBandwidth'=>$model->getBandwidthData(11,$filters),
+        'backupBandwidth'=>$model->getBandwidthData(25,$filters),
+        'studentReadiness'=>$model->getStudentReadinessReportData($filters),
+        'session'=>$model->getSessionReportData($filters),
+        'wave'=>$model->getWaveReportData($filters),
+        'infrastructureReadiness'=>$model->getInfrastructureReadinessReportData($filters),
+        'backupInternetSchools'=>$backupInternetSchools,
     ];
 
-    $model = $this->dashboardModel;
+        $html=view('dashboard/export_pdf',$data);
 
-    $backupInternetSchools = [];
-    try {
-        $backupInternetSchools = $model->getSchoolsWithoutBackupInternet($filters);
-    } catch (\Throwable $e) {
-        log_message('error', 'Gagal mengambil data sekolah tanpa ISP cadangan: ' . $e->getMessage());
-        $backupInternetSchools = [];
+        unset(
+            $summary,
+            $monevStatus,
+            $officerRecap,
+            $problemRecommendations,
+            $visitsByLevel,
+            $infrastructure,
+            $electricity,
+            $backupInternetSchools
+        );
+
+        $dompdf=new \Dompdf\Dompdf();
+
+        $options=$dompdf->getOptions();
+        $options->set('isRemoteEnabled',false);
+        $options->set('isHtml5ParserEnabled',true);
+        $options->set('defaultFont','Arial');
+        $options->set('isPhpEnabled',false);
+        $options->set('isFontSubsettingEnabled',true);
+        $options->set('dpi',96);
+
+        $dompdf->setOptions($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4','portrait');
+        $dompdf->render();
+
+        unset($html);
+
+        $fileName='Laporan_Monev_TKAP_'.date('Ymd_His').'.pdf';
+
+        $dompdf->stream($fileName,[
+            'Attachment'=>false
+        ]);
+
+        exit;
     }
 
-    $data = [
-        'title' => 'Laporan Monitoring & Evaluasi TKAP',
-        'generatedAt' => date('d F Y H:i'),
-        'filters' => $filters,
-        'summary' => $model->getDashboardSummary($filters),
-        'monevStatus' => $model->getMonevStatusRecap($filters),
-        'officerRecap' => $model->getMonevOfficerRecap($filters),
-        'problemRecommendations' => $model->getProblemRecommendationRecap($filters),
-        'visitsByLevel' => $model->getVisitsByLevel($filters),
-        'backupInternetSchools' => $backupInternetSchools,
-    ];
-
-    $html = view('dashboard/export_pdf', $data);
-
-    $dompdf = new \Dompdf\Dompdf();
-
-    $options = $dompdf->getOptions();
-    $options->set('isRemoteEnabled', false);
-    $options->set('isHtml5ParserEnabled', true);
-    $options->set('defaultFont', 'Arial');
-    $options->set('isPhpEnabled', false);
-    $options->set('isFontSubsettingEnabled', true);
-
-    $dompdf->setOptions($options);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-
-    $fileName = 'Laporan_Monev_TKAP_' . date('Ymd_His') . '.pdf';
-
-    $dompdf->stream($fileName, [
-        'Attachment' => false
-    ]);
-
-    exit;
-}
 
     public function data()
     {
@@ -126,6 +201,14 @@ public function export()
 
         $model = $this->dashboardModel;
 
+        $electricity = [];
+        try {
+            $electricity = $model->getElectricityRecap($filters);
+        } catch (\Throwable $e) {
+            log_message('error', 'Gagal mengambil data daya listrik: ' . $e->getMessage());
+            $electricity = [];
+        }
+
        return $this->response->setJSON([
             'summary' => $model->getDashboardSummary($filters),
             'infrastructure' => $model->getInfrastructureData($filters),
@@ -137,7 +220,6 @@ public function export()
             'sessions'       => $model->getSessionData($filters),
             'waves'          => $model->getWaveData($filters),
             'readiness'      => $model->getInfrastructureReadiness($filters),
-
             'readinessData'  => $model->getReadinessData($filters),
             'monevStatus'=>$model->getMonevStatusRecap($filters),
             'officerRecap'=>$model->getMonevOfficerRecap($filters),

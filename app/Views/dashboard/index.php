@@ -647,6 +647,7 @@
                                     <th>Sekolah</th>
                                     <th>NPSN</th>
                                     <th>Kesiapan</th>
+                                    <th> 
                                 </tr>
                             </thead>
                             <tbody id="readinessTableBody">
