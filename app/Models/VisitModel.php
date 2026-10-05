@@ -66,30 +66,40 @@ class VisitModel extends Model
             $builder->where('vt_filter.user_id', (int)$userId);
         }
 
-       if ($keyword !== '') {
-            $builder->groupStart();
-            $builder->like('s.npsn', $keyword);
-            $builder->orLike('s.school_name', $keyword);
-            $builder->orLike('r.name', $keyword);
-            $builder->orLike('s.level', $keyword);
-            $builder->orLike('v.visit_date', $keyword);
-            $builder->orLike('v.status', $keyword);
-            $builder->orLike('creator.name', $keyword);
-            $builder->orLike('creator.username', $keyword);
-            $builder->orLike('submitter.name', $keyword);
-            $builder->orLike('submitter.username', $keyword);
-            $builder->orWhere("EXISTS (
-                SELECT 1
-                FROM visit_team vt_search
-                INNER JOIN users u_search ON u_search.id = vt_search.user_id
-                WHERE vt_search.visit_id = v.id
-                AND (
-                    u_search.name LIKE '%".$this->db->escapeLikeString($keyword)."%'
-                    OR u_search.username LIKE '%".$this->db->escapeLikeString($keyword)."%'
-                    OR u_search.institution LIKE '%".$this->db->escapeLikeString($keyword)."%'
-                )
-            )", null, false);
-            $builder->groupEnd();
+      if ($keyword !== '') {
+            $schoolSearch = $this->db->table('schools');
+            $schoolSearch->select('id');
+            $schoolSearch->like('school_name', $keyword);
+            $matchedSchools = $schoolSearch->get()->getResultArray();
+            if (!empty($matchedSchools)) {
+                $schoolIds = array_map('intval', array_column($matchedSchools, 'id'));
+                $builder->whereIn('v.school_id', $schoolIds);
+            } else {
+                $builder->groupStart();
+                $builder->like('s.npsn', $keyword);
+                $builder->orLike('s.school_name', $keyword);
+                $builder->orLike('r.name', $keyword);
+                $builder->orLike('s.level', $keyword);
+                $builder->orLike('v.visit_date', $keyword);
+                $builder->orLike('v.status', $keyword);
+                $builder->orLike('creator.name', $keyword);
+                $builder->orLike('creator.username', $keyword);
+                $builder->orLike('submitter.name', $keyword);
+                $builder->orLike('submitter.username', $keyword);
+                $escapedKeyword = $this->db->escapeLikeString($keyword);
+                $builder->orWhere("EXISTS (
+                    SELECT 1
+                    FROM visit_team vt_search
+                    INNER JOIN users u_search ON u_search.id = vt_search.user_id
+                    WHERE vt_search.visit_id = v.id
+                    AND (
+                        u_search.name LIKE '%{$escapedKeyword}%'
+                        OR u_search.username LIKE '%{$escapedKeyword}%'
+                        OR u_search.institution LIKE '%{$escapedKeyword}%'
+                    )
+                )", null, false);
+                $builder->groupEnd();
+            }
         }
 
         if ($status !== '') {

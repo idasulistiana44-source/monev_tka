@@ -1273,7 +1273,7 @@ body {
         <div class="infra-category <?= $code !== 'INF-01' ? 'page-break-before' : '' ?>">
             <div class="infra-category-header">
                 <div class="infra-category-title"><?= esc($categoryTitle) ?></div>
-                <div class="infra-category-description">10 sekolah dengan jumlah tertinggi</div>
+                <div class="infra-category-description">10 sekolah dengan jumlah   <?= esc($categoryTitle) ?>  terbanyak</div>
             </div>
             <div class="infra-chart">
                 <?php foreach ($chartRows as $chartIndex => $row): ?>
@@ -1292,7 +1292,8 @@ body {
                             <div class="infra-chart-bar" style="width:<?= number_format($percent, 2, '.', '') ?>%;"></div>
                         </div>
                         <div class="infra-chart-number">
-                            <?= $formatNumber($row['jumlah']) ?>
+                          <?= $formatNumber($row['jumlah']) ?>
+                          <?= in_array($code, ['INF-04', 'INF-05']) ? 'ruangan' : 'unit' ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
