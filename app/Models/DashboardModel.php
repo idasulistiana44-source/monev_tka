@@ -356,15 +356,15 @@ class DashboardModel extends Model
 
     public function getInfrastructureData($filters=[])
     {
-        $questions=[
-            1=>'INF-01',
-            2=>'INF-02',
-            3=>'INF-03',
-            4=>'INF-04',
-            5=>'INF-05',
-            6=>'INF-06',
-            7=>'INF-07',
-            8=>'INF-08'
+        $questions = [
+            1 => 'INF-01',
+            2 => 'INF-02',
+            3 => 'INF-03',
+            4 => 'INF-04',
+            5 => 'INF-05',
+            6 => 'INF-06',
+            8 => 'INF-07',
+            7 => 'INF-08'
         ];
         $result=[];
         foreach($questions as $questionId=>$code){
