@@ -1357,27 +1357,35 @@
                 'status-progress badge bg-warning text-dark'
             );
 
-        } else if (status === 'COMPLETED') {
-
+        }else if (status === 'COMPLETED') {
             statusEl.addClass(
                 'status-completed badge bg-success'
             );
-
-
-            $('#btnSaveDraft')
-                .addClass('d-none')
-                .hide();
-
-            $('#btnCompleteVisit')
-                .addClass('d-none')
-                .hide();
-
-
-            $('.instrument-answer, .instrument-answer-checkbox')
-                .prop(
-                    'disabled',
-                    true
-                );
+            if (window.IS_ADMIN) {
+                $('#btnSaveDraft')
+                    .removeClass('d-none')
+                    .show();
+                $('#btnCompleteVisit')
+                    .addClass('d-none')
+                    .hide();
+                $('.instrument-answer, .instrument-answer-checkbox')
+                    .prop(
+                        'disabled',
+                        false
+                    );
+            } else {
+                $('#btnSaveDraft')
+                    .addClass('d-none')
+                    .hide();
+                $('#btnCompleteVisit')
+                    .addClass('d-none')
+                    .hide();
+                $('.instrument-answer, .instrument-answer-checkbox')
+                    .prop(
+                        'disabled',
+                        true
+                    );
+            }
         }
     }
 

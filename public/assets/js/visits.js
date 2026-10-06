@@ -377,25 +377,31 @@
 
                                 '</a>';
 
-                        }else if(
+                       }else if(
                             row.status === 'COMPLETED' ||
                             row.status === 'VERIFIED'
                         ){
-
-                            action +=
-                                '<a href="' +
-                                baseVisitUrl(
-                                    'visits/form/' + row.id
-                                ) +
-                                '" ' +
-                                'class="btn btn-sm btn-outline-primary" ' +
-                                'title="Lihat Monev">' +
-
-                                '<i class="fas fa-eye me-1"></i>' +
-                                'Lihat' +
-
-                                '</a>';
-
+                            if(window.IS_ADMIN){
+                                action +=
+                                    '<a href="' +
+                                    baseVisitUrl('visits/form/' + row.id) +
+                                    '" ' +
+                                    'class="btn btn-sm btn-outline-primary" ' +
+                                    'title="Edit Monev">' +
+                                    '<i class="fas fa-edit me-1"></i>' +
+                                    'Edit' +
+                                    '</a>';
+                            }else{
+                                action +=
+                                    '<a href="' +
+                                    baseVisitUrl('visits/form/' + row.id) +
+                                    '" ' +
+                                    'class="btn btn-sm btn-outline-primary" ' +
+                                    'title="Lihat Monev">' +
+                                    '<i class="fas fa-eye me-1"></i>' +
+                                    'Lihat' +
+                                    '</a>';
+                            }
                         }
 
                         if(window.IS_ADMIN){

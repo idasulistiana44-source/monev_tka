@@ -46,15 +46,16 @@
                 <i class="fas fa-arrow-left me-1"></i> Kembali
             </a>
             <div class="d-flex gap-2">
-                <!-- Tombol Simpan Draft disembunyikan jika status sudah COMPLETED -->
-                <?php if (($visit['status'] ?? '') !== 'COMPLETED'): ?>
+               <?php if (($visit['status'] ?? '') !== 'COMPLETED' || strtolower((string)session()->get('role')) === 'admin'): ?>
                 <button type="button" class="btn btn-outline-primary mb-0" id="btnSaveDraft">
                     <i class="fas fa-save me-1"></i> Simpan Draft
                 </button>
+                <?php endif; ?>
+                <?php if (($visit['status'] ?? '') !== 'COMPLETED'): ?>
                 <button type="button" class="btn btn-primary mb-0" id="btnCompleteVisit">
                     <i class="fas fa-check me-1"></i> Selesaikan Monev
                 </button>
-                <?php else: ?>
+                <?php elseif (strtolower((string)session()->get('role')) !== 'admin'): ?>
                 <span class="badge bg-success p-2 fs-6"><i class="fas fa-check-circle me-1"></i> Monev Telah Selesai</span>
                 <?php endif; ?>
             </div>
@@ -86,7 +87,6 @@
         </div>
     </div>
 </div>
-
 <script>
 window.VISIT_ID = <?= (int)($visit['id'] ?? 0) ?>;
 window.baseUrl = '<?= rtrim(base_url(),'/') ?>';
@@ -94,4 +94,5 @@ window.VISITS_FORM_BASE_URL = '<?= rtrim(base_url(),'/') ?>/';
 window.VISITS_FORM_CSRF_NAME = '<?= csrf_token() ?>';
 window.VISITS_FORM_CSRF_HASH = '<?= csrf_hash() ?>';
 window.VISIT_STATUS = '<?= esc($visit['status'] ?? 'DRAFT') ?>';
+window.IS_ADMIN = <?= strtolower((string)session()->get('role')) === 'admin' ? 'true' : 'false' ?>;
 </script>

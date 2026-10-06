@@ -858,16 +858,27 @@ document.addEventListener('DOMContentLoaded',function(){
         const rows=getPageData(filtered,page);
         const start=(page-1)*state.pageSize;
         tbody.innerHTML=rows.map(function(item,index){
-            const npsn=colspan===4?'<td>'+escapeHtml(item.npsn)+'</td>':'';
+            const npsn=colspan===5?'<td>'+escapeHtml(item.npsn)+'</td>':'';
             const suffix = stateName === 'electricity' ? ' Watt' : '';
             const value = stateName === 'electricity'
                 ? numberFormat(item.value)
                 : escapeHtml(item.value);
+            const component = stateName === 'readiness'
+                ? escapeHtml(item.komponen_kurang || 'Memenuhi Kebutuhan')
+                : '';
 
             return '<tr><td>'+(start+index+1)+'</td><td>'+
                 escapeHtml(item.school_name)+'</td>'+
                 npsn+
-                '<td><strong>'+value+suffix+'</strong></td></tr>';
+                '<td><strong style="'+
+                (stateName === 'readiness' && item.value === 'Kurang Memadai' ? 'color:#dc2626;' : '')+
+                '">'+value+suffix+'</strong></td>'+
+                (stateName === 'readiness'
+                    ? '<td><span style="'+
+                    (item.value === 'Kurang Memadai' ? 'color:#dc2626;' : '')+
+                    '">'+component+'</span></td>'
+                    : '')+
+                '</tr>';
         }).join('');
         renderPagination(paginationId,filtered.length,page,function(newPage){
             state.pages[stateName]=newPage;
@@ -1011,7 +1022,7 @@ document.addEventListener('DOMContentLoaded',function(){
         if($('readinessFair'))$('readinessFair').textContent=numberFormat(source['Cukup']||0);
         if($('readinessPoor'))$('readinessPoor').textContent=numberFormat(source['Kurang Memadai']||0);
         const data=state.data?.readinessData||[];
-        renderCategoricalTable('readiness',data,'readinessTableBody','readinessPagination','readinessFilter',4,'Kesiapan');
+        renderCategoricalTable('readiness',data,'readinessTableBody','readinessPagination','readinessFilter',5,'Kesiapan');
     };
     const updateSummary=function(){
         const summary=state.data?.summary||{};
