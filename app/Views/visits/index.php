@@ -32,14 +32,43 @@ window.VISITS_CSRF_HASH='<?= csrf_hash() ?>';
             <div class="visits-toolbar">
                 <div class="visits-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchVisit" class="form-control" placeholder="Cari data..." autocomplete="off">
+                    <input type="text"
+                        id="searchVisit"
+                        class="form-control"
+                        placeholder="Cari data..."
+                        autocomplete="off">
                 </div>
+
                 <select id="filterStatus" class="form-select visits-filter">
                     <option value="">Semua Status</option>
                     <option value="DRAFT">Draft</option>
                     <option value="IN_PROGRESS">Berlangsung</option>
                     <option value="COMPLETED">Selesai</option>
                 </select>
+
+                <div class="visits-date-group">
+                    <span class="visits-date-label">Tanggal</span>
+
+                    <input type="date"
+                        id="filterDateFrom"
+                        class="form-control"
+                        title="Tanggal mulai">
+
+                    <span class="visits-date-separator">–</span>
+
+                    <input type="date"
+                        id="filterDateTo"
+                        class="form-control"
+                        title="Tanggal sampai">
+                </div>
+
+                <button type="button"
+                        class="btn btn-outline-secondary visits-reset"
+                        id="btnResetFilter"
+                        title="Reset Filter">
+                    <i class="fas fa-undo"></i>
+                </button>
+
             </div>
             <div class="visits-table-responsive">
                 <table

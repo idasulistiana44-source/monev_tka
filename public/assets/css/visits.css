@@ -139,3 +139,64 @@
 #visitEditModal .select2-container--open .select2-dropdown{
     display:block!important;
 }
+.visits-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.visits-search {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.visits-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    z-index: 2;
+}
+
+.visits-search input {
+    padding-left: 38px;
+}
+
+.visits-filter {
+    width: 170px;
+}
+
+.visits-date-group {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.visits-date-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.visits-date-group .form-control {
+    width: 145px;
+    height: 38px;
+}
+
+.visits-date-separator {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.visits-reset {
+    width: 40px;
+    height: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

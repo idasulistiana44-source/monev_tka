@@ -31,6 +31,8 @@ class Visits extends BaseController
         try {
             $keyword  = trim((string)$this->request->getGet('keyword'));
             $status   = trim((string)$this->request->getGet('status'));
+            $dateFrom = trim((string)$this->request->getGet('date_from'));
+            $dateTo   = trim((string)$this->request->getGet('date_to'));
             
             $userRole = strtolower((string)session()->get('role'));
             $userId   = (int)session()->get('user_id');
@@ -41,6 +43,24 @@ class Visits extends BaseController
                 $data = $this->visitModel->getList($keyword, $status);
             }
 
+            if ($dateFrom !== '' || $dateTo !== '') {
+
+                $data = array_filter($data, function ($row) use ($dateFrom, $dateTo) {
+                    $visitDate = trim((string)($row['visit_date'] ?? ''));
+                    if ($visitDate === '') {
+                        return false;
+                    }
+                    if ($dateFrom !== '' && $visitDate < $dateFrom) {
+                        return false;
+                    }
+                    if ($dateTo !== '' && $visitDate > $dateTo) {
+                        return false;
+                    }
+                    return true;
+                });
+
+                $data = array_values($data);
+            }
             return $this->response->setJSON([
                 'status' => true,
                 'data'   => $data

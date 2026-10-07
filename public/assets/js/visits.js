@@ -52,6 +52,12 @@
                 const status =
                     $('#filterStatus').val() || '';
 
+                const dateFrom =
+                $('#filterDateFrom').val() || '';
+
+                const dateTo =
+                    $('#filterDateTo').val() || '';
+
                 // Loading di dalam tabel
                 $('#visitsTable tbody').html(
                     '<tr>' +
@@ -65,7 +71,9 @@
                 request(URLS.data, {
                     data: {
                         keyword: keyword,
-                        status: status
+                        status: status,
+                        date_from: dateFrom,
+                        date_to: dateTo
                     }
                 }).done(function(res){
 
@@ -847,6 +855,19 @@
             searchTimer=setTimeout(loadVisits,400);
         });
         $('#filterStatus').on('change',loadVisits);
+        $('#filterDateFrom, #filterDateTo').on('change', function () {
+            loadVisits();
+        });
+        $('#btnResetFilter').on('click', function () {
+
+            $('#searchVisit').val('');
+            $('#filterStatus').val('');
+            $('#filterDateFrom').val('');
+            $('#filterDateTo').val('');
+
+            loadVisits();
+        });
+        
        $('#visitRegion').on('change',function(){
             const regionId=$(this).val();
             const school=$('#visitSchool');
@@ -1161,5 +1182,45 @@
     e.preventDefault();
     console.log('FORM EDIT SUBMIT');
     updateVisit();
-});
+    });
+
+    $('#filterDateFrom').on('change', function () {
+
+    const from = $(this).val();
+    const to   = $('#filterDateTo').val();
+
+    if (from && to && from > to) {
+
+        notify(
+            'Tanggal Dari tidak boleh lebih besar dari Tanggal Sampai.',
+            'warning'
+        );
+
+        $(this).val('');
+        return;
+    }
+
+        loadVisits();
+    });
+
+
+    $('#filterDateTo').on('change', function () {
+
+        const from = $('#filterDateFrom').val();
+        const to   = $(this).val();
+
+        if (from && to && to < from) {
+
+            notify(
+                'Tanggal Sampai tidak boleh lebih kecil dari Tanggal Dari.',
+                'warning'
+            );
+
+            $(this).val('');
+            return;
+        }
+
+        loadVisits();
+    });
+
 })();
