@@ -68,6 +68,7 @@ class Dashboard extends BaseController
             'level'=>$this->request->getGet('level'),
             'region_id'=>$this->request->getGet('region_id'),
             'district_id'=>$this->request->getGet('district_id'),
+            'school_id'   => $this->request->getGet('school_id')
         ];
 
         $model=$this->dashboardModel;
@@ -197,6 +198,7 @@ class Dashboard extends BaseController
             'level'       => $this->request->getGet('level'),
             'region_id'   => $this->request->getGet('region_id'),
             'district_id' => $this->request->getGet('district_id'),
+            'school_id'   => $this->request->getGet('school_id')
         ];
 
         $model = $this->dashboardModel;
@@ -240,6 +242,20 @@ class Dashboard extends BaseController
 
         return $this->response->setJSON([
             'districts'=>$this->dashboardModel->getDistricts($regionId)
+        ]);
+    }
+    public function schools()
+    {
+        $keyword = trim((string)$this->request->getGet('q'));
+
+        if ($keyword === '') {
+            return $this->response->setJSON([
+                'schools' => []
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'schools' => $this->dashboardModel->searchSchools($keyword)
         ]);
     }
 }

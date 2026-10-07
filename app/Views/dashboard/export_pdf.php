@@ -666,6 +666,12 @@ body {
     }
     $totalStatus = $sudahMonev + $sedangBerlangsung + $draftMonev;
     $maxStatus = max($sudahMonev, $sedangBerlangsung, $draftMonev, 1);
+
+    $reportRegionName = trim((string)($reportRegionName ?? ''));
+
+    if ($reportRegionName === '') {
+        $reportRegionName = 'SELURUH WILAYAH DKI JAKARTA';
+    }
     ?>
 
 <div class="header">
@@ -677,6 +683,9 @@ body {
     </div>
     <div class="header-subtitle">
         TAHUN 2026
+    </div>
+    <div class="header-subtitle">
+        <?= esc($reportRegionName) ?>
     </div>
 </div>
 <div class="report-title">
@@ -1082,45 +1091,53 @@ body {
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php foreach (($problem['details'] ?? []) as $index => $row): ?>
-                    <?php
-                    $peserta = (int)($row['peserta'] ?? 0);
-                    $gelombang = (int)($row['gelombang'] ?? 0);
-                    $sesi = (int)($row['sesi'] ?? 0);
-                    $kebutuhanUtama = (int)($row['kebutuhan_utama'] ?? 0);
-                    $cadangan = (int)($row['kebutuhan_cadangan'] ?? 0);
-                    $totalKebutuhan = (int)($row['total_kebutuhan'] ?? ($kebutuhanUtama + $cadangan));
-                    $tersedia = (int)($row['available'] ?? 0);
-                    $kekuranganUtama = max($kebutuhanUtama - $tersedia, 0);
-                    $kekuranganCadangan = $kekuranganUtama > 0 ? $cadangan : max($totalKebutuhan - $tersedia, 0);
-                    $kurang = $tersedia < $kebutuhanUtama;
-                    $status = $kurang ? 'PERANGKAT UTAMA KURANG' : 'PERANGKAT UTAMA CUKUP';
-                    ?>
+           <tbody>
+                <?php if (empty($problem['details'])): ?>
                     <tr>
-                        <td class="center"><?= $index + 1 ?></td>
-                        <td><?= htmlspecialchars($row['school'] ?? '-') ?></td>
-                        <td class="center"><strong><?= $peserta ?> siswa</strong></td>
-                        <td class="center"><?= $gelombang ?></td>
-                        <td class="center"><?= $sesi ?></td>
-                        <td class="center"><strong><?= $kebutuhanUtama ?> unit</strong></td>
-                        <td class="center"><?= $cadangan ?> unit</td>
-                        <td class="center"><strong><?= $totalKebutuhan ?> unit</strong></td>
-                        <td class="center"><?= $tersedia ?> unit</td>
-                        <td class="center <?= $kurang || $kekuranganCadangan > 0 ? 'text-danger' : '' ?>">
-                            <?php if ($kurang): ?>
-                                <strong><?= $kekuranganUtama ?> unit utama + <?= $kekuranganCadangan ?> unit cadangan</strong>
-                            <?php elseif ($kekuranganCadangan > 0): ?>
-                                <strong><?= $kekuranganCadangan ?> unit cadangan</strong>
-                            <?php else: ?>
-                                <strong>0 unit</strong>
-                            <?php endif; ?>
-                        </td>
-                        <td class="center <?= $kurang ? 'status-danger' : 'status-success' ?>">
-                            <strong><?= $status ?></strong>
+                        <td colspan="11" style="text-align:center;padding:12px;">
+                            Tidak ada data.
                         </td>
                     </tr>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <?php foreach (($problem['details'] ?? []) as $index => $row): ?>
+                        <?php
+                        $peserta = (int)($row['peserta'] ?? 0);
+                        $gelombang = (int)($row['gelombang'] ?? 0);
+                        $sesi = (int)($row['sesi'] ?? 0);
+                        $kebutuhanUtama = (int)($row['kebutuhan_utama'] ?? 0);
+                        $cadangan = (int)($row['kebutuhan_cadangan'] ?? 0);
+                        $totalKebutuhan = (int)($row['total_kebutuhan'] ?? ($kebutuhanUtama + $cadangan));
+                        $tersedia = (int)($row['available'] ?? 0);
+                        $kekuranganUtama = max($kebutuhanUtama - $tersedia, 0);
+                        $kekuranganCadangan = $kekuranganUtama > 0 ? $cadangan : max($totalKebutuhan - $tersedia, 0);
+                        $kurang = $tersedia < $kebutuhanUtama;
+                        $status = $kurang ? 'PERANGKAT UTAMA KURANG' : 'PERANGKAT UTAMA CUKUP';
+                        ?>
+                        <tr>
+                            <td class="center"><?= $index + 1 ?></td>
+                            <td><?= htmlspecialchars($row['school'] ?? '-') ?></td>
+                            <td class="center"><strong><?= $peserta ?> siswa</strong></td>
+                            <td class="center"><?= $gelombang ?></td>
+                            <td class="center"><?= $sesi ?></td>
+                            <td class="center"><strong><?= $kebutuhanUtama ?> unit</strong></td>
+                            <td class="center"><?= $cadangan ?> unit</td>
+                            <td class="center"><strong><?= $totalKebutuhan ?> unit</strong></td>
+                            <td class="center"><?= $tersedia ?> unit</td>
+                            <td class="center <?= $kurang || $kekuranganCadangan > 0 ? 'text-danger' : '' ?>">
+                                <?php if ($kurang): ?>
+                                    <strong><?= $kekuranganUtama ?> unit utama + <?= $kekuranganCadangan ?> unit cadangan</strong>
+                                <?php elseif ($kekuranganCadangan > 0): ?>
+                                    <strong><?= $kekuranganCadangan ?> unit cadangan</strong>
+                                <?php else: ?>
+                                    <strong>0 unit</strong>
+                                <?php endif; ?>
+                            </td>
+                            <td class="center <?= $kurang ? 'status-danger' : 'status-success' ?>">
+                                <strong><?= $status ?></strong>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
 

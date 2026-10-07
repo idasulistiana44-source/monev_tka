@@ -31,32 +31,58 @@ document.addEventListener('DOMContentLoaded',function(){
             end_date:'',
             level:'',
             region_id:'',
-            district_id:''
+            district_id:'',
+            school_id:''
         }
     };
     const config=window.dashboardConfig||{};
     const regionsUrl=window.dashboardConfig?.regionsUrl||'';
     const districtsUrl=window.dashboardConfig?.districtsUrl||'';
+    const schoolsUrl=window.dashboardConfig?.schoolsUrl||'/dashboard/schools';
     const dataUrl=config.dataUrl||'/dashboard/data';
     const exportUrl=config.exportUrl||'/dashboard/export';
     const numberFormat=function(value){
         return Number(value||0).toLocaleString('id-ID');
     };
-    const loadDistricts=function(regionId){
+    const loadDistricts=function(regionId, selectedDistrictId=''){
         const element=$('filterKecamatan');
-        if(!element||!districtsUrl)return;
+
+        if(!element||!districtsUrl)return Promise.resolve();
+
         element.innerHTML='<option value="">Semua Kecamatan</option>';
-        if(!regionId)return;
-        fetch(districtsUrl+'?region_id='+encodeURIComponent(regionId),{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}})
+
+        if(!regionId)return Promise.resolve();
+
+        return fetch(
+            districtsUrl+'?region_id='+encodeURIComponent(regionId),
+            {
+                headers:{
+                    'X-Requested-With':'XMLHttpRequest',
+                    'Accept':'application/json'
+                }
+            }
+        )
         .then(function(response){
-            if(!response.ok)throw new Error('HTTP '+response.status);
+            if(!response.ok){
+                throw new Error('HTTP '+response.status);
+            }
+
             return response.json();
         })
         .then(function(data){
             const districts=data.districts||[];
-            element.innerHTML='<option value="">Semua Kecamatan</option>'+districts.map(function(item){
-                return '<option value="'+escapeHtml(item.id)+'">'+escapeHtml(item.name)+'</option>';
-            }).join('');
+
+            element.innerHTML=
+                '<option value="">Semua Kecamatan</option>'+
+                districts.map(function(item){
+                    return '<option value="'+escapeHtml(item.id)+'">'+
+                        escapeHtml(item.name)+
+                        '</option>';
+                }).join('');
+
+            if(selectedDistrictId){
+                element.value=String(selectedDistrictId);
+            }
         })
         .catch(function(error){
             console.error('Gagal mengambil data kecamatan:',error);
@@ -87,6 +113,93 @@ document.addEventListener('DOMContentLoaded',function(){
         .catch(function(error){
             console.error('Gagal mengambil data wilayah:',error);
         });
+    };
+    let schoolSearchData={};
+    let schoolSearchTimer=null;
+
+    const searchSchools=function(keyword){
+        const results=$('searchSchoolResults');
+
+        if(!results)return;
+
+        keyword=String(keyword||'').trim();
+
+        if(keyword.length<2){
+            results.innerHTML='';
+            results.style.display='none';
+            schoolSearchData={};
+            return;
+        }
+
+        fetch(schoolsUrl+'?q='+encodeURIComponent(keyword),{
+            headers:{
+                'X-Requested-With':'XMLHttpRequest',
+                'Accept':'application/json'
+            }
+        })
+        .then(function(response){
+            if(!response.ok){
+                throw new Error('HTTP '+response.status);
+            }
+
+            return response.json();
+        })
+        .then(function(data){
+            const schools=data.schools||[];
+
+            schoolSearchData={};
+
+            if(!schools.length){
+                results.innerHTML='<div class="search-school-empty">Sekolah tidak ditemukan</div>';
+                results.style.display='block';
+                return;
+            }
+
+            results.innerHTML=schools.map(function(school){
+
+                schoolSearchData[String(school.id)]=school;
+
+                return `
+                    <div class="search-school-item" data-id="${escapeHtml(school.id)}">
+                        <div class="search-school-name">
+                            ${escapeHtml(school.school_name||'-')}
+                        </div>
+
+                        <div class="search-school-meta">
+                            ${escapeHtml(school.npsn||'-')}
+                            •
+                            ${escapeHtml(school.level||'-')}
+                            •
+                            ${escapeHtml(school.district_name||'-')}
+                        </div>
+                    </div>
+                `;
+
+            }).join('');
+
+            results.style.display='block';
+        })
+        .catch(function(error){
+            console.error('Gagal mencari sekolah:',error);
+            results.innerHTML='';
+            results.style.display='none';
+        });
+    };
+    const selectSchool=function(schoolId){
+        const school=schoolSearchData[String(schoolId)];
+
+        if(!school)return;
+
+        $('filterSchoolId').value=school.id||'';
+        $('searchSchool').value=school.school_name||'';
+
+        $('filterJenjang').value=school.level||'';
+        $('filterWilayah').value=school.region_id||'';
+
+        $('searchSchoolResults').innerHTML='';
+        $('searchSchoolResults').style.display='none';
+
+        loadDistricts(school.region_id, school.district_id);
     };
     const escapeHtml=function(value){
         return String(value??'').replace(/[&<>"']/g,function(char){
@@ -1529,15 +1642,32 @@ document.addEventListener('DOMContentLoaded',function(){
         state.filters.level=$('filterJenjang')?.value||'';
         state.filters.region_id=$('filterWilayah')?.value||'';
         state.filters.district_id=$('filterKecamatan')?.value||'';
+        state.filters.school_id=$('filterSchoolId')?.value||'';
         loadDashboard();
     };
+
     const resetFilters=function(){
         if($('filterStartDate'))$('filterStartDate').value='';
         if($('filterEndDate'))$('filterEndDate').value='';
         if($('filterJenjang'))$('filterJenjang').value='';
         if($('filterWilayah'))$('filterWilayah').value='';
         if($('filterKecamatan'))$('filterKecamatan').value='';
-        state.filters={start_date:'',end_date:'',level:'',region_id:'',district_id:''};
+        if($('searchSchool'))$('searchSchool').value='';
+        if($('filterSchoolId'))$('filterSchoolId').value='';
+        if($('searchSchoolResults')){
+            $('searchSchoolResults').innerHTML='';
+            $('searchSchoolResults').style.display='none';
+        }
+
+        state.filters={
+            start_date:'',
+            end_date:'',
+            level:'',
+            region_id:'',
+            district_id:'',
+            school_id:''
+        };
+
         loadRegions();
         loadDashboard();
     };
@@ -1566,7 +1696,30 @@ document.addEventListener('DOMContentLoaded',function(){
         state.pages.infrastructure=1;
         renderInfrastructure();
     });
+    $('searchSchool')?.addEventListener('input',function(){
+        const keyword=this.value;
 
+        clearTimeout(schoolSearchTimer);
+
+        if(!keyword.trim()){
+            $('filterSchoolId').value='';
+            schoolSearchData={};
+            $('searchSchoolResults').innerHTML='';
+            $('searchSchoolResults').style.display='none';
+            return;
+        }
+
+        schoolSearchTimer=setTimeout(function(){
+            searchSchools(keyword);
+        },300);
+    });
+    $('searchSchoolResults')?.addEventListener('click',function(event){
+        const item=event.target.closest('.search-school-item');
+
+        if(!item)return;
+
+        selectSchool(item.dataset.id);
+    });
    if(window.jQuery){
         jQuery('#electricityDetailFilter').off('change.electricity').on('change.electricity',function(){
             state.pages.electricity=1;

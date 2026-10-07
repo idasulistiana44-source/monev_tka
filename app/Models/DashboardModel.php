@@ -25,6 +25,9 @@ class DashboardModel extends Model
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
         }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
+        }
         return $builder;
     }
 
@@ -68,29 +71,36 @@ class DashboardModel extends Model
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
         }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
+        }
 
         return $builder->countAllResults();
     }
-
-    public function getTotalSchools($filters=[])
+    public function getTotalSchools($filters = [])
     {
-        $builder=$this->db->table('schools s')
+        $builder = $this->db->table('schools s')
             ->select('COUNT(*) AS total');
 
-        if(!empty($filters['level'])){
-            $builder->where('s.level',$filters['level']);
+        if (!empty($filters['school_id'])) {
+            $builder->where('s.id', $filters['school_id']);
+        } else {
+            if (!empty($filters['level'])) {
+                $builder->where('s.level', $filters['level']);
+            }
+
+            if (!empty($filters['region_id'])) {
+                $builder->where('s.region_id', $filters['region_id']);
+            }
+
+            if (!empty($filters['district_id'])) {
+                $builder->where('s.district_id', $filters['district_id']);
+            }
         }
 
-        if(!empty($filters['region_id'])){
-            $builder->where('s.region_id',$filters['region_id']);
-        }
-        if(!empty($filters['district_id'])){
-            $builder->where('s.district_id',$filters['district_id']);
-        }
+        $result = $builder->get()->getRowArray();
 
-        $result=$builder->get()->getRowArray();
-
-        return (int)($result['total']??0);
+        return (int)($result['total'] ?? 0);
     }
 
    public function getInProgressSchools($filters=[])
@@ -116,6 +126,9 @@ class DashboardModel extends Model
         }
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
+        }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
         }
 
         $result=$builder
@@ -149,6 +162,9 @@ class DashboardModel extends Model
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
         }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
+        }
 
         $result=$builder
             ->select('COUNT(DISTINCT v.school_id) AS total')
@@ -178,7 +194,7 @@ class DashboardModel extends Model
     public function getDashboardSummary($filters=[])
     {
         return [
-            'totalSchools'=>$this->getTotalSchools(),
+            'totalSchools'=>$this->getTotalSchools($filters),
             'draftSchools'=>$this->getDraftSchools($filters),
             'inProgressSchools'=>$this->getInProgressSchools($filters),
             'visitedSchools'=>$this->getVisitedSchools($filters),
@@ -614,6 +630,9 @@ class DashboardModel extends Model
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
         }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
+        }
         return $builder
             ->where("TRIM(va.answer)<>",'')
             ->orderBy('s.school_name','ASC')
@@ -644,6 +663,9 @@ class DashboardModel extends Model
         }
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
+        }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
         }
         $rows=$builder
             ->groupBy('s.id,s.school_name,s.npsn')
@@ -693,6 +715,9 @@ class DashboardModel extends Model
         }
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
+        }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
         }
         $rows=$builder
             ->orderBy('s.school_name','ASC')
@@ -769,6 +794,13 @@ class DashboardModel extends Model
 
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
+        }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
+        }
+
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
         }
 
         $rows=$builder
@@ -1275,6 +1307,9 @@ class DashboardModel extends Model
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
         }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
+        }
 
         $builder->groupBy('u.id,u.name,r.id,r.name');
         $builder->orderBy('u.name','ASC');
@@ -1358,6 +1393,9 @@ class DashboardModel extends Model
 
         if(!empty($filters['district_id'])){
             $builder->where('s.district_id',$filters['district_id']);
+        }
+        if(!empty($filters['school_id'])){
+            $builder->where('s.id',$filters['school_id']);
         }
 
         $visits=$builder->get()->getResultArray();
@@ -1726,5 +1764,26 @@ class DashboardModel extends Model
         $builder->groupBy('s.id');
         $builder->orderBy('s.name','ASC');
         return $builder->get()->getResultArray();
+    }
+    public function searchSchools($keyword)
+    {
+        return $this->db->table('schools s')
+            ->select('
+                s.id,
+                s.npsn,
+                s.school_name,
+                s.level,
+                s.region_id,
+                s.district_id,
+                r.name AS region_name,
+                d.name AS district_name
+            ')
+            ->join('region r', 'r.id = s.region_id', 'left')
+            ->join('district d', 'd.id = s.district_id', 'left')
+            ->like('s.school_name', $keyword)
+            ->orderBy('s.school_name', 'ASC')
+            ->limit(20)
+            ->get()
+            ->getResultArray();
     }
 }

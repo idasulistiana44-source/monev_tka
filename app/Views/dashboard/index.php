@@ -34,6 +34,20 @@
                 <option value="">Semua Kecamatan</option>
             </select>
         </div>
+         <div class="filter-group">
+        <label>Cari Sekolah</label>
+        <div class="position-relative">
+            <input
+                type="text"
+                id="searchSchool"
+                class="form-control"
+                placeholder="Cari nama sekolah..."
+                autocomplete="off"
+            >
+            <input type="hidden" id="filterSchoolId" value="">
+            <div id="searchSchoolResults" class="search-school-results"></div>
+        </div>
+    </div>
         <div class="filter-actions">
             <button type="button" class="dashboard-btn" id="btnApplyFilter"><i class="fas fa-filter"></i>Tampilkan</button>
             <button type="button" class="dashboard-btn dashboard-btn-light" id="btnResetFilter"><i class="fas fa-sync-alt"></i>Reset</button>

@@ -371,3 +371,60 @@
     }
 }
 
+.search-school-wrapper{
+    position:relative;
+    width:100%;
+}
+
+.search-school-results{
+    display:none;
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0;
+    right:0;
+    z-index:9999;
+    background:#fff;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    max-height:280px;
+    overflow-y:auto;
+    box-shadow:0 8px 20px rgba(15,23,42,.12);
+}
+
+.search-school-item{
+    padding:10px 12px;
+    cursor:pointer;
+    border-bottom:1px solid #f1f5f9;
+    transition:background .15s ease;
+}
+
+.search-school-item:last-child{
+    border-bottom:none;
+}
+
+.search-school-item:hover{
+    background:#f8fafc;
+}
+
+.search-school-name{
+    font-size:14px;
+    font-weight:600;
+    color:#334155;
+}
+
+.search-school-meta{
+    margin-top:3px;
+    font-size:12px;
+    color:#64748b;
+}
+
+.search-school-empty{
+    padding:12px;
+    text-align:center;
+    font-size:13px;
+    color:#64748b;
+}
+
+.search-school-group{
+    min-width:240px;
+}
