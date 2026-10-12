@@ -5,15 +5,18 @@
             <p>Monitoring dan Evaluasi Pelaksanaan TKAP</p>
         </div>
     </div>
-    <div class="dashboard-filter">
+   <div class="dashboard-filter">
+
         <div class="filter-group">
             <label>Tanggal Mulai</label>
             <input type="date" id="filterStartDate" class="form-control">
         </div>
+
         <div class="filter-group">
             <label>Tanggal Selesai</label>
             <input type="date" id="filterEndDate" class="form-control">
         </div>
+
         <div class="filter-group">
             <label>Jenjang</label>
             <select id="filterJenjang" class="form-select">
@@ -22,36 +25,61 @@
                 <option value="SMK">SMK</option>
             </select>
         </div>
+
         <div class="filter-group">
             <label>Wilayah</label>
             <select id="filterWilayah" class="form-select">
                 <option value="">Semua Wilayah</option>
             </select>
         </div>
+
         <div class="filter-group">
             <label>Kecamatan</label>
             <select id="filterKecamatan" class="form-select">
                 <option value="">Semua Kecamatan</option>
             </select>
         </div>
-         <div class="filter-group">
-        <label>Cari Sekolah</label>
-        <div class="position-relative">
-            <input
-                type="text"
-                id="searchSchool"
-                class="form-control"
-                placeholder="Cari nama sekolah..."
-                autocomplete="off"
-            >
-            <input type="hidden" id="filterSchoolId" value="">
-            <div id="searchSchoolResults" class="search-school-results"></div>
+
+        <div class="filter-group">
+            <label>Cari Sekolah</label>
+            <div class="position-relative">
+                <input
+                    type="text"
+                    id="searchSchool"
+                    class="form-control"
+                    placeholder="Cari nama sekolah..."
+                    autocomplete="off"
+                >
+                <input type="hidden" id="filterSchoolId" value="">
+                <div id="searchSchoolResults" class="search-school-results"></div>
+            </div>
         </div>
-    </div>
+
         <div class="filter-actions">
-            <button type="button" class="dashboard-btn" id="btnApplyFilter"><i class="fas fa-filter"></i>Tampilkan</button>
-            <button type="button" class="dashboard-btn dashboard-btn-light" id="btnResetFilter"><i class="fas fa-sync-alt"></i>Reset</button>
+
+            <button type="button"
+                    class="dashboard-btn"
+                    id="btnApplyFilter">
+                <i class="fas fa-filter"></i>
+                Tampilkan
+            </button>
+
+            <button type="button"
+                    class="dashboard-btn dashboard-btn-light"
+                    id="btnResetFilter">
+                <i class="fas fa-sync-alt"></i>
+                Reset
+            </button>
+
+            <button type="button"
+                    class="dashboard-btn dashboard-btn-outline"
+                    id="btnExportPDF">
+                <i class="fas fa-file-pdf"></i>
+                Export PDF
+            </button>
+
         </div>
+
     </div>
     <div class="dashboard-stats">
         <!-- Jumlah Sekolah -->
@@ -435,7 +463,9 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Sekolah</th>
+                                     <th>ISP</th>
                                     <th>Bandwidth</th>
+                                   
                                 </tr>
                             </thead>
                             <tbody id="ispUtamaTableBody">
@@ -676,7 +706,7 @@
             </div>
         </div>
     </div>
-    <div class="dashboard-export">
+    <!-- <div class="dashboard-export">
         <div>
             <h3>Export Laporan Monev</h3>
             <p>Data mengikuti periode dan filter yang dipilih.</p>
@@ -684,7 +714,7 @@
         <div>
             <button type="button" class="dashboard-btn dashboard-btn-outline" id="btnExportPDF"><i class="fas fa-file-pdf"></i>Export PDF</button>
         </div>
-    </div>
+    </div> -->
 </div>
 <div class="modal fade" id="problemDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">

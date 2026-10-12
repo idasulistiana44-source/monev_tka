@@ -71,6 +71,22 @@ class Dashboard extends BaseController
             'school_id'   => $this->request->getGet('school_id')
         ];
 
+            $filterWilayahName = 'SELURUH WILAYAH DKI JAKARTA';
+            $filterSchoolName  = '';
+
+            if (!empty($filters['region_id'])) {
+                $regions = $model->getRegions();
+
+                foreach ($regions as $region) {
+                    if ((string)($region['id'] ?? '') === (string)$filters['region_id']) {
+                        $filterWilayahName = $region['name']
+                            ?? $region['region_name']
+                            ?? 'SELURUH WILAYAH DKI JAKARTA';
+                        break;
+                    }
+                }
+            }
+
         $model=$this->dashboardModel;
 
         try{
@@ -148,6 +164,8 @@ class Dashboard extends BaseController
         'wave'=>$model->getWaveReportData($filters),
         'infrastructureReadiness'=>$model->getInfrastructureReadinessReportData($filters),
         'backupInternetSchools'=>$backupInternetSchools,
+        'filterWilayahName' => $filterWilayahName,
+        'filterSchoolName'  => $filterSchoolName
     ];
 
         $html=view('dashboard/export_pdf',$data);
@@ -200,6 +218,25 @@ class Dashboard extends BaseController
             'district_id' => $this->request->getGet('district_id'),
             'school_id'   => $this->request->getGet('school_id')
         ];
+        $filterWilayahName = 'SELURUH WILAYAH DKI JAKARTA';
+        $filterSchoolName  = '';
+
+        if (!empty($filters['region_id'])) {
+            $regions = $model->getRegions();
+
+            foreach ($regions as $region) {
+                if ((string)($region['id'] ?? '') === (string)$filters['region_id']) {
+                    $filterWilayahName = $region['name']
+                        ?? $region['region_name']
+                        ?? 'SELURUH WILAYAH DKI JAKARTA';
+                    break;
+                }
+            }
+        }
+
+        if (!empty($filters['school_id'])) {
+        
+        }
 
         $model = $this->dashboardModel;
 

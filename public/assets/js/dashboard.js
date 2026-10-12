@@ -974,6 +974,7 @@ document.addEventListener('DOMContentLoaded',function(){
             const npsn=colspan===5?'<td>'+escapeHtml(item.npsn)+'</td>':'';
             const suffix = stateName === 'electricity' ? ' Watt' : '';
             const value = stateName === 'electricity'
+            
                 ? numberFormat(item.value)
                 : escapeHtml(item.value);
             const component = stateName === 'readiness'

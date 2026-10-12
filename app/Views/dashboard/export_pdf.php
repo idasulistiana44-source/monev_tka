@@ -157,16 +157,24 @@ body {
     font-weight: bold;
 }
 .detail-box {
-    border: 1px solid #cbd5e1;
-    padding: 9px;
-    margin-top: 10px;
-    margin-bottom: 12px;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
+
 .detail-title {
-    font-size: 11px;
-    font-weight: bold;
-    margin-bottom: 5px;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    line-height: 1.5;
+    page-break-after: avoid;
+    break-after: avoid;
 }
+
+.detail-table {
+    page-break-before: avoid;
+    break-before: avoid;
+}
+
 .detail-description {
     font-size: 9px;
     line-height: 1.5;
@@ -685,7 +693,17 @@ body {
         TAHUN 2026
     </div>
     <div class="header-subtitle">
-        <?= esc($reportRegionName) ?>
+        <?php
+        $headerLocation = 'SELURUH WILAYAH DKI JAKARTA';
+
+        if (!empty($filterSchoolName)) {
+            $headerLocation = $filterSchoolName;
+        } elseif (!empty($filterWilayahName)) {
+            $headerLocation = $filterWilayahName;
+        }
+        ?>
+
+        <?= esc($headerLocation) ?>
     </div>
 </div>
 <div class="report-title">
@@ -1155,6 +1173,13 @@ body {
                     </tr>
                 </thead>
                 <tbody>
+                <?php if (empty($problem['details'])): ?>
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:12px;">
+                            Tidak ada data.
+                        </td>
+                    </tr>
+                <?php else: ?>
                     <?php foreach (($problem['details'] ?? []) as $index => $row): ?>
                         <tr>
                             <td class="center"><?= $index + 1 ?></td>
@@ -1162,10 +1187,13 @@ body {
                             <td><?= htmlspecialchars($row['isp'] ?? '-') ?></td>
                             <td class="center"><?= htmlspecialchars($row['bandwidth'] ?? '-') ?> Mbps</td>
                             <td class="center"><?= htmlspecialchars($row['need'] ?? '-') ?> Mbps</td>
-                            <td class="center"><strong><?= htmlspecialchars($row['shortage'] ?? '-') ?> Mbps</strong></td>
+                            <td class="center">
+                                <strong><?= htmlspecialchars($row['shortage'] ?? '-') ?> Mbps</strong>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
-                </tbody>
+                <?php endif; ?>
+            </tbody>
             </table>
 
         <?php elseif ($type === 'backup_missing'): ?>
@@ -1179,14 +1207,24 @@ body {
                     </tr>
                 </thead>
                 <tbody>
+                <?php if (empty($problem['details'])): ?>
+                    <tr>
+                        <td colspan="3" style="text-align:center;padding:12px;">
+                            Tidak ada data.
+                        </td>
+                    </tr>
+                <?php else: ?>
                     <?php foreach (($problem['details'] ?? []) as $index => $row): ?>
                         <tr>
                             <td class="center"><?= $index + 1 ?></td>
                             <td><?= htmlspecialchars($row['school'] ?? '-') ?></td>
-                             <td style="text-align:center;"><?= htmlspecialchars($row['npsn'] ?? '-') ?></td>
+                            <td style="text-align:center;">
+                                <?= htmlspecialchars($row['npsn'] ?? '-') ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
-                </tbody>
+                <?php endif; ?>
+            </tbody>
             </table>
 
         <?php elseif ($type === 'backup_bandwidth'): ?>
@@ -1201,17 +1239,31 @@ body {
                         <th>Kekurangan</th>
                     </tr>
                 </thead>
-                <tbody>
+               <tbody>
+                <?php if (empty($problem['details'])): ?>
+                    <tr>
+                        <td colspan="5" style="text-align:center;padding:12px;">
+                            Tidak ada data.
+                        </td>
+                    </tr>
+                <?php else: ?>
                     <?php foreach (($problem['details'] ?? []) as $index => $row): ?>
                         <tr>
                             <td class="center"><?= $index + 1 ?></td>
                             <td><?= htmlspecialchars($row['school'] ?? '-') ?></td>
-                            <td class="center"><?= htmlspecialchars($row['bandwidth'] ?? '-') ?> Mbps</td>
-                            <td class="center"><?= htmlspecialchars($row['need'] ?? '-') ?> Mbps</td>
-                            <td class="center"><strong><?= htmlspecialchars($row['shortage'] ?? '-') ?> Mbps</strong></td>
+                            <td class="center">
+                                <?= htmlspecialchars($row['bandwidth'] ?? '-') ?> Mbps
+                            </td>
+                            <td class="center">
+                                <?= htmlspecialchars($row['need'] ?? '-') ?> Mbps
+                            </td>
+                            <td class="center">
+                                <strong><?= htmlspecialchars($row['shortage'] ?? '-') ?> Mbps</strong>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
-                </tbody>
+                <?php endif; ?>
+            </tbody>
             </table>
 
         <?php endif; ?>
@@ -1271,8 +1323,25 @@ body {
             return $b['jumlah'] <=> $a['jumlah'];
         });
         if (empty($rows)) {
-            continue;
-        }
+        ?>
+        <div class="infra-category <?= $code !== 'INF-01' ? 'page-break-before' : '' ?>">
+            <div class="infra-category-header">
+                <div class="infra-category-title">
+                    <?= esc($categoryTitle) ?>
+                </div>
+
+                <div class="infra-category-description">
+                    10 sekolah dengan jumlah <?= esc($categoryTitle) ?> terbanyak
+                </div>
+            </div>
+
+            <div class="empty-data">
+                Tidak ada data <?= strtolower(esc($categoryTitle)) ?>.
+            </div>
+        </div>
+        <?php
+        continue;
+    }
         $chartRows = array_slice($rows, 0, 10);
         $values = array_column($rows, 'jumlah');
         $totalValue = array_sum($values);
