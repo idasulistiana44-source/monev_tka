@@ -561,6 +561,194 @@ class DashboardModel extends Model
     //     ];
     // }
 
+    
+    
+    public function getIspDashboardData(string $type, array $filters = []): array
+    {
+        $isUtama = $type === 'ispUtama';
+
+        // Data bandwidth
+        $bandwidthData = $this->getBandwidthData(
+            $isUtama ? 11 : 25,
+            $filters
+        );
+
+        // Data nama ISP dari pilihan ISP dan kolom "Lainnya"
+        $providerData = $this->getIspProviderData($type, $filters);
+
+        $bandwidthBySchool = [];
+        foreach (($bandwidthData['data'] ?? []) as $item) {
+            $schoolId = (int) ($item['school_id'] ?? 0);
+
+            if ($schoolId > 0) {
+                $bandwidthBySchool[$schoolId] = $item['value'] ?? '';
+            }
+        }
+
+        $providerBySchool = [];
+        foreach (($providerData['data'] ?? []) as $item) {
+            $schoolId = (int) ($item['school_id'] ?? 0);
+
+            if ($schoolId > 0) {
+                $providerBySchool[$schoolId] = trim(
+                    (string) ($item['value'] ?? '')
+                );
+            }
+        }
+
+        // Gabungkan sekolah dari kedua sumber
+        $schoolIds = array_unique(array_merge(
+            array_keys($bandwidthBySchool),
+            array_keys($providerBySchool)
+        ));
+
+        $schoolsById = [];
+
+        foreach (($bandwidthData['data'] ?? []) as $item) {
+            $schoolId = (int) ($item['school_id'] ?? 0);
+            if ($schoolId > 0) {
+                $schoolsById[$schoolId] = $item;
+            }
+        }
+
+        foreach (($providerData['data'] ?? []) as $item) {
+            $schoolId = (int) ($item['school_id'] ?? 0);
+
+            if ($schoolId > 0 && !isset($schoolsById[$schoolId])) {
+                $schoolsById[$schoolId] = $item;
+            }
+        }
+
+        $schools = [];
+        $distribution = [];
+
+        $ispField = $isUtama ? 'ispUtama' : 'ispCadangan';
+
+        foreach ($schoolIds as $schoolId) {
+            $item = $schoolsById[$schoolId] ?? [];
+            $ispName = trim((string) ($providerBySchool[$schoolId] ?? ''));
+
+            $item['school_id'] = $schoolId;
+            $item['bandwidth'] = $bandwidthBySchool[$schoolId] ?? '';
+            $item[$ispField] = $ispName !== '' ? $ispName : 'Tidak Ada';
+            $item['value'] = $item[$ispField];
+
+            $schools[] = $item;
+
+            if ($ispName !== '' && strcasecmp($ispName, 'Tidak Ada') !== 0) {
+                $distribution[$ispName] = ($distribution[$ispName] ?? 0) + 1;
+            }
+        }
+
+        usort($schools, static function ($a, $b) {
+            return strcmp(
+                (string) ($a['school_name'] ?? ''),
+                (string) ($b['school_name'] ?? '')
+            );
+        });
+
+        arsort($distribution);
+
+        return [
+            'distribution' => $distribution,
+            'data' => $schools,
+        ];
+    }
+
+
+public function getIspProviderData(string $type, array $filters = []): array
+{
+    // ISP Utama atau ISP Cadangan
+    if ($type === 'ispUtama') {
+        $questionId = 22; // Pilihan ISP Utama
+        $otherId = 23;    // Nama ISP Utama jika Lainnya
+    } elseif ($type === 'ispCadangan') {
+        $questionId = 24; // Pilihan ISP Cadangan
+        $otherId = null;  // ID pertanyaan nama ISP cadangan belum dipastikan
+    } else {
+        return [
+            'distribution' => [],
+            'data' => [],
+        ];
+    }
+
+    $builder = $this->baseVisitQuery($filters);
+
+    $builder
+        ->select('s.id, s.school_name, s.npsn')
+        ->select('va.answer AS isp_choice')
+        ->join(
+            'visit_answers va',
+            'va.visit_id = v.id AND va.question_id = ' . (int) $questionId,
+            'left'
+        );
+
+    // JOIN jawaban "Lainnya" hanya jika ID pertanyaannya tersedia.
+    if ($otherId !== null) {
+        $builder
+            ->select('va_other.answer AS isp_other')
+            ->join(
+                'visit_answers va_other',
+                'va_other.visit_id = v.id AND va_other.question_id = ' . (int) $otherId,
+                'left'
+            );
+    } else {
+        // Agar key isp_other tetap tersedia tanpa JOIN tambahan.
+        $builder->select("'' AS isp_other", false);
+    }
+
+    $rows = $builder
+        ->orderBy('s.school_name', 'ASC')
+        ->get()
+        ->getResultArray();
+
+    $schools = [];
+    $distribution = [];
+
+    foreach ($rows as $row) {
+        $isp = trim((string) ($row['isp_choice'] ?? ''));
+        $other = trim((string) ($row['isp_other'] ?? ''));
+
+        // ISP Cadangan
+        if ($type === 'ispCadangan') {
+            if (strcasecmp($isp, 'Tidak Ada') === 0) {
+                $isp = 'Tidak Ada ISP';
+            } elseif (strcasecmp($isp, 'Ada') === 0) {
+                // Jika pilihan Ada, gunakan nama ISP yang tersedia.
+                $isp = $other !== '' ? $other : 'Tidak Ada ISP';
+            } elseif ($isp === '') {
+                $isp = 'Tidak Ada ISP';
+            }
+        } else {
+            // ISP Utama
+            if (strcasecmp($isp, 'Lainnya') === 0 && $other !== '') {
+                $isp = $other;
+            }
+
+            if ($isp === '') {
+                $isp = 'Tidak Tersedia ISP Cadangan';
+            }
+        }
+
+        $schools[] = [
+            'school_id'   => (int) $row['id'],
+            'school_name' => $row['school_name'],
+            'npsn'        => $row['npsn'],
+            'value'       => $isp,
+        ];
+
+        $distribution[$isp] = ($distribution[$isp] ?? 0) + 1;
+    }
+
+    arsort($distribution);
+
+    return [
+        'distribution' => $distribution,
+        'data' => $schools,
+    ];
+}
+
+
     public function getBandwidthData($questionId,$filters=[]){
             $builder=$this->baseVisitQuery($filters);
             $rows=$builder
@@ -1650,49 +1838,63 @@ class DashboardModel extends Model
 
         $kebutuhanPerangkat=$komputerUtama+$komputerCadangan;
 
+       
         // ==============================
         // ISP UTAMA
         // ==============================
-        $bandwidthIspUtama=$this->extractNumber(
-            $answers[11]??0
+
+        // INF-13: Bandwidth ISP Utama
+        $bandwidthIspUtama = $this->extractNumber(
+            $answers[11] ?? 0
         );
 
-        $ispUtama=trim(
-            (string)($answers[22]??'')
+        // INF-11: Pilihan ISP Utama
+        $ispUtama = trim(
+            (string) ($answers[22] ?? '')
         );
 
-        $ispUtamaLainnya=trim(
-            (string)($answers[23]??'')
+        // INF-12: Sebutkan ISP Utama jika memilih Lainnya
+        $ispUtamaLainnya = trim(
+            (string) ($answers[23] ?? '')
         );
 
-        if(
-            strcasecmp($ispUtama,'Lainnya')===0 &&
-            $ispUtamaLainnya!==''
-        ){
-            $ispUtama=$ispUtamaLainnya;
+        // Jika memilih Lainnya, gunakan nama ISP yang diisi
+        if (
+            strcasecmp($ispUtama, 'Lainnya') === 0
+            && $ispUtamaLainnya !== ''
+        ) {
+            $ispUtama = $ispUtamaLainnya;
         }
 
+
+       
         // ==============================
         // ISP CADANGAN
         // ==============================
-        $ispCadangan=trim(
-            (string)($answers[12]??'')
-        );
 
-        $ispCadanganLainnya=trim(
-            (string)($answers[24]??'')
-        );
+            // INF-14: Pilihan ISP Cadangan
+            $ispCadangan = trim(
+                (string) ($answers[12] ?? '')
+            );
 
-        if(
-            strcasecmp($ispCadangan,'Lainnya')===0 &&
-            $ispCadanganLainnya!==''
-        ){
-            $ispCadangan=$ispCadanganLainnya;
-        }
+            // INF-15: Sebutkan ISP Cadangan jika memilih Lainnya
+            $ispCadanganLainnya = trim(
+                (string) ($answers[24] ?? '')
+            );
 
-        $bandwidthIspCadangan=$this->extractNumber(
-            $answers[25]??0
-        );
+            // Jika memilih Lainnya, tampilkan nama ISP yang diisi
+            if (
+                strcasecmp($ispCadangan, 'Lainnya') === 0
+                && $ispCadanganLainnya !== ''
+            ) {
+                $ispCadangan = $ispCadanganLainnya;
+            }
+
+            // INF-16: Bandwidth ISP Cadangan
+            $bandwidthIspCadangan = $this->extractNumber(
+                $answers[25] ?? 0
+            );
+
 
         // ==============================
         // BANDWIDTH

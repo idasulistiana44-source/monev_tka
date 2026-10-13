@@ -1184,7 +1184,7 @@ body {
                         <tr>
                             <td class="center"><?= $index + 1 ?></td>
                             <td><?= htmlspecialchars($row['school'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($row['isp'] ?? '-') ?></td>
+                            <td class="center"><?= htmlspecialchars($row['isp'] ?? '-') ?></td>
                             <td class="center"><?= htmlspecialchars($row['bandwidth'] ?? '-') ?> Mbps</td>
                             <td class="center"><?= htmlspecialchars($row['need'] ?? '-') ?> Mbps</td>
                             <td class="center">
@@ -1745,6 +1745,16 @@ body {
     $bandwidthData = is_array($mainBandwidth ?? null) ? $mainBandwidth : [];
     $rows = is_array($bandwidthData['data'] ?? null) ? $bandwidthData['data'] : [];
     $bandwidthRows = [];
+    $ispUtamaData = is_array($ispUtama['data'] ?? null)
+    ? $ispUtama['data']
+    : [];
+
+    $namaIspUtama = [];
+
+    foreach ($ispUtamaData as $ispRow) {
+        $namaIspUtama[(int)($ispRow['school_id'] ?? 0)] =
+            $ispRow['value'] ?? '';
+    }
     foreach ($rows as $row) {
         $value = trim((string)($row['value'] ?? ''));
         if ($value === '') {
@@ -1757,8 +1767,10 @@ body {
             continue;
         }
         $bandwidthRows[] = [
+            'school_id' => $row['school_id'] ?? 0,
             'school_name' => $row['school_name'] ?? '-',
             'npsn' => $row['npsn'] ?? '-',
+            'isp' => $namaIspUtama[(int)($row['school_id'] ?? 0)] ?? '-',
             'value' => $value,
             'numeric_value' => $numericValue
         ];
@@ -1883,6 +1895,7 @@ body {
                     <th width="7%">No</th>
                     <th>Sekolah</th>
                     <th width="20%">NPSN</th>
+                    <th>ISP Utama</th>
                     <th width="20%">Bandwidth</th>
                 </tr>
             </thead>
@@ -1897,6 +1910,9 @@ body {
                         </td>
                         <td class="center">
                             <?= esc($row['npsn']) ?>
+                        </td>
+                        <td class="center">
+                            <?= esc($row['isp'] ?: '-') ?>
                         </td>
                         <td class="center">
                             <strong>
@@ -1915,12 +1931,23 @@ body {
 </div>
 
     <?php
-    $backupData = is_array($backupBandwidth ?? null) ? $backupBandwidth : [];
-    $backupRows = is_array($backupData['data'] ?? null) ? $backupData['data'] : [];
-    $backupRows = array_values(array_filter($backupRows, function ($row) {
-        $value = trim((string)($row['value'] ?? ''));
-        return $value !== '' && (float)preg_replace('/[^0-9.]/', '', $value) > 0;
-    }));
+    $backupData = is_array($backupBandwidth ?? null)
+        ? $backupBandwidth
+        : [];
+
+    $backupRows = is_array($backupData['data'] ?? null)
+        ? $backupData['data']
+        : [];
+
+    $backupChartRows = array_values(array_filter(
+        $backupRows,
+        function ($row) {
+            $value = trim((string) ($row['value'] ?? ''));
+
+            return $value !== ''
+                && (float) preg_replace('/[^0-9.]/', '', $value) > 0;
+        }
+    ));
     if (!empty($backupRows)):
     $backupRecap = [];
     foreach ($backupRows as $row) {
@@ -1955,6 +1982,21 @@ body {
     usort($backupRows, function ($a, $b) {
         return (float)($b['numeric_value'] ?? preg_replace('/[^0-9.]/', '', (string)($b['value'] ?? ''))) <=> (float)($a['numeric_value'] ?? preg_replace('/[^0-9.]/', '', (string)($a['value'] ?? '')));
     });
+    $ispCadanganData = is_array($ispCadangan['data'] ?? null)
+        ? $ispCadangan['data']
+        : [];
+
+    $namaIspCadangan = [];
+
+    foreach ($ispCadanganData as $ispRow) {
+        $schoolId = (int) ($ispRow['school_id'] ?? 0);
+
+        if ($schoolId > 0) {
+            $namaIspCadangan[$schoolId] = trim(
+                (string) ($ispRow['isp'] ?? '')
+            );
+        }
+    }
     ?>
     <div class="section page-break-before">
         <div class="section-title">8. BANDWIDTH ISP CADANGAN</div>
@@ -2018,11 +2060,21 @@ body {
                     <th width="7%">No</th>
                     <th>Sekolah</th>
                     <th width="20%">NPSN</th>
+                    <th>ISP Cadangan</th>
                     <th width="20%">Bandwidth</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($backupRows as $index => $row): ?>
+                    <?php
+                    $schoolId = (int) ($row['school_id'] ?? 0);
+
+                    $namaIsp = $namaIspCadangan[$schoolId] ?? '';
+
+                    if ($namaIsp === '') {
+                        $namaIsp = 'Tidak Ada ISP';
+                    }
+                    ?>
                 <tr>
                     <td class="center">
                         <?= $index + 1 ?>
@@ -2033,6 +2085,7 @@ body {
                     <td class="center">
                         <?= esc($row['npsn'] ?? '-') ?>
                     </td>
+                    <td class="center"><?= esc($namaIsp) ?></td>
                     <td class="center">
                         <strong>
                             <?= esc($row['value'] ?? '-') ?>

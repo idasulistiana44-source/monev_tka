@@ -159,13 +159,16 @@ class Dashboard extends BaseController
         'internet'=>$model->getInternetData($filters),
         'mainBandwidth'=>$model->getBandwidthData(11,$filters),
         'backupBandwidth'=>$model->getBandwidthData(25,$filters),
+        'ispUtama' => $model->getIspDashboardData('ispUtama', $filters),
+        'ispCadangan' => $model->getIspDashboardData('ispCadangan', $filters),
         'studentReadiness'=>$model->getStudentReadinessReportData($filters),
         'session'=>$model->getSessionReportData($filters),
         'wave'=>$model->getWaveReportData($filters),
         'infrastructureReadiness'=>$model->getInfrastructureReadinessReportData($filters),
         'backupInternetSchools'=>$backupInternetSchools,
         'filterWilayahName' => $filterWilayahName,
-        'filterSchoolName'  => $filterSchoolName
+        'filterSchoolName'  => $filterSchoolName,
+
     ];
 
         $html=view('dashboard/export_pdf',$data);
@@ -253,8 +256,8 @@ class Dashboard extends BaseController
             'infrastructure' => $model->getInfrastructureData($filters),
             'electricity'    => $model->getElectricityData($filters),
             'internet'       => $model->getInternetData($filters),
-            'ispUtama'         => $model->getBandwidthData(11, $filters),
-            'ispCadangan'       => $model->getBandwidthData(25, $filters),
+            'ispUtama' => $model->getIspDashboardData('ispUtama', $filters),
+            'ispCadangan' => $model->getIspDashboardData('ispCadangan', $filters),
             'students'       => $model->getStudentData($filters),
             'sessions'       => $model->getSessionData($filters),
             'waves'          => $model->getWaveData($filters),

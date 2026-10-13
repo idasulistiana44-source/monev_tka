@@ -887,18 +887,20 @@ document.addEventListener('DOMContentLoaded',function(){
         };
 
         // Chart
-        renderDistributionChart(
-            type,
-            canvasId,
-            source.distribution
+       const top10Distribution = Object.fromEntries(
+            Object.entries(source.distribution || {})
+                .sort((a, b) => Number(b[1]) - Number(a[1]))
+                .slice(0, 10)
         );
 
+        renderDistributionChart(type, canvasId, top10Distribution);
+
         // Filter
-        fillSelect(
-            filterId,
-            source.distribution,
-            'Semua Bandwidth'
-        );
+        const filterLabel = type === 'ispUtama'
+            ? 'Semua ISP Utama'
+            : 'Semua ISP Cadangan';
+
+        fillSelect(filterId, source.distribution, filterLabel);
 
         const entries=Object.entries(source.distribution||{});
 
@@ -970,30 +972,59 @@ document.addEventListener('DOMContentLoaded',function(){
         const page=state.pages[stateName]||1;
         const rows=getPageData(filtered,page);
         const start=(page-1)*state.pageSize;
-        tbody.innerHTML=rows.map(function(item,index){
-            const npsn=colspan===5?'<td>'+escapeHtml(item.npsn)+'</td>':'';
+        
+        tbody.innerHTML = rows.map(function(item, index) {
+            const npsn = colspan === 5
+                ? '<td>' + escapeHtml(item.npsn) + '</td>'
+                : '';
+
+            const isISP = stateName === 'ispUtama' ||
+                        stateName === 'ispCadangan';
+
             const suffix = stateName === 'electricity' ? ' Watt' : '';
+
             const value = stateName === 'electricity'
-            
                 ? numberFormat(item.value)
                 : escapeHtml(item.value);
+
             const component = stateName === 'readiness'
                 ? escapeHtml(item.komponen_kurang || 'Memenuhi Kebutuhan')
                 : '';
 
-            return '<tr><td>'+(start+index+1)+'</td><td>'+
-                escapeHtml(item.school_name)+'</td>'+
-                npsn+
-                '<td><strong style="'+
-                (stateName === 'readiness' && item.value === 'Kurang Memadai' ? 'color:#dc2626;' : '')+
-                '">'+value+suffix+'</strong></td>'+
+           if (isISP) {
+                const namaISP = stateName === 'ispCadangan'
+                    ? item.ispCadangan
+                    : item.ispUtama;
+
+                return '<tr>' +
+                    '<td>' + (start + index + 1) + '</td>' +
+                    '<td>' + escapeHtml(item.school_name) + '</td>' +
+                    '<td>' + escapeHtml(item.bandwidth || '-') + '</td>' +
+                    '<td><strong>' +
+                        escapeHtml(namaISP || 'Tidak Ada') +
+                    '</strong></td>' +
+                    '</tr>';
+            }
+
+            // Tabel lainnya tetap menggunakan format semula
+            return '<tr><td>' + (start + index + 1) + '</td>' +
+                '<td>' + escapeHtml(item.school_name) + '</td>' +
+                npsn +
+                '<td><strong style="' +
+                (stateName === 'readiness' && item.value === 'Kurang Memadai'
+                    ? 'color:#dc2626;'
+                    : '') +
+                '">' + value + suffix + '</strong></td>' +
                 (stateName === 'readiness'
-                    ? '<td><span style="'+
-                    (item.value === 'Kurang Memadai' ? 'color:#dc2626;' : '')+
-                    '">'+component+'</span></td>'
-                    : '')+
+                    ? '<td><span style="' +
+                        (item.value === 'Kurang Memadai'
+                            ? 'color:#dc2626;'
+                            : '') +
+                        '">' + component + '</span></td>'
+                    : '') +
                 '</tr>';
         }).join('');
+
         renderPagination(paginationId,filtered.length,page,function(newPage){
             state.pages[stateName]=newPage;
             renderCategoricalTable(stateName,data,tableId,paginationId,filterId,colspan,columnName);
@@ -1618,19 +1649,29 @@ document.addEventListener('DOMContentLoaded',function(){
                 'Accept':'application/json'
             }
         })
-        .then(function(response){
-            if(!response.ok){
-                throw new Error('HTTP '+response.status);
-            }
-            return response.json();
-        })
-        .then(function(data){
-            state.data=data;
-            console.log('DATA DASHBOARD:',data);
-            console.log('PROBLEM RECOMMENDATIONS:',data.problemRecommendations);
-            Object.keys(state.pages).forEach(function(key){
-                state.pages[key]=1;
+        .then(function(response) {
+            return response.text().then(function(text) {
+                if (!response.ok) {
+                    console.error('DETAIL ERROR SERVER:', text);
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                try {
+                    return JSON.parse(text);
+                } catch (error) {
+                    console.error('RESPONS BUKAN JSON:', text);
+                    throw error;
+                }
             });
+        })
+        .then(function(data) {
+            state.data = data;
+            console.log('DATA DASHBOARD:', data);
+
+            Object.keys(state.pages).forEach(function(key) {
+                state.pages[key] = 1;
+            });
+
             renderAll();
         })
         .catch(function(error){

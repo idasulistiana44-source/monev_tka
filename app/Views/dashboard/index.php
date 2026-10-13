@@ -414,8 +414,8 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Sekolah</th>
-                                    <th>NPSN</th>
-                                    <th>Jaringan</th>
+                                    <th>jaringan</th>
+                                    <th>ISP </th>
                                 </tr>
                             </thead>
                             <tbody id="internetTableBody">
@@ -463,9 +463,8 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Sekolah</th>
-                                     <th>ISP</th>
                                     <th>Bandwidth</th>
-                                   
+                                     <th>ISP Utama</th>
                                 </tr>
                             </thead>
                             <tbody id="ispUtamaTableBody">
@@ -493,7 +492,7 @@
                 <div class="dashboard-highlight">
                     <i class="fas fa-upload"></i>
                     <div>
-                        <span>Bandwidth ISP cadangan terbanyak</span>
+                        <span>Ketersediaan ISP Cadangan</span>
                         <strong id="ispCadanganMostUsed">-</strong>
                         <small id="ispCadanganMostUsedCount">0 sekolah</small>
                     </div>
@@ -512,6 +511,7 @@
                                     <th>No</th>
                                     <th>Sekolah</th>
                                     <th>Bandwidth</th>
+                                    <th>ISP Cadangan</th>
                                 </tr>
                             </thead>
                             <tbody id="ispCadanganTableBody">
