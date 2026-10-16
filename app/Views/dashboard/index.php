@@ -92,7 +92,7 @@
                 <div class="stat-card-value" id="summaryTotalSchools">
                     <?= esc($totalSchools ?? 0) ?>
                 </div>
-                <div class="stat-card-note">Total sekolah terdaftar</div>
+                <div class="stat-card-note">Total sekolah</div>
             </div>
         </div>
         
@@ -415,7 +415,6 @@
                                     <th>No</th>
                                     <th>Sekolah</th>
                                     <th>jaringan</th>
-                                    <th>ISP </th>
                                 </tr>
                             </thead>
                             <tbody id="internetTableBody">
@@ -706,15 +705,185 @@
             </div>
         </div>
     </div>
-    <!-- <div class="dashboard-export">
-        <div>
-            <h3>Export Laporan Monev</h3>
-            <p>Data mengikuti periode dan filter yang dipilih.</p>
+    <div class="dashboard-charts">
+        <div class="dashboard-panel">
+
+            <!-- Header Panel -->
+            <div class="dashboard-panel-header">
+                <div>
+                    <h3 class="dashboard-panel-title">
+                        Daftar Kunjungan Monev Status Draft
+                    </h3>
+                    <p class="dashboard-panel-subtitle">
+                        Daftar sekolah dengan status Monev Draft.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Body Panel -->
+            <div class="dashboard-panel-body">
+                <div class="dashboard-table">
+
+                    <!-- Header Tabel + Search -->
+                    <div class="dashboard-table-header">
+                        <div>
+                            <h4>Detail Kunjungan Sekolah</h4>
+                            <span>
+                                Daftar sekolah yang masih berstatus Draft.
+                            </span>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <input
+                                type="search"
+                                id="schoolsWithoutDraftSearch"
+                                class="form-control"
+                                placeholder="Cari semua data..."
+                                aria-label="Cari semua data kunjungan"
+                                style="width: 260px; max-width: 100%;"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Tabel Data -->
+                    <div class="table-responsive">
+                        <table class="monev-table">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Petugas</th>
+                                    <th>NPSN</th>
+                                    <th>Nama Sekolah</th>
+                                    <th>Wilayah</th>
+                                    <th>Level</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Dibuat</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="schoolsWithoutDraftTableBody">
+                                <tr>
+                                    <td colspan="9" class="table-empty">
+                                        Memuat data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer Tabel: Jumlah + Pagination -->
+                    <div class="d-flex justify-content-between align-items-center gap-2 mt-3 flex-wrap">
+
+                        <div
+                            id="schoolsWithoutDraftCount"
+                            class="text-muted"
+                        >
+                            0 kunjungan
+                        </div>
+
+                        <div
+                            class="monev-pagination"
+                            id="schoolsWithoutDraftPagination">
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
         </div>
-        <div>
-            <button type="button" class="dashboard-btn dashboard-btn-outline" id="btnExportPDF"><i class="fas fa-file-pdf"></i>Export PDF</button>
+    </div>
+    <div class="dashboard-charts">
+        <div class="dashboard-panel">
+
+            <!-- Header Panel -->
+            <div class="dashboard-panel-header">
+                <div>
+                    <h3 class="dashboard-panel-title">
+                        Daftar Kunjungan Monev Sedang Berlangsung
+                    </h3>
+                    <p class="dashboard-panel-subtitle">
+                        Daftar sekolah yang sedang dalam proses Monev.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Body Panel -->
+            <div class="dashboard-panel-body">
+                <div class="dashboard-table">
+
+                    <!-- Header Tabel + Search -->
+                    <div class="dashboard-table-header">
+                        <div>
+                            <h4>Detail Kunjungan Sekolah</h4>
+                            <span>
+                                Daftar kunjungan dengan status IN_PROGRESS.
+                            </span>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <input
+                                type="search"
+                                id="inProgressVisitsSearch"
+                                class="form-control"
+                                placeholder="Cari semua data..."
+                                aria-label="Cari data kunjungan berlangsung"
+                                style="width: 260px; max-width: 100%;"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Tabel Data -->
+                    <div class="table-responsive">
+                        <table class="monev-table">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Petugas</th>
+                                    <th>NPSN</th>
+                                    <th>Nama Sekolah</th>
+                                    <th>Wilayah</th>
+                                    <th>Level</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Dibuat</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="inProgressVisitsTableBody">
+                                <tr>
+                                    <td colspan="9" class="table-empty">
+                                        Memuat data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer: Jumlah + Pagination -->
+                    <div
+                        class="d-flex justify-content-between align-items-center
+                            gap-2 mt-3 flex-wrap"
+                    >
+                        <div
+                            id="inProgressVisitsCount"
+                            class="text-muted"
+                        >
+                            0 kunjungan
+                        </div>
+
+                        <div
+                            class="monev-pagination"
+                            id="inProgressVisitsPagination">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
-    </div> -->
+    </div>
+
+
 </div>
 <div class="modal fade" id="problemDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">

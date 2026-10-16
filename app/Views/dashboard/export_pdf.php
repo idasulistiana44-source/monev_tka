@@ -722,7 +722,7 @@ body {
                 <?= number_format($totalSchools, 0, ',', '.') ?>
             </div>
             <div class="summary-note">
-                Seluruh Sekolah
+                Total Sekolah
             </div>
         </td>
         <td class="summary-card">
@@ -1983,8 +1983,8 @@ body {
         return (float)($b['numeric_value'] ?? preg_replace('/[^0-9.]/', '', (string)($b['value'] ?? ''))) <=> (float)($a['numeric_value'] ?? preg_replace('/[^0-9.]/', '', (string)($a['value'] ?? '')));
     });
     $ispCadanganData = is_array($ispCadangan['data'] ?? null)
-        ? $ispCadangan['data']
-        : [];
+    ? $ispCadangan['data']
+    : [];
 
     $namaIspCadangan = [];
 
@@ -1993,7 +1993,12 @@ body {
 
         if ($schoolId > 0) {
             $namaIspCadangan[$schoolId] = trim(
-                (string) ($ispRow['isp'] ?? '')
+                (string) (
+                    $ispRow['ispCadangan']
+                    ?? $ispRow['isp']
+                    ?? $ispRow['value']
+                    ?? ''
+                )
             );
         }
     }
@@ -2069,7 +2074,7 @@ body {
                     <?php
                     $schoolId = (int) ($row['school_id'] ?? 0);
 
-                    $namaIsp = $namaIspCadangan[$schoolId] ?? '';
+                   $namaIsp = trim($namaIspCadangan[$schoolId] ?? '');
 
                     if ($namaIsp === '') {
                         $namaIsp = 'Tidak Ada ISP';
@@ -2653,6 +2658,160 @@ usort($waveRows, function ($a, $b) {
 
     </div>
 
+</div>
+<div class="section">
+    <div class="section-title">
+        DAFTAR SEKOLAH BELUM MEMILIKI DRAFT MONEV
+    </div>
+
+    <div class="section-description">
+        Daftar sekolah dengan penugasan aktif yang belum memiliki catatan kunjungan Monev.
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Nama Petugas</th>
+                <th>Wilayah</th>
+                <th>Kecamatan</th>
+                <th>NPSN</th>
+                <th>Nama Sekolah</th>
+                <th>Tanggal Penugasan</th>
+            </tr>
+        </thead>
+      
+        <tbody>
+            <?php if (!empty($schoolsWithoutDraft)): ?>
+                <?php foreach ($schoolsWithoutDraft as $index => $row): ?>
+                    <?php
+                        $namaPetugas = $row['petugas']
+                            ?? $row['officer_name']
+                            ?? $row['nama_petugas']
+                            ?? $row['tim_monev']
+                            ?? '-';
+
+                        $tanggal = $row['created_at']
+                            ?? $row['assignment_date']
+                            ?? $row['tanggal_dibuat']
+                            ?? null;
+
+                        $timestamp = !empty($tanggal)
+                            ? strtotime((string) $tanggal)
+                            : false;
+                    ?>
+                    <tr>
+                        <td class="center"><?= $index + 1 ?></td>
+                        <td><?= esc($namaPetugas ?: '-') ?></td>
+                        <td><?= esc($row['region_name'] ?? '-') ?></td>
+                        <td><?= esc($row['district_name'] ?? '-') ?></td>
+                        <td class="center"><?= esc($row['npsn'] ?? '-') ?></td>
+                        <td><?= esc($row['school_name'] ?? '-') ?></td>
+                        <td class="center">
+                            <?= $timestamp !== false
+                                ? esc(date('d-m-Y H:i', $timestamp))
+                                : '-' ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="7" class="center">
+                        Tidak ada data sekolah.
+                    </td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+
+    </table>
+</div>
+
+<div class="section">
+    <div class="section-title">
+        DAFTAR SEKOLAH MONEV SEDANG BERLANGSUNG
+    </div>
+
+    <div class="section-description">
+        Daftar sekolah yang sedang dalam proses pelaksanaan Monitoring dan Evaluasi (Monev).
+    </div>
+
+    <table class="table">
+            
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Nama Petugas</th>
+                <th>Wilayah</th>
+                <th>Kecamatan</th>
+                <th>NPSN</th>
+                <th>Nama Sekolah</th>
+                <th>Tanggal Dibuat</th>
+            </tr>
+        </thead>
+        
+       <tbody>
+        <?php if (!empty($inProgressVisits)): ?>
+            <?php foreach ($inProgressVisits as $index => $row): ?>
+                <?php
+                    $namaPetugas = $row['petugas']
+                        ?? $row['nama_petugas']
+                        ?? $row['officer_name']
+                        ?? '-';
+
+                    $tanggalDibuat = $row['created_at']
+                        ?? $row['tanggal_dibuat']
+                        ?? $row['assignment_date']
+                        ?? null;
+                ?>
+
+                <tr>
+                    <td class="center">
+                        <?= $index + 1 ?>
+                    </td>
+
+                    <td>
+                        <?= esc($namaPetugas ?: '-') ?>
+                    </td>
+
+                    <td>
+                        <?= esc($row['region_name'] ?? '-') ?>
+                    </td>
+
+                    <td>
+                        <?= esc($row['district_name'] ?? '-') ?>
+                    </td>
+
+                    <td class="center">
+                        <?= esc($row['npsn'] ?? '-') ?>
+                    </td>
+
+                    <td>
+                        <?= esc($row['school_name'] ?? '-') ?>
+                    </td>
+
+                    <td class="center">
+                        <?php if (!empty($tanggalDibuat)): ?>
+                            <?php
+                                $timestamp = strtotime($tanggalDibuat);
+                            ?>
+                            <?= $timestamp !== false
+                                ? esc(date('d-m-Y H:i', $timestamp))
+                                : '-' ?>
+                        <?php else: ?>
+                            -
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="7" class="center">
+                    Tidak ada data monev yang sedang berlangsung.
+                </td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+    </table>
 </div>
 
 <div class="footer">

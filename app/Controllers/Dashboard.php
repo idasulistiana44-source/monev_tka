@@ -57,35 +57,42 @@ class Dashboard extends BaseController
         return view('layout/template', $data);
     }
     
-    public function export()
+   public function export()
     {
-        ini_set('memory_limit','512M');
+        ini_set('memory_limit', '512M');
         set_time_limit(300);
 
-        $filters=[
-            'start_date'=>$this->request->getGet('start_date'),
-            'end_date'=>$this->request->getGet('end_date'),
-            'level'=>$this->request->getGet('level'),
-            'region_id'=>$this->request->getGet('region_id'),
-            'district_id'=>$this->request->getGet('district_id'),
+        // Inisialisasi model sebelum digunakan
+        $model = $this->dashboardModel;
+
+        $filters = [
+            'start_date'  => $this->request->getGet('start_date'),
+            'end_date'    => $this->request->getGet('end_date'),
+            'level'       => $this->request->getGet('level'),
+            'region_id'   => $this->request->getGet('region_id'),
+            'district_id' => $this->request->getGet('district_id'),
             'school_id'   => $this->request->getGet('school_id')
         ];
 
-            $filterWilayahName = 'SELURUH WILAYAH DKI JAKARTA';
-            $filterSchoolName  = '';
+        $filterWilayahName = 'SELURUH WILAYAH DKI JAKARTA';
+        $filterSchoolName  = '';
 
-            if (!empty($filters['region_id'])) {
-                $regions = $model->getRegions();
+        if (!empty($filters['region_id'])) {
+            $regions = $model->getRegions();
 
-                foreach ($regions as $region) {
-                    if ((string)($region['id'] ?? '') === (string)$filters['region_id']) {
-                        $filterWilayahName = $region['name']
-                            ?? $region['region_name']
-                            ?? 'SELURUH WILAYAH DKI JAKARTA';
-                        break;
-                    }
+            foreach ($regions as $region) {
+                if (
+                    (string) ($region['id'] ?? '') ===
+                    (string) $filters['region_id']
+                ) {
+                    $filterWilayahName = $region['name']
+                        ?? $region['region_name']
+                        ?? 'SELURUH WILAYAH DKI JAKARTA';
+
+                    break;
                 }
             }
+        }
 
         $model=$this->dashboardModel;
 
@@ -144,9 +151,50 @@ class Dashboard extends BaseController
             log_message('error','Gagal mengambil data sekolah tanpa ISP cadangan: '.$e->getMessage());
             $backupInternetSchools=[];
         }
+  
+        // Ambil daftar sekolah yang belum memiliki Draft Monev
+        try {
+            $schoolsWithoutDraft = $model->getSchoolsWithoutDraft($filters);
 
+            // Normalisasi field agar konsisten dengan template PDF
+            $schoolsWithoutDraft = array_map(static function ($row) {
+                $row['petugas'] = $row['petugas']
+                    ?? $row['nama_petugas']
+                    ?? $row['officer_name']
+                    ?? '-';
+
+                $row['created_at'] = $row['created_at']
+                    ?? $row['tanggal_dibuat']
+                    ?? $row['assignment_date']
+                    ?? null;
+
+                return $row;
+            }, $schoolsWithoutDraft);
+
+        } catch (\Throwable $e) {
+            log_message(
+                'error',
+                'Gagal mengambil daftar Draft Monev: ' . $e->getMessage()
+            );
+
+            $schoolsWithoutDraft = [];
+        }
+        // Ambil daftar Monev yang sedang berlangsung
+        try {
+            $inProgressVisits = $model->getInProgressVisits($filters);
+        } catch (\Throwable $e) {
+            log_message(
+                'error',
+                'Gagal mengambil daftar Monev sedang berlangsung: ' . $e->getMessage()
+            );
+            $inProgressVisits = [];
+        }
+
+ 
      $data=[
         'title'=>'Laporan Monitoring & Evaluasi TKAP',
+        'schoolsWithoutDraft' => $schoolsWithoutDraft,
+        'inProgressVisits'    => $inProgressVisits,
         'generatedAt'=>date('d F Y H:i'),
         'filters'=>$filters,
         'summary'=>$summary,
@@ -210,64 +258,114 @@ class Dashboard extends BaseController
         exit;
     }
 
+public function data()
+{
+    // Inisialisasi model terlebih dahulu
+    $model = $this->dashboardModel;
 
-    public function data()
-    {
-        $filters = [
-            'start_date'  => $this->request->getGet('start_date'),
-            'end_date'    => $this->request->getGet('end_date'),
-            'level'       => $this->request->getGet('level'),
-            'region_id'   => $this->request->getGet('region_id'),
-            'district_id' => $this->request->getGet('district_id'),
-            'school_id'   => $this->request->getGet('school_id')
-        ];
-        $filterWilayahName = 'SELURUH WILAYAH DKI JAKARTA';
-        $filterSchoolName  = '';
+    $filters = [
+        'start_date'  => $this->request->getGet('start_date'),
+        'end_date'    => $this->request->getGet('end_date'),
+        'level'       => $this->request->getGet('level'),
+        'region_id'   => $this->request->getGet('region_id'),
+        'district_id' => $this->request->getGet('district_id'),
+        'school_id'   => $this->request->getGet('school_id')
+    ];
 
-        if (!empty($filters['region_id'])) {
-            $regions = $model->getRegions();
+    $filterWilayahName = 'SELURUH WILAYAH DKI JAKARTA';
+    $filterSchoolName  = '';
 
-            foreach ($regions as $region) {
-                if ((string)($region['id'] ?? '') === (string)$filters['region_id']) {
-                    $filterWilayahName = $region['name']
-                        ?? $region['region_name']
-                        ?? 'SELURUH WILAYAH DKI JAKARTA';
-                    break;
-                }
+    // Ambil nama wilayah berdasarkan filter
+    if (!empty($filters['region_id'])) {
+        $regions = $model->getRegions();
+
+        foreach ($regions as $region) {
+            if (
+                (string) ($region['id'] ?? '') ===
+                (string) $filters['region_id']
+            ) {
+                $filterWilayahName = $region['name']
+                    ?? $region['region_name']
+                    ?? 'SELURUH WILAYAH DKI JAKARTA';
+
+                break;
             }
         }
+    }
 
-        if (!empty($filters['school_id'])) {
-        
-        }
+    // Filter sekolah (belum ada logika tambahan di bagian ini)
+    if (!empty($filters['school_id'])) {
+        // Tambahkan logika nama sekolah jika diperlukan.
+    }
 
-        $model = $this->dashboardModel;
+    // Rekap daya listrik
+    $electricity = [];
+
+    try {
+        $electricity = $model->getElectricityRecap($filters);
+    } catch (\Throwable $e) {
+        log_message(
+            'error',
+            'Gagal mengambil data daya listrik: ' . $e->getMessage()
+        );
 
         $electricity = [];
-        try {
-            $electricity = $model->getElectricityRecap($filters);
-        } catch (\Throwable $e) {
-            log_message('error', 'Gagal mengambil data daya listrik: ' . $e->getMessage());
-            $electricity = [];
-        }
-
-       return $this->response->setJSON([
-            'summary' => $model->getDashboardSummary($filters),
-            'infrastructure' => $model->getInfrastructureData($filters),
-            'electricity'    => $model->getElectricityData($filters),
-            'internet'       => $model->getInternetData($filters),
-            'ispUtama' => $model->getIspDashboardData('ispUtama', $filters),
-            'ispCadangan' => $model->getIspDashboardData('ispCadangan', $filters),
-            'students'       => $model->getStudentData($filters),
-            'sessions'       => $model->getSessionData($filters),
-            'waves'          => $model->getWaveData($filters),
-            'readiness'      => $model->getInfrastructureReadiness($filters),
-            'readinessData'  => $model->getReadinessData($filters),
-            'monevStatus'=>$model->getMonevStatusRecap($filters),
-            'officerRecap'=>$model->getMonevOfficerRecap($filters),
-            'problemRecommendations'=>$model->getProblemRecommendationRecap($filters)
-        ]);
     }
+
+    // Data kunjungan/sekolah berstatus Draft
+    $schoolsWithoutDraft = [];
+
+    
+    try {
+        $schoolsWithoutDraft = $model->getSchoolsWithoutDraft($filters);
+
+        $schoolsWithoutDraft = array_map(static function ($row) {
+            $row['petugas'] = $row['petugas'] ?? '-';
+            $row['tim_monev'] = $row['tim_monev'] ?? '-';
+            $row['created_at'] = $row['created_at'] ?? null;
+
+            return $row;
+        }, $schoolsWithoutDraft);
+
+    } catch (\Throwable $e) {
+        log_message(
+            'error',
+            'Gagal mengambil daftar Draft Monev: ' . $e->getMessage()
+        );
+
+        $schoolsWithoutDraft = [];
+    }
+
+
+    try {
+        $inProgressVisits = $model->getInProgressVisits($filters);
+    } catch (\Throwable $e) {
+        log_message(
+            'error',
+            'Gagal mengambil kunjungan Monev berlangsung: ' . $e->getMessage()
+        );
+
+        $inProgressVisits = [];
+    }
+    return $this->response->setJSON([
+        'schoolsWithoutDraft' => $schoolsWithoutDraft,
+        'inProgressVisits' => $inProgressVisits,
+        'summary' => $model->getDashboardSummary($filters),
+        'infrastructure' => $model->getInfrastructureData($filters),
+        'electricity' => $model->getElectricityData($filters),
+        'internet' => $model->getInternetData($filters),
+        'ispUtama' => $model->getIspDashboardData('ispUtama', $filters),
+        'ispCadangan' => $model->getIspDashboardData('ispCadangan', $filters),
+        'students' => $model->getStudentData($filters),
+        'sessions' => $model->getSessionData($filters),
+        'waves' => $model->getWaveData($filters),
+        'readiness' => $model->getInfrastructureReadiness($filters),
+        'readinessData' => $model->getReadinessData($filters),
+        'monevStatus' => $model->getMonevStatusRecap($filters),
+        'officerRecap' => $model->getMonevOfficerRecap($filters),
+        'problemRecommendations' => $model->getProblemRecommendationRecap($filters)
+    ]);
+}
     
     public function regions()
     {

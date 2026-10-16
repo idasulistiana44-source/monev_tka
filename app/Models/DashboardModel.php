@@ -1988,4 +1988,121 @@ public function getIspProviderData(string $type, array $filters = []): array
             ->get()
             ->getResultArray();
     }
+
+
+public function getSchoolsWithoutDraft(array $filters = []): array
+{
+    $builder = $this->db->table('visits v');
+
+    $builder->select("
+        v.id AS visit_id,
+        v.school_id,
+        v.status,
+        v.created_at,
+        s.npsn,
+        s.school_name,
+        s.region_id,
+        s.district_id,
+        s.level,
+        r.name AS region_name,
+        d.name AS district_name,
+        creator.name AS petugas,
+        GROUP_CONCAT(
+            DISTINCT team_user.name
+            ORDER BY team_user.name
+            SEPARATOR ', '
+        ) AS tim_monev
+    ");
+
+    $builder->join('schools s', 's.id = v.school_id');
+    $builder->join('region r', 'r.id = s.region_id', 'left');
+    $builder->join('district d', 'd.id = s.district_id', 'left');
+    $builder->join('users creator', 'creator.id = v.created_by', 'left');
+    $builder->join('visit_team vt', 'vt.visit_id = v.id', 'left');
+    $builder->join('users team_user', 'team_user.id = vt.user_id', 'left');
+
+    $builder->where('v.status', 'DRAFT');
+
+    if (!empty($filters['region_id'])) {
+        $builder->where('s.region_id', $filters['region_id']);
+    }
+
+    if (!empty($filters['district_id'])) {
+        $builder->where('s.district_id', $filters['district_id']);
+    }
+
+    if (!empty($filters['school_id'])) {
+        $builder->where('s.id', $filters['school_id']);
+    }
+
+    if (!empty($filters['level'])) {
+        $builder->where('s.level', $filters['level']);
+    }
+
+    $builder->groupBy('v.id');
+
+    return $builder
+        ->orderBy('creator.name', 'ASC')
+        ->orderBy('v.created_at', 'DESC')
+        ->get()
+        ->getResultArray();
+}
+
+
+public function getInProgressVisits(array $filters = []): array
+{
+    $builder = $this->db->table('visits v');
+
+    $builder->select("
+        v.id,
+        v.status,
+        v.created_at,
+        s.npsn,
+        s.school_name,
+        s.level,
+        r.name AS region_name,
+        d.name AS district_name,
+        creator.name AS petugas
+    ");
+
+    $builder->join('schools s', 's.id = v.school_id', 'left');
+    $builder->join('region r', 'r.id = s.region_id', 'left');
+    $builder->join('district d', 'd.id = s.district_id', 'left');
+    $builder->join('users creator', 'creator.id = v.created_by', 'left');
+
+    $builder->where('LOWER(v.status)', 'in_progress');
+
+    if (!empty($filters['start_date'])) {
+        $builder->where('DATE(v.created_at) >=', $filters['start_date']);
+    }
+
+    if (!empty($filters['end_date'])) {
+        $builder->where('DATE(v.created_at) <=', $filters['end_date']);
+    }
+
+    if (!empty($filters['level'])) {
+        $builder->where('s.level', $filters['level']);
+    }
+
+    if (!empty($filters['region_id'])) {
+        $builder->where('s.region_id', $filters['region_id']);
+    }
+
+    if (!empty($filters['district_id'])) {
+        $builder->where('s.district_id', $filters['district_id']);
+    }
+
+    if (!empty($filters['school_id'])) {
+        $builder->where('v.school_id', $filters['school_id']);
+    }
+
+    return $builder
+        ->orderBy('v.created_at', 'DESC')
+        ->get()
+        ->getResultArray();
+}
+
+
+
+
 }

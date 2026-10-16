@@ -884,7 +884,12 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
         </thead>
 
         <tbody>
-
+            <tr>
+                <td>Jenis Jaringan</td>
+                <td style="text-align:center;">
+                  ' . $e($metrics['jaringan'] ?? '-') . '
+                </td>
+            </tr
             <tr>
                 <td>ISP Utama</td>
                 <td style="text-align:center;">
@@ -2495,6 +2500,17 @@ $dynamic = function ($itemTitle) use ($metrics, $members, $data, $e, $formatDate
                         ) . '
                     </td>
                 </tr>
+     
+                <tr>
+                    <td>Catatan Petugas</td>
+                    <td style="text-align:center;">
+                        ' . (
+                            trim((string) ($metrics['catatan'] ?? '')) !== ''
+                                ? nl2br($e($metrics['catatan']))
+                                : '-'
+                        ) . '
+                    </td>
+                </tr>
 
                 <tr>
                     <td>
@@ -3085,6 +3101,10 @@ else:
         .header-main{font-size:18px;font-weight:700;line-height:1.3}
         .header-sub{font-size:17px;font-weight:700;line-height:1.3}
         .header-year{font-size:15px;line-height:1.3;margin-top:3px}
+        .penutup-section {
+            page-break-before: always;
+            break-before: page;
+        }
     </style>
 </head>
 <body>
@@ -3150,9 +3170,16 @@ else:
         $sectionTitle = trim((string) ($row['section_title'] ?? ''));
         $itemTitle = trim((string) ($row['item_title'] ?? ''));
         $content = $cleanHtml($row['content'] ?? '');
-        if ($sectionTitle !== $currentSection):
-            $currentSection = $sectionTitle;
+        
+    if ($sectionTitle !== $currentSection):
+        $isPenutup = stripos($sectionTitle, 'PENUTUP') !== false;
+
+        $currentSection = $sectionTitle;
     ?>
+        <?php if ($isPenutup): ?>
+            <div style="page-break-before: always;"></div>
+        <?php endif; ?>
+
         <div class="chapter">
             <?= $e($sectionTitle) ?>
         </div>
@@ -3286,8 +3313,10 @@ else:
         <div class="content">
             <?= $dynamic('SARAN') ?>
         </div>
-        <div class="item-title">
+        <div class="penutup-section">
+            <div class="item-title" style="page-break-before: always;">
             11. Penutup
+            </div>
         </div>
         <div class="content">
             <p>Demikian laporan monitoring dan evaluasi ini disusun sebagai dokumentasi hasil pelaksanaan monitoring dan bahan tindak lanjut kesiapan sekolah dalam pelaksanaan Tes Kemampuan Akademik.</p>

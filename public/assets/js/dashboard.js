@@ -1605,7 +1605,347 @@ document.addEventListener('DOMContentLoaded',function(){
         '</tr>';
     }).join('');
 };
-    
+
+
+
+let schoolsWithoutDraftPage = 1;
+const schoolsWithoutDraftPageSize = 10;
+let schoolsWithoutDraftSearchKeyword = '';
+
+function renderSchoolsWithoutDraft() {
+    const tbody = $('schoolsWithoutDraftTableBody');
+    const pagination = $('schoolsWithoutDraftPagination');
+    const count = $('schoolsWithoutDraftCount');
+
+    if (!tbody || !pagination) return;
+
+    // Ambil seluruh data kunjungan dari dashboard
+    const allRows = Array.isArray(state.data?.schoolsWithoutDraft)
+        ? state.data.schoolsWithoutDraft
+        : [];
+
+    // Normalisasi teks agar pencarian tidak sensitif
+    // terhadap huruf besar/kecil dan spasi berlebih.
+    const normalize = function(value) {
+        return String(value ?? '')
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
+    const keyword = normalize(schoolsWithoutDraftSearchKeyword);
+
+    // Cari pada seluruh kolom dan properti data sekolah.
+    const filteredRows = allRows.filter(function(row) {
+        if (!keyword) return true;
+
+        const searchableText = Object.values(row)
+            .map(function(value) {
+                return String(value ?? '');
+            })
+            .join(' ');
+
+        return normalize(searchableText).includes(keyword);
+    });
+
+    const total = filteredRows.length;
+    const totalPages = Math.ceil(
+        total / schoolsWithoutDraftPageSize
+    );
+
+    // Kembali ke halaman pertama jika halaman aktif
+    // sudah melebihi jumlah halaman hasil pencarian.
+    if (
+        totalPages === 0 ||
+        schoolsWithoutDraftPage > totalPages
+    ) {
+        schoolsWithoutDraftPage = 1;
+    }
+
+    // Jumlah hasil mengikuti pencarian.
+    if (count) {
+        count.textContent = keyword
+            ? `${total} hasil ditemukan`
+            : `${total} kunjungan`;
+    }
+
+    // Tampilkan pesan jika tidak ada hasil.
+    if (total === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-4">
+                    ${
+                        keyword
+                            ? 'Data yang sesuai tidak ditemukan.'
+                            : 'Tidak ada kunjungan berstatus Draft.'
+                    }
+                </td>
+            </tr>
+        `;
+
+        pagination.innerHTML = '';
+        return;
+    }
+
+    // Pagination diterapkan setelah data difilter.
+    const start = (schoolsWithoutDraftPage - 1)
+        * schoolsWithoutDraftPageSize;
+
+    const pageRows = filteredRows.slice(
+        start,
+        start + schoolsWithoutDraftPageSize
+    );
+
+    // Render hasil pencarian.
+    tbody.innerHTML = pageRows.map(function(row, index) {
+        return `
+            <tr>
+                <td>${start + index + 1}</td>
+                <td>${escapeHtml(row.petugas || '-')}</td>
+                <td>${escapeHtml(row.npsn || '-')}</td>
+                <td>${escapeHtml(row.school_name || '-')}</td>
+                <td>${escapeHtml(row.region_name || '-')}</td>
+                <td>${escapeHtml(row.level || '-')}</td>
+                <td>
+                    <span class="badge bg-secondary">
+                        ${escapeHtml(row.status || 'DRAFT')}
+                    </span>
+                </td>
+                <td>${escapeHtml(row.created_at || '-')}</td>
+            </tr>
+        `;
+    }).join('');
+
+    // Render pagination berdasarkan hasil pencarian.
+    let buttons = `
+        <span class="page-info">
+            Halaman ${schoolsWithoutDraftPage} dari ${totalPages}
+        </span>
+
+        <button
+            type="button"
+            class="page-btn"
+            data-page="${schoolsWithoutDraftPage - 1}"
+            ${schoolsWithoutDraftPage === 1 ? 'disabled' : ''}
+            aria-label="Halaman sebelumnya">
+            &lsaquo;
+        </button>
+    `;
+
+    for (let page = 1; page <= totalPages; page++) {
+        buttons += `
+            <button
+                type="button"
+                class="page-btn ${page === schoolsWithoutDraftPage ? 'active' : ''}"
+                data-page="${page}">
+                ${page}
+            </button>
+        `;
+    }
+
+    buttons += `
+        <button
+            type="button"
+            class="page-btn"
+            data-page="${schoolsWithoutDraftPage + 1}"
+            ${schoolsWithoutDraftPage === totalPages ? 'disabled' : ''}
+            aria-label="Halaman berikutnya">
+            &rsaquo;
+        </button>
+    `;
+
+    pagination.innerHTML = buttons;
+}
+
+let inProgressVisitsPage = 1;
+const inProgressVisitsPageSize = 10;
+let inProgressVisitsKeyword = '';
+
+const renderInProgressVisits = function() {
+    const tbody = $('inProgressVisitsTableBody');
+    const pagination = $('inProgressVisitsPagination');
+    const count = $('inProgressVisitsCount');
+
+    if (!tbody || !pagination) {
+        console.warn('Elemen tabel Monev Berlangsung belum ditemukan.');
+        return;
+    }
+
+    // Ambil data dari respons Controller
+    const allRows = Array.isArray(state.data?.inProgressVisits)
+        ? state.data.inProgressVisits
+        : [];
+
+    // Normalisasi teks pencarian
+    const normalize = function(value) {
+        return String(value ?? '')
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
+    const keyword = normalize(inProgressVisitsKeyword);
+
+    // Pencarian seluruh kolom
+    const filteredRows = allRows.filter(function(row) {
+        const searchableText = [
+            row.petugas,
+            row.npsn,
+            row.school_name,
+            row.region_name,
+            row.level,
+            row.tim_monev,
+            row.status,
+            row.created_at
+        ].map(normalize).join(' ');
+
+        return searchableText.includes(keyword);
+    });
+
+    const total = filteredRows.length;
+    const totalPages = Math.ceil(total / inProgressVisitsPageSize);
+
+    if (totalPages === 0) {
+        inProgressVisitsPage = 1;
+    } else if (inProgressVisitsPage > totalPages) {
+        inProgressVisitsPage = totalPages;
+    }
+
+    // Jumlah data
+    if (count) {
+        count.textContent = keyword
+            ? total + ' hasil ditemukan'
+            : total + ' kunjungan';
+    }
+
+    // Jika tidak ada data
+    if (total === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="table-empty text-center py-4">
+                    ${keyword
+                        ? 'Data yang sesuai tidak ditemukan.'
+                        : 'Tidak ada kunjungan yang sedang berlangsung.'}
+                </td>
+            </tr>
+        `;
+
+        pagination.innerHTML = '';
+        return;
+    }
+
+    // Pagination
+    const start = (inProgressVisitsPage - 1) * inProgressVisitsPageSize;
+    const pageRows = filteredRows.slice(
+        start,
+        start + inProgressVisitsPageSize
+    );
+
+    // Render isi tabel
+    tbody.innerHTML = pageRows.map(function(row, index) {
+        const status = String(row.status || 'IN_PROGRESS')
+            .toUpperCase();
+
+        return `
+            <tr>
+                <td>${start + index + 1}</td>
+                <td>${escapeHtml(row.petugas || '-')}</td>
+                <td>${escapeHtml(row.npsn || '-')}</td>
+                <td>${escapeHtml(row.school_name || '-')}</td>
+                <td>${escapeHtml(row.region_name || '-')}</td>
+                <td>${escapeHtml(row.level || '-')}</td>
+                <td>
+                    <span class="badge bg-primary">
+                        ${status === 'IN_PROGRESS'
+                            ? 'Berlangsung'
+                            : escapeHtml(status)}
+                    </span>
+                </td>
+                <td>${escapeHtml(row.created_at || '-')}</td>
+            </tr>
+        `;
+    }).join('');
+
+    // Tombol pagination
+    let buttons = `
+        <button type="button"
+            class="btn btn-sm btn-outline-secondary"
+            data-inprogress-page="${inProgressVisitsPage - 1}"
+            ${inProgressVisitsPage <= 1 ? 'disabled' : ''}>
+            Sebelumnya
+        </button>
+    `;
+
+    for (let page = 1; page <= totalPages; page++) {
+        buttons += `
+            <button type="button"
+                class="btn btn-sm ${
+                    page === inProgressVisitsPage
+                        ? 'btn-primary'
+                        : 'btn-outline-secondary'
+                }"
+                data-inprogress-page="${page}">
+                ${page}
+            </button>
+        `;
+    }
+
+    buttons += `
+        <button type="button"
+            class="btn btn-sm btn-outline-secondary"
+            data-inprogress-page="${inProgressVisitsPage + 1}"
+            ${inProgressVisitsPage >= totalPages ? 'disabled' : ''}>
+            Berikutnya
+        </button>
+    `;
+
+    pagination.innerHTML = buttons;
+};
+
+// ============================================
+// PENCARIAN TABEL BERLANGSUNG
+// ============================================
+
+const inProgressSearchInput = $('inProgressVisitsSearch');
+
+if (inProgressSearchInput) {
+    inProgressSearchInput.addEventListener('input', function() {
+        inProgressVisitsKeyword = this.value;
+        inProgressVisitsPage = 1;
+        renderInProgressVisits();
+    });
+}
+
+// ============================================
+// EVENT PAGINATION TABEL BERLANGSUNG
+// ============================================
+
+document.addEventListener('click', function(event) {
+    const button = event.target.closest(
+        '#inProgressVisitsPagination [data-inprogress-page]'
+    );
+
+    if (!button || button.disabled) {
+        return;
+    }
+
+    inProgressVisitsPage = Number(button.dataset.inprogressPage);
+    renderInProgressVisits();
+});
+
+document.addEventListener('click', function (event) {
+    const button = event.target.closest(
+        '#schoolsWithoutDraftPagination [data-page]'
+    );
+
+    if (!button || button.disabled) return;
+
+    schoolsWithoutDraftPage = Number(button.dataset.page);
+    renderSchoolsWithoutDraft();
+});
+
+
+
     const renderAll=function(){
         updateSummary();
         renderInfrastructure();
@@ -1616,7 +1956,8 @@ document.addEventListener('DOMContentLoaded',function(){
             'ispUtamaChart',
             'ispUtamaTableBody',
             'ispUtamaPagination',
-            'ispUtamaFilter'
+            'ispUtamaFilter',
+            
         );
 
         renderBandwidth(
@@ -1630,9 +1971,12 @@ document.addEventListener('DOMContentLoaded',function(){
         renderSession();
         renderWave();
         renderReadiness();
-        renderMonevStatus();
         renderOfficerRecap();
         renderProblemRecommendations();
+        renderSchoolsWithoutDraft();
+        renderMonevStatus()
+        renderInProgressVisits();
+        
     };
     const loadDashboard=function(){
         const params=new URLSearchParams();
@@ -1666,11 +2010,15 @@ document.addEventListener('DOMContentLoaded',function(){
         })
         .then(function(data) {
             state.data = data;
-            console.log('DATA DASHBOARD:', data);
 
-            Object.keys(state.pages).forEach(function(key) {
-                state.pages[key] = 1;
-            });
+            console.log('SUMMARY:', data.summary);
+            console.log('DATA KUNJUNGAN BERLANGSUNG:', data.inProgressVisits);
+            console.log(
+                'JUMLAH KUNJUNGAN BERLANGSUNG:',
+                Array.isArray(data.inProgressVisits)
+                    ? data.inProgressVisits.length
+                    : 'Data bukan array atau key tidak tersedia'
+            );
 
             renderAll();
         })
@@ -1806,6 +2154,18 @@ document.addEventListener('DOMContentLoaded',function(){
         );
 
     });
+
+const draftSearchInput = $('schoolsWithoutDraftSearch');
+
+if (draftSearchInput) {
+    draftSearchInput.addEventListener('input', function() {
+        schoolsWithoutDraftSearchKeyword = this.value;
+        schoolsWithoutDraftPage = 1;
+
+        renderSchoolsWithoutDraft();
+    });
+}
+
    window.showProblemDetail=function(index){
     const item=state.data?.problemRecommendations?.[index];
     if(!item)return;
@@ -1922,6 +2282,4 @@ document.addEventListener('DOMContentLoaded',function(){
     loadRegions(); 
     loadDashboard();
     
-
-
 });

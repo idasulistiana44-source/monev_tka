@@ -225,6 +225,7 @@ class ReportsModel extends Model
         $ups=(int)$this->numberFrom($a['INF-07']??0);
         $accessPoint=(int)$this->numberFrom($a['INF-08']??0);
         $daya = $a['INF-09'] ?? '';
+        $catatanPetugas = trim((string) ($a['CAT-01'] ?? ''));
         $jaringan = $a['INF-10'] ?? '';
 
         $ispUtama = trim((string)($a['INF-11'] ?? ''));
@@ -561,6 +562,7 @@ class ReportsModel extends Model
         return [
             'pc'=>$pc,
             'laptop_milik'=>$laptopMilik,
+            'catatan' => $catatan,
             'laptop_bukan_milik'=>$laptopBukan,
             'total_perangkat'=>$totalPerangkat,
             'labkom'=>$labkom,
