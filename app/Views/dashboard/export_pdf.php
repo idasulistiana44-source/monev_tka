@@ -2661,11 +2661,11 @@ usort($waveRows, function ($a, $b) {
 </div>
 <div class="section">
     <div class="section-title">
-        DAFTAR SEKOLAH BELUM MEMILIKI DRAFT MONEV
+        DAFTAR VISITASI PETUGAS YANG BERSTATUS DRAFT (BELUM DI MONEV)
     </div>
 
     <div class="section-description">
-        Daftar sekolah dengan penugasan aktif yang belum memiliki catatan kunjungan Monev.
+        Daftar sekolah dengan penugasan aktif yang belum menyelesaikan catatan kunjungan Monev.
     </div>
 
     <table class="table">
@@ -2728,7 +2728,7 @@ usort($waveRows, function ($a, $b) {
 
 <div class="section">
     <div class="section-title">
-        DAFTAR SEKOLAH MONEV SEDANG BERLANGSUNG
+        DAFTAR VISITASI PETUGAS YANG BERSTATUS SEDANG BERLANGSUNG
     </div>
 
     <div class="section-description">
